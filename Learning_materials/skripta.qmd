@@ -1,0 +1,149 @@
+---
+title: "TODO: Název přednášky"
+subtitle: "Podkladové čtenářské materiály k přednášce"
+lang: cs
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Obsah"
+    number-sections: true
+    code-fold: false
+    code-summary: "Zobrazit kód v R"
+    embed-resources: true
+    theme: [flatly, ../theme/skripta_theme.scss]
+    highlight-style: github
+    include-in-header: "../theme/fonts-include.html"
+  typst:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    output-file: "skripta_raw.pdf"
+    include-in-header: "skripta_theme.typ"
+date: 2026/02/26
+date-format: long
+date-modified: last-modified
+---
+
+```{r}
+#| label: nastaveni
+#| include: false
+if (!require("here")) install.packages("here")
+
+here::i_am("Learning_materials/skripta.qmd")
+
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("ggbeeswarm")) install.packages("ggbeeswarm")
+if (!require("palmerpenguins")) install.packages("palmerpenguins")
+if (!require("glossary")) install.packages("glossary")
+
+library(tidyverse)
+library(ggbeeswarm)
+library(palmerpenguins)
+library(glossary)
+
+# Glossary: point to the canonical slovnik pojmy.yaml hosted on GitHub.
+# Terms are looked up by slug ID (e.g. "histogram", "median", "boxplot").
+# Usage in text: `r render_glossary_term("slug", display = "Czech term")`
+# The glossary_style() call applies brand colours to the hover tooltip (HTML only).
+local_pojmy <- tempfile(fileext = ".yaml")
+tryCatch(
+  {
+    download.file(
+      url = "https://raw.githubusercontent.com/CUNI-NATUR-Biostatistics/slovnik/main/pojmy.yaml",
+      destfile = local_pojmy,
+      quiet = TRUE
+    )
+    glossary::glossary_path(local_pojmy)
+  },
+  error = function(e) {
+    message("Glossary YAML unavailable: ", conditionMessage(e))
+  }
+)
+tryCatch(
+  {
+    source(
+      paste0(
+        "https://raw.githubusercontent.com/",
+        "CUNI-NATUR-Biostatistics/slovnik/main/",
+        "R/Functions/render_glossary_term.R"
+      )
+    )
+  },
+  error = function(e) {
+    source(here::here("R/Functions/render_glossary_term.R"))
+  }
+)
+```
+
+```{r}
+#| label: nastaveni-slovnik
+#| echo: false
+#| message: false
+#| results: asis
+if (knitr::is_html_output()) {
+  glossary::glossary_style(
+    color = "#5D2890",
+    text_decoration = "underline",
+    def_bg = "#FFFFFF",
+    def_color = "#2E2E2E"
+  )
+  # Override: show tooltip on hover (not :active) and suppress the arrow on active.
+  cat(
+    "<style>",
+    "a.glossary:hover .def { display: inline-block; }",
+    "a.glossary:hover .def::after {",
+    "  content: ' '; position: absolute; top: 100%; left: 50%;",
+    "  margin-left: -5px; border-width: 5px; border-style: solid;",
+    "  border-color: #FFFFFF transparent transparent transparent;",
+    "}",
+    "a.glossary:active .def { display: none; }",
+    "a.glossary:active .def::after { display: none; }",
+    "</style>",
+    "<script>",
+    "document.addEventListener('DOMContentLoaded', function() {",
+    "  document.querySelectorAll('a.glossary').forEach(function(a) {",
+    "    a.addEventListener('click', function(e) { e.preventDefault(); });",
+    "  });",
+    "});",
+    "</script>",
+    sep = "\n"
+  )
+}
+```
+
+## Úvod
+
+TODO: Stručný úvod do tématu přednášky. Vysvětlete biologický kontext a motivaci.
+
+## TODO: Hlavní část
+
+TODO: Obsah hlavní části skripta. Používejte podnadpisy (###) pro strukturování textu.
+
+### TODO: Podkapitola
+
+TODO: Text podkapitoly s biologickými příklady a R kódem.
+
+```{r}
+#| label: demo
+#| echo: true
+# TODO: ukázka kódu v R
+```
+
+## Shrnutí
+
+TODO: Klíčové body k zapamatování.
+
+- TODO: bod 1
+- TODO: bod 2
+- TODO: bod 3
+
+## Slovníček pojmů {.unnumbered}
+
+Pojmy použité v těchto materiálech a jejich definice:
+
+```{r}
+#| label: slovnicek
+#| echo: false
+glossary::glossary_table()
+```

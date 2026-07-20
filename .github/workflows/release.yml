@@ -1,0 +1,12 @@
+name: Release materials
+
+on:
+  push:
+    tags:
+      - "L*-v*"
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    uses: CUNI-NATUR-Biostatistics/.github/.github/workflows/release.yml@main
