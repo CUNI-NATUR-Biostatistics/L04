@@ -87,7 +87,10 @@ $headingMargin:          0 0 10px 0 !default;
 // Code blocks
 // ---------------------------------------------------------------------------
 .reveal pre {
-  box-shadow: none;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.07);
+  border: 1.5px solid rgba(0, 0, 0, 0.09);
+  border-radius: 6px;
+  box-sizing: border-box;
 }
 
 .reveal pre code {
@@ -101,6 +104,16 @@ $headingMargin:          0 0 10px 0 !default;
 
 // Hide scrollbars inside code blocks
 .reveal pre code::-webkit-scrollbar { display: none; }
+
+// ---------------------------------------------------------------------------
+// Figures — ggplot and other cell output images
+// ---------------------------------------------------------------------------
+.reveal .cell-output-display img {
+  border-radius: 6px;
+  display: block;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 
 // ---------------------------------------------------------------------------
 // Tables
