@@ -1,6 +1,6 @@
 ---
-title: "TODO: Název přednášky"
-subtitle: "Podkladové čtenářské materiály k přednášce"
+title: "Od odhadu k nejistotě"
+subtitle: "Výběrová variabilita a interval spolehlivosti"
 lang: cs
 format:
   html:
@@ -20,7 +20,7 @@ format:
     number-sections: true
     output-file: "skripta_raw.pdf"
     include-in-header: "skripta_theme.typ"
-date: 2026/02/26
+date: 2026/07/21
 date-format: long
 date-modified: last-modified
 ---
@@ -28,29 +28,83 @@ date-modified: last-modified
 ```{r}
 #| label: nastaveni
 #| include: false
-if (!require("here")) install.packages("here")
+if (!requireNamespace("here", quietly = TRUE)) install.packages("here")
+if (!requireNamespace("readr", quietly = TRUE)) install.packages("readr")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+if (!requireNamespace("tidyr", quietly = TRUE)) install.packages("tidyr")
+if (!requireNamespace("purrr", quietly = TRUE)) install.packages("purrr")
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("glossary", quietly = TRUE)) install.packages("glossary")
 
 here::i_am("Learning_materials/skripta.qmd")
 
-if (!require("tidyverse")) install.packages("tidyverse")
-if (!require("ggbeeswarm")) install.packages("ggbeeswarm")
-if (!require("palmerpenguins")) install.packages("palmerpenguins")
-if (!require("glossary")) install.packages("glossary")
+data_gejzir <-
+  readr::read_csv(
+    file = here::here("data", "old_faithful_2024.csv"),
+    col_types = readr::cols(
+      eruption_id = readr::col_double(),
+      geyser = readr::col_character(),
+      date = readr::col_date(format = "%m/%d/%y"),
+      time = readr::col_double(),
+      waiting = readr::col_double(),
+      webcam = readr::col_character(),
+      duration = readr::col_double()
+    )
+  ) |>
+  tidyr::drop_na(duration, waiting) |>
+  dplyr::mutate(
+    delka_erupce_10_s = duration / 10
+  )
 
-library(tidyverse)
-library(ggbeeswarm)
-library(palmerpenguins)
-library(glossary)
+mod_gejzir <-
+  lm(
+    formula = waiting ~ delka_erupce_10_s,
+    data = data_gejzir
+  )
 
-# Glossary: point to the canonical slovnik pojmy.yaml hosted on GitHub.
-# Terms are looked up by slug ID (e.g. "histogram", "median", "boxplot").
-# Usage in text: `r render_glossary_term("slug", display = "Czech term")`
-# The glossary_style() call applies brand colours to the hover tooltip (HTML only).
+table_koeficienty <-
+  summary(mod_gejzir)$coefficients
+
+table_intervaly <-
+  confint(
+    object = mod_gejzir,
+    level = 0.95
+  )
+
+set.seed(900723)
+
+data_opakovane_odhady <-
+  seq_len(500) |>
+  purrr::map(
+    .f = ~ {
+      data_vzorek <-
+        data_gejzir |>
+        dplyr::slice_sample(
+          n = 40,
+          replace = TRUE
+        )
+
+      mod_vzorek <-
+        lm(
+          formula = waiting ~ delka_erupce_10_s,
+          data = data_vzorek
+        )
+
+      tibble::tibble(
+        odhad_sklonu = coef(mod_vzorek)[["delka_erupce_10_s"]]
+      )
+    }
+  ) |>
+  purrr::list_rbind()
+
 local_pojmy <- tempfile(fileext = ".yaml")
 tryCatch(
   {
     download.file(
-      url = "https://raw.githubusercontent.com/CUNI-NATUR-Biostatistics/slovnik/main/pojmy.yaml",
+      url = paste0(
+        "https://raw.githubusercontent.com/",
+        "CUNI-NATUR-Biostatistics/slovnik/main/pojmy.yaml"
+      ),
       destfile = local_pojmy,
       quiet = TRUE
     )
@@ -88,7 +142,6 @@ if (knitr::is_html_output()) {
     def_bg = "#FFFFFF",
     def_color = "#2E2E2E"
   )
-  # Override: show tooltip on hover (not :active) and suppress the arrow on active.
   cat(
     "<style>",
     "a.glossary:hover .def { display: inline-block; }",
@@ -112,31 +165,297 @@ if (knitr::is_html_output()) {
 }
 ```
 
-## Úvod
+## Jak může jeden výběr vypovídat o skutečném vztahu?
 
-TODO: Stručný úvod do tématu přednášky. Vysvětlete biologický kontext a motivaci.
+Představte si, že jste právě viděli erupci gejzíru Old Faithful. Změřili jste, jak dlouho trvala, a chcete odhadnout, za kolik minut začne další erupce. Delší erupce obvykle souvisejí s delším čekáním. Z jediného souboru pozorování však neznáme tento vztah dokonale.
 
-## TODO: Hlavní část
+::: {.callout-important}
+## Hlavní otázka
 
-TODO: Obsah hlavní části skripta. Používejte podnadpisy (###) pro strukturování textu.
+**Jak nám může jeden pozorovaný výběr něco říct o skutečném vztahu, když by jiný výběr mohl dát trochu jiný výsledek?**
+:::
 
-### TODO: Podkapitola
+V této lekci proto k již známému modelu přidáme `r render_glossary_term("nejistota", display = "nejistotu")`. Nebudeme zatím formálně rozhodovat o konkrétních tvrzeních. Budeme se ptát, jak velký `r render_glossary_term("efekt", display = "efekt")` jsme odhadli a jak přesný tento odhad je.
 
-TODO: Text podkapitoly s biologickými příklady a R kódem.
+## Výsledky učení
+
+Po prostudování těchto materiálů budete schopni:
+
+- vysvětlit, proč by jiný náhodný výběr vedl k jinému odhadu stejného vztahu;
+- rozlišit velikost odhadovaného `r render_glossary_term("efekt", display = "efektu")` od přesnosti tohoto odhadu;
+- interpretovat `r render_glossary_term("interval-spolehlivosti", display = "interval spolehlivosti")` bez tvrzení, že obsahuje 95 % pozorování nebo dokazuje pravdivost hypotézy;
+- spojit odhad efektu a jeho nejistotu do jednoho věcného závěru.
+
+## Data: erupce gejzíru Old Faithful
+
+Použijeme `r nrow(data_gejzir)` pozorování erupcí gejzíru Old Faithful z roku 2024. Dobrovolníci zaznamenali údaje prostřednictvím služby [GeyserTimes](https://geysertimes.org/); výukový soubor zveřejnil projekt [ModernDive](https://moderndive.com/v2/inference-for-regression.html).
+
+Každé pozorování popisuje jednu erupci a čekání na erupci následující. Budou nás zajímat dvě `r render_glossary_term("numericka-promenna", display = "numerické proměnné")`:
+
+- `duration`: délka právě pozorované erupce v sekundách — náš `r render_glossary_term("prediktor", display = "prediktor")`;
+- `waiting`: čekání do následující erupce v minutách — naše `r render_glossary_term("odezva", display = "odezva")`.
+
+Prvních několik řádků ukazuje, co představuje jedno pozorování:
 
 ```{r}
-#| label: demo
-#| echo: true
-# TODO: ukázka kódu v R
+#| label: tabulka-prvnich-erupci
+#| echo: false
+#| message: false
+#| warning: false
+#| tbl-cap: "Ukázka pozorování erupcí gejzíru Old Faithful."
+data_gejzir |>
+  dplyr::select(date, duration, waiting) |>
+  dplyr::rename(
+    datum = date,
+    delka_erupce_s = duration,
+    cekani_min = waiting
+  ) |>
+  head(n = 6) |>
+  knitr::kable()
 ```
+
+Data jsou skutečná, ale nevznikla jako dokonale náhodný výběr všech erupcí Old Faithful. Pozorování pořizovali dobrovolníci v dostupných termínech. Při interpretaci proto musíme oddělovat **to, co vidíme v zaznamenaném souboru**, od širšího procesu, o kterém chceme uvažovat.
+
+### Nejprve se podívejme na data
+
+```{r}
+#| label: vztah-delky-a-cekani
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: >
+#|   Vztah mezi délkou erupce a čekáním na následující erupci.
+#|   Přímka je odhadnuta ze všech zaznamenaných erupcí.
+ggplot2::ggplot(
+  data = data_gejzir,
+  mapping = ggplot2::aes(
+    x = delka_erupce_10_s,
+    y = waiting
+  )
+) +
+  ggplot2::geom_point(
+    color = "#5D2890",
+    alpha = 0.65,
+    size = 2.3
+  ) +
+  ggplot2::geom_abline(
+    intercept = coef(mod_gejzir)[["(Intercept)"]],
+    slope = coef(mod_gejzir)[["delka_erupce_10_s"]],
+    color = "#D95F02",
+    linewidth = 1.1
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (desítky sekund)",
+    y = "Čekání na další erupci (minuty)"
+  ) +
+  ggplot2::theme_bw(base_size = 13)
+```
+
+::: {.callout-note}
+## Než budeme počítat
+
+Podívejte se na body bez čtení dalšího odstavce:
+
+1. Jaký směr má vztah mezi délkou erupce a čekáním?
+2. Leží všechny body přesně na přímce?
+3. Co byste čekali od přímky, kdybychom zaznamenali jinou skupinu erupcí?
+:::
+
+Vztah je kladný: po delších erupcích zpravidla čekáme déle. Body ale neleží přesně na přímce. Část rozdílů mezi pozorováními proto model nevysvětluje a odhadnutá přímka závisí na tom, která pozorování máme k dispozici.
+
+## Známý model, nová otázka
+
+Z předchozí lekce již známe lineární model s jedním `r render_glossary_term("prediktor", display = "prediktorem")`. Pro snadnější interpretaci vyjádříme délku erupce v desítkách sekund a odhadneme model `waiting ~ delka_erupce_10_s`.
+
+Nejprve načteme data a vytvoříme proměnnou v potřebných jednotkách:
+
+```{r}
+#| label: nacist-data-gejziru
+#| echo: true
+#| eval: true
+data_gejzir <-
+  read.csv(
+    file = here::here("data", "old_faithful_2024.csv"),
+    stringsAsFactors = FALSE
+  )
+
+data_gejzir$delka_erupce_10_s <-
+  data_gejzir$duration / 10
+```
+
+Potom fitujeme stejný typ modelu jako v předchozí lekci:
+
+```{r}
+#| label: fitovat-model-gejziru
+#| echo: true
+#| eval: true
+mod_gejzir <-
+  lm(
+    formula = waiting ~ delka_erupce_10_s,
+    data = data_gejzir
+  )
+
+coef(mod_gejzir)
+```
+
+Odhadnutý `r render_glossary_term("sklon", display = "sklon")` je `r round(coef(mod_gejzir)[["delka_erupce_10_s"]], 2)` minuty na 10 sekund erupce. V tomto souboru tedy erupce delší o 10 sekund souvisí v průměru s čekáním delším přibližně o `r round(coef(mod_gejzir)[["delka_erupce_10_s"]], 2)` minuty.
+
+Tento odhad popisuje velikost vztahu v našich datech. Zatím však nevíme, jak stabilní by byl, kdybychom měli jiný výběr erupcí.
+
+## Co kdybychom pozorovali jiné erupce?
+
+Skutečný proces nemůžeme vrátit zpět a znovu získat mnoho nezávislých souborů z téhož období. Pro výukovou demonstraci proto budeme opakovaně vybírat menší skupiny z pozorovaného souboru. V každé skupině znovu fitujeme stejný model a uložíme jeho `r render_glossary_term("sklon", display = "sklon")`.
+
+Tato demonstrace **nevytváří nová pozorování Old Faithful** a neříká nám, že známe skutečný populační sklon. Ukazuje pouze princip: kdyby se změnila pozorování ve výběru, změnil by se také odhad.
+
+```{r}
+#| label: rozdeleni-opakovanych-odhadu
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: >
+#|   Odhady sklonu z mnoha výukových výběrů po 40 erupcích.
+#|   Svislá čára označuje odhad ze všech pozorovaných erupcí.
+ggplot2::ggplot(
+  data = data_opakovane_odhady,
+  mapping = ggplot2::aes(x = odhad_sklonu)
+) +
+  ggplot2::geom_histogram(
+    bins = 25,
+    fill = "#8C6BB1",
+    color = "white"
+  ) +
+  ggplot2::geom_vline(
+    xintercept = coef(mod_gejzir)[["delka_erupce_10_s"]],
+    color = "#D95F02",
+    linewidth = 1.1,
+    linetype = "dashed"
+  ) +
+  ggplot2::labs(
+    x = "Odhad sklonu (minuty na 10 sekund erupce)",
+    y = "Počet výukových výběrů"
+  ) +
+  ggplot2::theme_bw(base_size = 13)
+```
+
+Jednotlivé odhady nejsou stejné. Jejich `r render_glossary_term("rozdeleni", display = "rozdělení")` má střed poblíž odhadu z celého pozorovaného souboru, ale také určitou šířku. Této změně odhadu mezi výběry říkáme **výběrová `r render_glossary_term("variabilita", display = "variabilita")`**.
+
+`r render_glossary_term("standardni-chyba", display = "Standardní chyba")` shrnuje, jak moc by se odhad parametru při opakovaném výběru typicky měnil. Pro sklon našeho modelu je standardní chyba `r round(table_koeficienty["delka_erupce_10_s", "Std. Error"], 2)` minuty na 10 sekund erupce.
+
+::: {.callout-warning}
+## Očekávaná variabilita není porucha modelu
+
+Různé výběry dávají různé odhady i tehdy, když postupujeme správně. Samotná změna odhadu mezi výběry proto není důkazem chyby. Je důsledkem toho, že pozorujeme pouze omezenou část proměnlivého procesu.
+:::
+
+## Velikost vztahu a přesnost jsou dvě informace
+
+Odhad `r render_glossary_term("sklon", display = "sklonu")` odpovídá na otázku **„Jak velkou změnu čekání jsme odhadli?“** `r render_glossary_term("standardni-chyba", display = "Standardní chyba")` odpovídá na jinou otázku: **„Jak přesně jsme tuto změnu odhadli?“**
+
+Dva výzkumy mohou odhadnout podobný `r render_glossary_term("efekt", display = "efekt")`, ale jeden může být mnohem přesnější. Přesnost obvykle roste, když máme více informativních pozorování a když body méně kolísají kolem modelového vztahu. Velký efekt proto automaticky neznamená přesný odhad a malý efekt automaticky neznamená nepřesný odhad.
+
+V našem modelu patří k odhadu `r round(coef(mod_gejzir)[["delka_erupce_10_s"]], 2)` standardní chyba `r round(table_koeficienty["delka_erupce_10_s", "Std. Error"], 2)`. Obě čísla potřebujeme, ale jejich společné čtení bude snazší pomocí intervalu.
+
+## Jak vyjádřit rozsah nejistoty?
+
+`r render_glossary_term("interval-spolehlivosti", display = "Interval spolehlivosti")` spojuje bodový odhad a jeho `r render_glossary_term("nejistota", display = "nejistotu")`. Pro sklon modelu jej v R získáme takto:
+
+```{r}
+#| label: interval-sklonu
+#| echo: true
+#| eval: true
+confint(
+  object = mod_gejzir,
+  parm = "delka_erupce_10_s",
+  level = 0.95
+)
+```
+
+```{r}
+#| label: graf-intervalu-sklonu
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 2.5
+#| fig-cap: "Bodový odhad sklonu a jeho 95% interval spolehlivosti."
+data_interval <-
+  tibble::tibble(
+    odhad = coef(mod_gejzir)[["delka_erupce_10_s"]],
+    dolni = table_intervaly["delka_erupce_10_s", "2.5 %"],
+    horni = table_intervaly["delka_erupce_10_s", "97.5 %"],
+    parametr = "Odhad"
+  )
+
+ggplot2::ggplot(
+  data = data_interval,
+  mapping = ggplot2::aes(
+    x = odhad,
+    y = parametr
+  )
+) +
+  ggplot2::geom_errorbarh(
+    mapping = ggplot2::aes(
+      xmin = dolni,
+      xmax = horni
+    ),
+    height = 0.15,
+    color = "#5D2890",
+    linewidth = 1.1
+  ) +
+  ggplot2::geom_point(
+    color = "#D95F02",
+    size = 3.5
+  ) +
+  ggplot2::labs(
+    x = "Změna čekání (minuty)",
+    y = NULL
+  ) +
+  ggplot2::theme_bw(base_size = 13) +
+  ggplot2::theme(
+    axis.text.y = ggplot2::element_blank(),
+    axis.ticks.y = ggplot2::element_blank()
+  )
+```
+
+Bod uprostřed je náš nejlepší odhad ze zaznamenaných dat: `r round(coef(mod_gejzir)[["delka_erupce_10_s"]], 2)` minuty delšího čekání při erupci delší o 10 sekund. Interval od `r round(table_intervaly["delka_erupce_10_s", "2.5 %"], 2)` do `r round(table_intervaly["delka_erupce_10_s", "97.5 %"], 2)` minuty ukazuje rozsah hodnot `r render_glossary_term("efekt", display = "efektu")`, které jsou slučitelné s těmito daty a použitým modelem.
+
+Označení **95% interval** popisuje dlouhodobou vlastnost postupu: kdybychom opakovaně získávali srovnatelné náhodné výběry a pokaždé vytvořili interval stejným způsobem, přibližně 95 % těchto intervalů by pokrylo skutečnou hodnotu parametru. Jednou vypočtený interval už ale není náhodná nádoba s 95% pravděpodobností; náhodný byl výběr, ze kterého vznikl.
+
+::: {.callout-warning}
+## Co interval spolehlivosti neříká
+
+- **Neobsahuje prostředních 95 % erupcí ani čekacích dob.** Popisuje nejistotu odhadu sklonu, nikoli `r render_glossary_term("rozdeleni", display = "rozdělení")` jednotlivých pozorování.
+- **Nedokazuje, že některá hodnota je pravdivá nebo nepravdivá.** Ukazuje, které velikosti efektu jsou s daty a modelem slučitelné.
+- **Neříká, že skutečný parametr má po výpočtu tohoto intervalu 95% pravděpodobnost ležet uvnitř.** Číslo 95 % patří k dlouhodobému postupu vytváření intervalů.
+:::
+
+## Co můžeme říct o Old Faithful?
+
+V zaznamenaném souboru erupcí jsme odhadli, že erupce delší o 10 sekund souvisí v průměru s čekáním delším o `r round(coef(mod_gejzir)[["delka_erupce_10_s"]], 2)` minuty. `r render_glossary_term("interval-spolehlivosti", display = "Interval spolehlivosti")` sahá od `r round(table_intervaly["delka_erupce_10_s", "2.5 %"], 2)` do `r round(table_intervaly["delka_erupce_10_s", "97.5 %"], 2)` minuty na 10 sekund erupce.
+
+Toto tvrzení sděluje dvě věci současně:
+
+1. **Velikost vztahu:** delší erupce jsou spojeny s delším čekáním.
+2. **Přesnost odhadu:** data jsou slučitelná s určitým rozsahem kladných velikostí vztahu, ne pouze s jediným číslem.
+
+Interpretace stále závisí na použitém modelu a na způsobu získání dat. Dobrovolnická pozorování nejsou dokonalým náhodným výběrem všech erupcí a blízké erupce mohou být časově propojené. Výsledek proto čteme jako opatrný odhad vztahu v zachyceném procesu, nikoli jako neměnný přírodní zákon.
 
 ## Shrnutí
 
-TODO: Klíčové body k zapamatování.
+- Jiný náhodný výběr by obvykle poskytl trochu jiný odhad stejného `r render_glossary_term("efekt", display = "efektu")`.
+- Výběrová `r render_glossary_term("variabilita", display = "variabilita")` je očekávaný důsledek práce s omezeným výběrem.
+- `r render_glossary_term("standardni-chyba", display = "Standardní chyba")` popisuje přesnost odhadu, nikoli velikost efektu.
+- `r render_glossary_term("interval-spolehlivosti", display = "Interval spolehlivosti")` vyjadřuje rozsah efektů slučitelných s daty a modelem.
+- Velikost efektu a přesnost jeho odhadu musíme interpretovat společně.
 
-- TODO: bod 1
-- TODO: bod 2
-- TODO: bod 3
+::: {.callout-tip}
+## Most k následující lekci
+
+Nyní umíme popsat velikost odhadovaného efektu i jeho `r render_glossary_term("nejistota", display = "nejistotu")`. Další otázka zní: **Jak pomocí dat hodnotit konkrétní tvrzení o `r render_glossary_term("parametry-modelu", display = "parametru modelu")`?** Formální postup a možné chyby rozhodnutí zavedeme až v následující lekci.
+:::
+
+::: {.content-visible when-format="html"}
 
 ## Slovníček pojmů {.unnumbered}
 
@@ -147,3 +466,5 @@ Pojmy použité v těchto materiálech a jejich definice:
 #| echo: false
 glossary::glossary_table()
 ```
+
+:::
