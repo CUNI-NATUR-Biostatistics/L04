@@ -1,5 +1,5 @@
 ---
-format: 
+format:
   revealjs:
     slide-number: true
     theme: [default, ../theme/presentation_theme.scss, ../theme/presentation_components.scss]
@@ -25,43 +25,21 @@ knitr::opts_chunk$set(
   out.width = "100%"
 )
 
-if (!require("here")) install.packages("here")
-
-library(here)
-
 here::i_am("Presentation/presentation.qmd")
+source(here::here("R", "set_r_theme.R"))
 
-if (!require("tidyverse")) install.packages("tidyverse")
-if (!require("ggbeeswarm")) install.packages("ggbeeswarm")
-if (!require("ggview")) install.packages("ggview")
-if (!require("magick")) install.packages("magick")
-if (!require("cowplot")) install.packages("cowplot")
-if (!require("remotes")) install.packages("remotes")
-if (!require("waffle")) remotes::install_github("hrbrmstr/waffle")
-
-library(tidyverse)
-library(ggbeeswarm)
-library(ggview)
-library(magick)
-library(cowplot)
-library(waffle)
-
-path_materials <-
-  "Presentation/Materials"
+path_materials <- "Presentation/Materials"
 
 include_local_figure <- function(data_source) {
   knitr::include_graphics(
-    path = here::here(
-      path_materials,
-      data_source
-    ),
+    path = here::here(path_materials, data_source),
     error = TRUE
   )
 }
 ```
 
 ```{r}
-#| label: dynamic link generation
+#| label: dynamic-link-generation
 #| include: false
 project_name <-
   basename(here::here())
@@ -78,15 +56,16 @@ github_url <-
 slides_url <-
   paste0(
     "https://CUNI-NATUR-Biostatistics.github.io/",
-    project_name, "/"
+    project_name,
+    "/"
   )
 ```
 
-## Název přednášky
+## Od odhadu k nejistotě
 
 <br>
 
-::: {.text-color-white .text-font-heading .text-size-heading .text-bold}
+::: {.text-color-indigo_velvet .text-font-heading .text-size-heading1 .text-bold}
 `r display_name`
 :::
 
@@ -96,1064 +75,1244 @@ slides_url <-
 
 [Moodle](https://dl2.cuni.cz/course/view.php?id=106)
 
+```{r}
+#| label: nacist-data-pro-otazku
+#| include: false
+data_gejzir <-
+  readr::read_csv(
+    file = here::here("data", "old_faithful_2024.csv"),
+    col_types = readr::cols(
+      eruption_id = readr::col_double(),
+      geyser = readr::col_character(),
+      date = readr::col_date(format = "%Y-%m-%d"),
+      time = readr::col_double(),
+      cekani_min = readr::col_double(),
+      webcam = readr::col_character(),
+      duration = readr::col_double()
+    )
+  ) |>
+  tidyr::drop_na(duration, cekani_min) |>
+  dplyr::mutate(
+    delka_erupce_min = duration / 60
+  )
+```
+
+## Pomůže délka erupce předpovědět další čekání?
+
+<br>
+
+::: {.box-question}
+Old Faithful právě ukončil erupci.
+
+**Pomůže její délka odhadnout, za jak dlouho začne další?**
+:::
+
+::: {.fragment}
+A dostal by jiný pozorovatel stejnou odpověď?
+:::
+
 ## Výsledky učení
 
 Po absolvování této přednášky budete schopni:
 
-- TODO: výsledek učení 1
-- TODO: výsledek učení 2
-- TODO: výsledek učení 3
-
-# Obsah přednášky
-
-## Snímek 1
-
-TODO: obsah snímku
+::: {.incremental}
+- vysvětlit, proč různé soubory pozorování dávají různé odhady sklonu;
+- rozlišit velikost odhadovaného vztahu od přesnosti odhadu;
+- interpretovat 95% interval spolehlivosti v kontextu Old Faithful;
+- zapsat výsledek modelu s odhadem, SE, intervalem a jednotkami.
+:::
 
 ```{r}
-#| label: demo-plot
-#| echo: true
-# TODO: ukázka kódu v R
+#| label: pripravit-znamy-graf
+#| echo: false
+#| message: false
+#| warning: false
+plot_data <-
+  ggplot2::ggplot(
+    data = data_gejzir,
+    mapping = ggplot2::aes(
+      x = delka_erupce_min,
+      y = cekani_min
+    )
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.65,
+    size = 2.4
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (min)",
+    y = "Čekání (min)"
+  ) +
+  theme_biostat(base_size = 17) +
+  ggview::canvas(
+    width = 1600,
+    height = 800,
+    units = "px"
+  )
+
+ggview::save_ggplot(
+  plot = plot_data,
+  file = here::here(path_materials, "vsechna_pozorovani.png")
+)
+
+plot_model <-
+  plot_data +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = FALSE,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.4
+  )
+
+ggview::save_ggplot(
+  plot = plot_model,
+  file = here::here(path_materials, "vsechna_pozorovani_model.png")
+)
 ```
+
+## Co už umíme z předchozí lekce?
+
+```{r}
+#| label: zobrazit-vsechna-pozorovani
+#| echo: false
+include_local_figure("vsechna_pozorovani.png")
+```
+
+::: {.takeaway-strip}
+Se sousedem: popište směr vztahu a jednu věc, kterou z bodů zatím nevíme.
+:::
+
+## Stejná data, ale s modelem
+
+```{r}
+#| label: zobrazit-model-vsech-pozorovani
+#| echo: false
+include_local_figure("vsechna_pozorovani_model.png")
+```
+
+::: {.fragment}
+Fialová přímka shrnuje vztah v **tomto souboru pozorování**.
+:::
+
+## Dostali bychom příště stejnou přímku?
+
+<br>
+
+::: {.text-size-larger .text-bold .center}
+Představte si, že Old Faithful pozoruje někdo jiný.
+
+Budou jeho body — a jeho sklon — úplně stejné?
+:::
+
+::: {.takeaway-strip}
+Když nehlasujeme: napište si „ano“ nebo „ne“ a jednu větu, kterou svou volbu obhájíte.
+:::
+
+```{r}
+#| label: pripravit-pepuv-model
+#| include: false
+data_pepa <-
+  data_gejzir |>
+  dplyr::filter(
+    as.integer(format(x = date, format = "%m")) == 6L
+  )
+
+mod_pepa <-
+  lm(
+    formula = cekani_min ~ delka_erupce_min,
+    data = data_pepa
+  )
+
+plot_pepa <-
+  ggplot2::ggplot(
+    data = data_pepa,
+    mapping = ggplot2::aes(
+      x = delka_erupce_min,
+      y = cekani_min
+    )
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.75,
+    size = 2.8
+  ) +
+  ggplot2::geom_abline(
+    intercept = coef(mod_pepa)[["(Intercept)"]],
+    slope = coef(mod_pepa)[["delka_erupce_min"]],
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.4
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (min)",
+    y = "Čekání (min)",
+    subtitle = paste0(
+      "Pepa: červen, n = ",
+      nrow(data_pepa),
+      ", sklon = ",
+      formatC(
+        coef(mod_pepa)[["delka_erupce_min"]],
+        digits = 2,
+        format = "f"
+      )
+    )
+  ) +
+  theme_biostat(base_size = 17) +
+  ggview::canvas(
+    width = 1600,
+    height = 800,
+    units = "px"
+  )
+
+ggview::save_ggplot(
+  plot = plot_pepa,
+  file = here::here(path_materials, "pepa_cerven.png")
+)
+```
+
+## Pepa pozoroval pouze červen
+
+```{r}
+#| label: zobrazit-pepuv-model
+#| echo: false
+include_local_figure("pepa_cerven.png")
+```
+
+::: {.fragment}
+Erupce delší o jednu minutu souvisela v Pepových datech s čekáním delším přibližně o **`r round(coef(mod_pepa)[["delka_erupce_min"]], 2)` minuty**.
+:::
+
+## Co čekáte od Mařenky a Karla?
+
+::: {.panel-olive}
+[Diskuze se sousedem — 2 min]{.panel-title}
+
+Mařenka pozoruje v červenci, Karel v srpnu.
+
+1. Budou všechny tři sklony stejné?
+2. Který rozdíl by vás ještě nepřekvapil?
+:::
+
+```{r}
+#| label: pripravit-mesicni-modely
+#| echo: false
+#| message: false
+#| warning: false
+vec_poradi_vyzkumniku <-
+  c(
+    "Pepa – červen",
+    "Mařenka – červenec",
+    "Karel – srpen"
+  )
+
+data_mesicni <-
+  data_gejzir |>
+  dplyr::mutate(
+    mesic = as.integer(format(x = date, format = "%m")),
+    vyzkumnik = dplyr::case_when(
+      mesic == 6L ~ "Pepa – červen",
+      mesic == 7L ~ "Mařenka – červenec",
+      mesic == 8L ~ "Karel – srpen"
+    ),
+    vyzkumnik = factor(
+      x = vyzkumnik,
+      levels = vec_poradi_vyzkumniku
+    )
+  ) |>
+  tidyr::drop_na(vyzkumnik)
+
+data_modely_mesicni <-
+  data_mesicni |>
+  dplyr::group_by(vyzkumnik) |>
+  tidyr::nest() |>
+  dplyr::ungroup() |>
+  dplyr::mutate(
+    model = purrr::map(
+      .x = data,
+      .f = ~ lm(
+        formula = cekani_min ~ delka_erupce_min,
+        data = .x
+      )
+    ),
+    sklon = purrr::map_dbl(
+      .x = model,
+      .f = ~ coef(.x)[["delka_erupce_min"]]
+    ),
+    popisek = paste0(
+      gsub(
+        pattern = " – ",
+        replacement = "\n",
+        x = as.character(vyzkumnik),
+        fixed = TRUE
+      ),
+      "\nsklon = ",
+      formatC(x = sklon, digits = 2, format = "f")
+    )
+  )
+
+data_mesicni_graf <-
+  data_mesicni |>
+  dplyr::left_join(
+    data_modely_mesicni |>
+      dplyr::select(vyzkumnik, popisek),
+    by = dplyr::join_by(vyzkumnik)
+  ) |>
+  dplyr::mutate(
+    popisek = factor(
+      x = popisek,
+      levels = data_modely_mesicni$popisek
+    )
+  )
+
+plot_mesice <-
+  ggplot2::ggplot(
+    data = data_mesicni_graf,
+    mapping = ggplot2::aes(
+      x = delka_erupce_min,
+      y = cekani_min
+    )
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.7,
+    size = 1.9
+  ) +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = FALSE,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1
+  ) +
+  ggplot2::facet_wrap(
+    facets = ggplot2::vars(popisek),
+    ncol = 3
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (min)",
+    y = "Čekání (min)"
+  ) +
+  theme_biostat(base_size = 14) +
+  ggplot2::theme(
+    strip.text = ggplot2::element_text(size = 12)
+  ) +
+  ggview::canvas(
+    width = 1600,
+    height = 800,
+    units = "px"
+  )
+
+ggview::save_ggplot(
+  plot = plot_mesice,
+  file = here::here(path_materials, "tri_mesice.png")
+)
+```
+
+## Stejný postup, tři různé výsledky
+
+```{r}
+#| label: zobrazit-tri-mesice
+#| echo: false
+include_local_figure("tri_mesice.png")
+```
+
+## Odhad není oddělený od dat
+
+:::: {.columns}
+
+::: {.column width="48%"}
+::: {.panel-result}
+[Co zůstalo stejné]{.panel-title}
+
+- otázka;
+- proměnné;
+- lineární model;
+- postup fitování.
+:::
+:::
+
+::: {.column width="48%"}
+::: {.panel-question}
+[Co se změnilo]{.panel-title}
+
+- pozorované erupce;
+- poloha bodů;
+- odhadnutá přímka;
+- sklon.
+:::
+:::
+
+::::
+
+::: {.fragment}
+Proměnlivosti odhadu mezi možnými výběry říkáme **výběrová variabilita**.
+:::
+
+## Co udělá sto dalších pozorovatelů?
+
+<br>
+
+::: {.text-size-larger .text-bold .center}
+Každý pošle 40 erupcí, fituje stejný model a získá jeden sklon.
+
+Jak budou vypadat všechny sklony společně?
+:::
+
+::: {.takeaway-strip}
+Ve dvojici nakreslete velmi hrubý tvar, který očekáváte po 100 hlášeních.
+:::
+
+```{r}
+#| label: vytvorit-hlaseni-a-animaci
+#| echo: false
+#| message: false
+#| warning: false
+set.seed(900723)
+
+data_hlaseni <-
+  seq_len(100) |>
+  purrr::map(
+    .f = ~ {
+      data_jedno_hlaseni <-
+        data_gejzir |>
+        dplyr::slice_sample(
+          n = 40,
+          replace = FALSE
+        )
+
+      mod_jedno_hlaseni <-
+        lm(
+          formula = cekani_min ~ delka_erupce_min,
+          data = data_jedno_hlaseni
+        )
+
+      data_jedno_hlaseni |>
+        dplyr::mutate(
+          hlaseni = .x,
+          intercept = coef(mod_jedno_hlaseni)[["(Intercept)"]],
+          odhad_sklonu =
+            coef(mod_jedno_hlaseni)[["delka_erupce_min"]]
+        )
+    }
+  ) |>
+  purrr::list_rbind()
+
+data_odhady_hlaseni <-
+  data_hlaseni |>
+  dplyr::distinct(
+    hlaseni,
+    odhad_sklonu
+  )
+
+vec_meze_histogramu <-
+  seq(
+    from = floor(min(data_odhady_hlaseni$odhad_sklonu) * 10) / 10,
+    to = ceiling(max(data_odhady_hlaseni$odhad_sklonu) * 10) / 10,
+    length.out = 19
+  )
+
+max_cetnost_animace <-
+  max(
+    hist(
+      x = data_odhady_hlaseni$odhad_sklonu,
+      breaks = vec_meze_histogramu,
+      plot = FALSE
+    )$counts
+  )
+
+path_frames <-
+  here::here("Temp", "geyserwatch_frames")
+
+fs::dir_create(path_frames)
+
+vec_frame_paths <-
+  seq_len(100) |>
+  purrr::map_chr(
+    .f = ~ {
+      data_frame_hlaseni <-
+        data_hlaseni |>
+        dplyr::filter(hlaseni == .x)
+
+      data_frame_odhady <-
+        data_odhady_hlaseni |>
+        dplyr::filter(hlaseni <= .x)
+
+      aktualni_sklon <-
+        data_frame_hlaseni |>
+        dplyr::distinct(odhad_sklonu) |>
+        dplyr::pull(odhad_sklonu)
+
+      plot_frame_data <-
+        ggplot2::ggplot(
+          data = data_frame_hlaseni,
+          mapping = ggplot2::aes(
+            x = delka_erupce_min,
+            y = cekani_min
+          )
+        ) +
+        ggplot2::geom_point(
+          color = biostat_cols[["grey_olive"]],
+          alpha = 0.7,
+          size = 1.8
+        ) +
+        ggplot2::geom_abline(
+          intercept = data_frame_hlaseni$intercept[[1]],
+          slope = aktualni_sklon,
+          color = biostat_cols[["indigo_velvet"]],
+          linewidth = 1.2
+        ) +
+        ggplot2::coord_cartesian(
+          xlim = range(data_gejzir$delka_erupce_min),
+          ylim = range(data_gejzir$cekani_min)
+        ) +
+        ggplot2::labs(
+          title = paste0("Hlášení ", .x, "/100"),
+          subtitle = paste0(
+            "sklon = ",
+            formatC(
+              x = aktualni_sklon,
+              digits = 2,
+              format = "f"
+            )
+          ),
+          x = NULL,
+          y = NULL
+        ) +
+        theme_biostat(base_size = 10) +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(size = 16),
+          plot.subtitle = ggplot2::element_text(size = 13),
+          axis.title = ggplot2::element_text(size = 13),
+          axis.text = ggplot2::element_text(size = 11),
+          plot.margin = ggplot2::margin(
+            t = 8,
+            r = 8,
+            b = 8,
+            l = 28
+          )
+        )
+
+      plot_frame_histogram <-
+        ggplot2::ggplot(
+          data = data_frame_odhady,
+          mapping = ggplot2::aes(x = odhad_sklonu)
+        ) +
+        ggplot2::geom_histogram(
+          breaks = vec_meze_histogramu,
+          fill = biostat_cols[["amethyst"]],
+          color = "white"
+        ) +
+        ggplot2::geom_vline(
+          xintercept = aktualni_sklon,
+          color = biostat_cols[["orange"]],
+          linewidth = 1.1
+        ) +
+        ggplot2::coord_cartesian(
+          xlim = range(vec_meze_histogramu),
+          ylim = c(0, max_cetnost_animace + 1)
+        ) +
+        ggplot2::labs(
+          title = paste0("Histogram ", .x, "/100"),
+          subtitle = "nový sklon oranžově",
+          x = NULL,
+          y = NULL
+        ) +
+        theme_biostat(base_size = 10) +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(size = 16),
+          plot.subtitle = ggplot2::element_text(size = 13),
+          axis.title = ggplot2::element_text(size = 13),
+          axis.text = ggplot2::element_text(size = 11)
+        )
+
+      plot_frame <-
+        cowplot::plot_grid(
+          plot_frame_data,
+          plot_frame_histogram,
+          ncol = 2,
+          rel_widths = c(1, 1)
+        )
+
+      path_frame <-
+        here::here(
+          path_frames,
+          paste0(
+            "frame_",
+            formatC(x = .x, width = 3, flag = "0"),
+            ".png"
+          )
+        )
+
+      ggplot2::ggsave(
+        filename = path_frame,
+        plot = plot_frame,
+        width = 16,
+        height = 8,
+        units = "in",
+        dpi = 100,
+        bg = biostat_cols[["parchment"]]
+      )
+
+      path_frame
+    }
+  )
+
+vec_animacni_soubory <-
+  c(
+    rep(vec_frame_paths[[1]], times = 8),
+    vec_frame_paths,
+    rep(vec_frame_paths[[100]], times = 16)
+  )
+
+image_animace <-
+  vec_animacni_soubory |>
+  magick::image_read() |>
+  magick::image_animate(
+    fps = 10,
+    loop = 0
+  )
+
+magick::image_write(
+  image = image_animace,
+  path = here::here(
+    path_materials,
+    "geyserwatch_sklon_do_histogramu.gif"
+  ),
+  format = "gif"
+)
+
+fs::file_copy(
+  path = vec_frame_paths[[100]],
+  new_path = here::here(
+    path_materials,
+    "geyserwatch_100_hlaseni.png"
+  ),
+  overwrite = TRUE
+)
+```
+
+## Sledujte cestu jednoho sklonu
+
+```{r}
+#| label: zobrazit-animaci-hlaseni
+#| echo: false
+include_local_figure("geyserwatch_sklon_do_histogramu.gif")
+```
+
+::: {.takeaway-strip}
+Sledujte: nový soubor bodů → nová přímka → nový sklon → další část histogramu.
+:::
+
+## Po 100 hlášeních
+
+```{r}
+#| label: zobrazit-sto-hlaseni
+#| echo: false
+include_local_figure("geyserwatch_100_hlaseni.png")
+```
+
+## Co vidíme — a co ještě nevíme?
+
+:::: {.columns}
+
+::: {.column width="48%"}
+::: {.panel-result}
+[Co vidíme]{.panel-title}
+
+- sklony nejsou stejné;
+- většina leží ve společné oblasti;
+- některé výběry dávají strmější či plošší přímku.
+:::
+:::
+
+::: {.column width="48%"}
+::: {.panel-question}
+[Co ještě nevíme]{.panel-title}
+
+- jak proměnlivost popsat jedním číslem;
+- jak přesný je odhad z našich dat;
+- jaký rozsah efektů je s daty slučitelný.
+:::
+:::
+
+::::
+
+## Výuková demonstrace není sto nových pozorování
+
+::: {.box-warning}
+Pro každé hlášení jsme vybrali 40 řádků z našich zaznamenaných erupcí.
+
+Animace ukazuje **proměnlivost možných odhadů**. Neznamená, že známe skutečný populační sklon nebo že jsme získali nová data.
+:::
+
+## Kde R ukrývá velikost a přesnost?
+
+::: {.panel-olive}
+[Hledání ve výstupu — dvojice]{.panel-title}
+
+Najděte dvě čísla:
+
+1. které popisuje **velikost vztahu**;
+2. které popisuje **přesnost tohoto odhadu**.
+:::
+
+```{r}
+#| label: fitovat-model-vsech-erupci
+#| include: false
+mod_gejzir <-
+  lm(
+    formula = cekani_min ~ delka_erupce_min,
+    data = data_gejzir
+  )
+
+table_souhrn_modelu <-
+  summary(mod_gejzir)$coefficients
+
+odhad_sklonu <-
+  table_souhrn_modelu[
+    "delka_erupce_min",
+    "Estimate"
+  ]
+
+standardni_chyba_sklonu <-
+  table_souhrn_modelu[
+    "delka_erupce_min",
+    "Std. Error"
+  ]
+```
+
+## Najděte řádek sklonu
+
+```{r}
+#| label: zobrazit-souhrn-modelu
+#| echo: true
+#| eval: true
+mod_gejzir <-
+  lm(
+    formula = cekani_min ~ delka_erupce_min,
+    data = data_gejzir
+  )
+
+summary(mod_gejzir)
+```
+
+## Dvě čísla, dvě otázky
+
+:::: {.columns}
+
+::: {.column width="48%"}
+::: {.panel-result}
+[Estimate = `r round(odhad_sklonu, 2)`]{.panel-title}
+
+**Jak velký vztah jsme odhadli?**
+
+Erupce delší o jednu minutu souvisela s čekáním delším přibližně o `r round(odhad_sklonu, 2)` minuty.
+:::
+:::
+
+::: {.column width="48%"}
+::: {.panel-question}
+[Std. Error = `r round(standardni_chyba_sklonu, 2)`]{.panel-title}
+
+**Jak přesný je odhad sklonu?**
+
+Standardní chyba popisuje typickou velikost změny odhadu mezi srovnatelnými výběry.
+:::
+:::
+
+::::
+
+## Velikost vztahu, nebo přesnost?
+
+::: {.panel-olive}
+[Přiřaďte každou větu]{.panel-title}
+
+- „O kolik minut se změní čekání?“
+- „Jak moc by se odhad měnil mezi výběry?“
+- „Je vztah prudký, nebo pozvolný?“
+- „Jak těsně se možné odhady shlukují?“
+:::
+
+::: {.takeaway-strip}
+Se sousedem vytvořte dvě skupiny: **velikost vztahu** a **přesnost odhadu**.
+:::
+
+```{r}
+#| label: pripravit-histogram-se
+#| echo: false
+#| message: false
+#| warning: false
+plot_histogram_se_base <-
+  ggplot2::ggplot(
+    data = data_odhady_hlaseni,
+    mapping = ggplot2::aes(x = odhad_sklonu)
+  ) +
+  ggplot2::geom_histogram(
+    breaks = vec_meze_histogramu,
+    fill = biostat_cols[["amethyst"]],
+    color = "white"
+  )
+
+max_cetnost_se <-
+  max(
+    ggplot2::ggplot_build(plot_histogram_se_base)$data[[1]]$count
+  )
+
+data_rozsah_se <-
+  tibble::tibble(
+    odhad = odhad_sklonu,
+    dolni = odhad_sklonu - standardni_chyba_sklonu,
+    horni = odhad_sklonu + standardni_chyba_sklonu,
+    y = max_cetnost_se + 1.5
+  )
+
+plot_histogram_se <-
+  plot_histogram_se_base +
+  ggplot2::geom_vline(
+    xintercept = odhad_sklonu,
+    color = biostat_cols[["orange"]],
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  ggplot2::geom_errorbarh(
+    data = data_rozsah_se,
+    mapping = ggplot2::aes(
+      xmin = dolni,
+      xmax = horni,
+      y = y
+    ),
+    height = 0.7,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.6
+  ) +
+  ggplot2::geom_point(
+    data = data_rozsah_se,
+    mapping = ggplot2::aes(
+      x = odhad,
+      y = y
+    ),
+    color = biostat_cols[["orange"]],
+    size = 4
+  ) +
+  ggplot2::annotate(
+    geom = "text",
+    x = odhad_sklonu,
+    y = max_cetnost_se + 2.6,
+    label = "odhad ± 1 SE",
+    color = biostat_cols[["indigo_velvet"]],
+    size = 5
+  ) +
+  ggplot2::scale_y_continuous(
+    expand = ggplot2::expansion(mult = c(0, 0.18))
+  ) +
+  ggplot2::labs(
+    x = "Sklon (min čekání / min erupce)",
+    y = "Počet hlášení"
+  ) +
+  theme_biostat(base_size = 14) +
+  ggview::canvas(
+    width = 1600,
+    height = 800,
+    units = "px"
+  )
+
+ggview::save_ggplot(
+  plot = plot_histogram_se,
+  file = here::here(path_materials, "histogram_a_se.png")
+)
+```
+
+## Jedna standardní chyba jako měřítko
+
+```{r}
+#| label: zobrazit-histogram-se
+#| echo: false
+include_local_figure("histogram_a_se.png")
+```
+
+## Co ještě neplyne?
+
+::: {.box-warning}
+Rozsah **odhad ± jedna standardní chyba** není interval spolehlivosti.
+:::
+
+::: {.fragment}
+Je to měřítko přesnosti, ze kterého teprve vytvoříme interval určený pro interpretaci nejistoty.
+:::
+
+## Jak široký rozsah je slučitelný s daty?
+
+<br>
+
+::: {.text-size-larger .text-bold .center}
+Máme odhad a jeho standardní chybu.
+
+Jak z nich vytvořit srozumitelný rozsah možných velikostí vztahu?
+:::
+
+```{r}
+#| label: pripravit-intervaly
+#| echo: false
+#| message: false
+#| warning: false
+vec_hladiny_intervalu <-
+  c(0.80, 0.90, 0.95, 0.99)
+
+data_intervaly <-
+  vec_hladiny_intervalu |>
+  purrr::map(
+    .f = ~ {
+      table_jeden_interval <-
+        confint(
+          object = mod_gejzir,
+          parm = "delka_erupce_min",
+          level = .x
+        )
+
+      tibble::tibble(
+        hladina = .x,
+        popisek = paste0(
+          formatC(x = .x * 100, digits = 0, format = "f"),
+          "% interval"
+        ),
+        dolni = table_jeden_interval[1, 1],
+        horni = table_jeden_interval[1, 2]
+      )
+    }
+  ) |>
+  purrr::list_rbind() |>
+  dplyr::mutate(
+    odhad = odhad_sklonu,
+    popisek = factor(
+      x = popisek,
+      levels = paste0(
+        formatC(
+          x = vec_hladiny_intervalu * 100,
+          digits = 0,
+          format = "f"
+        ),
+        "% interval"
+      )
+    )
+  )
+
+dolni_interval <-
+  data_intervaly |>
+  dplyr::filter(hladina == 0.95) |>
+  dplyr::pull(dolni)
+
+horni_interval <-
+  data_intervaly |>
+  dplyr::filter(hladina == 0.95) |>
+  dplyr::pull(horni)
+
+plot_interval_95 <-
+  ggplot2::ggplot(
+    data = data_intervaly |>
+      dplyr::filter(hladina == 0.95),
+    mapping = ggplot2::aes(
+      x = odhad,
+      y = 1
+    )
+  ) +
+  ggplot2::geom_errorbarh(
+    mapping = ggplot2::aes(
+      xmin = dolni,
+      xmax = horni
+    ),
+    height = 0.18,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 2.2
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["orange"]],
+    size = 5
+  ) +
+  ggplot2::annotate(
+    geom = "text",
+    x = odhad_sklonu,
+    y = 1.18,
+    label = "odhad",
+    color = biostat_cols[["orange"]],
+    size = 5
+  ) +
+  ggplot2::annotate(
+    geom = "text",
+    x = dolni_interval,
+    y = 0.82,
+    label = "dolní hranice",
+    color = biostat_cols[["indigo_velvet"]],
+    hjust = 0,
+    size = 4.5
+  ) +
+  ggplot2::annotate(
+    geom = "text",
+    x = horni_interval,
+    y = 0.82,
+    label = "horní hranice",
+    color = biostat_cols[["indigo_velvet"]],
+    hjust = 1,
+    size = 4.5
+  ) +
+  ggplot2::scale_y_continuous(
+    limits = c(0.65, 1.3),
+    breaks = NULL
+  ) +
+  ggplot2::labs(
+    x = "Sklon (min čekání / min erupce)",
+    y = NULL
+  ) +
+  theme_biostat(base_size = 18) +
+  ggview::canvas(
+    width = 1600,
+    height = 650,
+    units = "px"
+  )
+
+ggview::save_ggplot(
+  plot = plot_interval_95,
+  file = here::here(path_materials, "interval_95.png")
+)
+
+plot_intervaly <-
+  ggplot2::ggplot(
+    data = data_intervaly,
+    mapping = ggplot2::aes(
+      x = odhad,
+      y = popisek
+    )
+  ) +
+  ggplot2::geom_vline(
+    xintercept = odhad_sklonu,
+    color = biostat_cols[["orange"]],
+    linetype = "dashed",
+    linewidth = 0.9
+  ) +
+  ggplot2::geom_errorbarh(
+    mapping = ggplot2::aes(
+      xmin = dolni,
+      xmax = horni
+    ),
+    height = 0.24,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.6
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["orange"]],
+    size = 4
+  ) +
+  ggplot2::labs(
+    x = "Sklon (min čekání / min erupce)",
+    y = NULL
+  ) +
+  theme_biostat(base_size = 14) +
+  ggview::canvas(
+    width = 1600,
+    height = 800,
+    units = "px"
+  )
+
+ggview::save_ggplot(
+  plot = plot_intervaly,
+  file = here::here(path_materials, "porovnani_intervalu.png")
+)
+```
+
+## 95% interval spolehlivosti
+
+```{r}
+#| label: zobrazit-interval-95
+#| echo: false
+include_local_figure("interval_95.png")
+```
+
+::: {.fragment}
+Pro Old Faithful: **[`r round(dolni_interval, 2)`; `r round(horni_interval, 2)`] minuty čekání na minutu erupce**.
+:::
+
+## Co se stane při vyšší hladině?
+
+::: {.panel-olive}
+[Seřaďte intervaly od nejužšího]{.panel-title}
+
+80 % · 90 % · 95 % · 99 %
+
+Musí vyšší požadované pokrytí vést k užšímu, nebo širšímu intervalu?
+:::
+
+::: {.takeaway-strip}
+Ve dvojici seřaďte čtyři hladiny a připravte jedno vysvětlení.
+:::
+
+## Stejný odhad, různě široké intervaly
+
+```{r}
+#| label: zobrazit-porovnani-intervalu
+#| echo: false
+include_local_figure("porovnani_intervalu.png")
+```
+
+::: {.fragment}
+Vyšší požadované dlouhodobé pokrytí → širší interval.
+:::
+
+## Užší neznamená automaticky přesnější data
+
+::: {.box-rule}
+Intervaly porovnáváme jako přesnější a méně přesné pouze při **stejné hladině spolehlivosti**.
+:::
+
+::: {.fragment}
+Snížit hladinu z 95 % na 80 % znamená přijmout nižší dlouhodobé pokrytí — nikoli získat více informace z dat.
+:::
+
+## Co znamená „95 %“?
+
+:::: {.columns}
+
+::: {.column width="31%"}
+::: {.card-indigo}
+[A]{.card-title}
+
+95 % jednotlivých erupcí leží uvnitř intervalu.
+:::
+:::
+
+::: {.column width="31%"}
+::: {.card-indigo}
+[B]{.card-title}
+
+Skutečný sklon má po výpočtu 95% pravděpodobnost být uvnitř.
+:::
+:::
+
+::: {.column width="31%"}
+::: {.card-indigo}
+[C]{.card-title}
+
+Při mnoha opakováních pokryje skutečný sklon přibližně 95 % vytvořených intervalů.
+:::
+:::
+
+::::
+
+::: {.takeaway-strip}
+Když nehlasujeme: zapište písmeno a podtrhněte slova, která rozhodla.
+:::
+
+## Přesvědčte souseda
+
+<br>
+
+::: {.panel-olive}
+[Partner convince — 2 min]{.panel-title}
+
+Neříkejte jen písmeno.
+
+Vysvětlete, **k čemu se číslo 95 % vztahuje** a proč zbývající možnosti znějí lákavě.
+:::
+
+## 95 % patří k postupu
+
+:::: {.columns}
+
+::: {.column width="48%"}
+::: {.panel-result}
+[Lepší interpretace]{.panel-title}
+
+Při mnoha srovnatelných opakováních pokryje skutečný sklon přibližně 95 % takto vytvořených intervalů.
+:::
+:::
+
+::: {.column width="48%"}
+::: {.panel-warning}
+[Neříkáme]{.panel-title}
+
+- 95 % pozorování je uvnitř;
+- tento interval má 95% šanci obsahovat pravdu;
+- interval dokazuje určitou hodnotu.
+:::
+:::
+
+::::
+
+## Vraťme se k hlavní otázce
+
+::: {.box-question}
+**Pomůže délka právě skončené erupce odhadnout, za jak dlouho začne další?**
+:::
+
+:::: {.columns}
+
+::: {.column width="48%"}
+::: {.panel-result}
+[Co už můžeme říct]{.panel-title}
+
+Odhadli jsme velikost vztahu i rozsah efektů slučitelných s daty a modelem.
+:::
+:::
+
+::: {.column width="48%"}
+::: {.panel-question}
+[Co stále zůstává otevřené]{.panel-title}
+
+Jak pomocí dat hodnotit konkrétní tvrzení o parametru modelu?
+:::
+:::
+
+::::
+
+## Napište jednu vědeckou větu
+
+::: {.panel-olive}
+[Dvojice — 3 min]{.panel-title}
+
+Vaše věta musí obsahovat:
+
+- vztah mezi délkou erupce a čekáním;
+- odhad sklonu;
+- SE a 95% CI;
+- jednotky;
+- opatrný jazyk bez kauzálního tvrzení.
+:::
+
+## Jedna možná věta
+
+::: {.box-result}
+Erupce delší o jednu minutu souvisela s čekáním delším o **`r round(odhad_sklonu, 2)` minuty** (odhad sklonu = `r round(odhad_sklonu, 2)`, SE = `r round(standardni_chyba_sklonu, 2)`, 95% CI [`r round(dolni_interval, 2)`, `r round(horni_interval, 2)`] minuty čekání na minutu erupce).
+:::
+
+::: {.takeaway-strip}
+Vyměňte si větu se sousední dvojicí: jsou v ní proměnné, jednotky a nejistota?
+:::
+
+## Co ještě omezuje náš závěr?
+
+::: {.box-warning}
+Dobrovolníci nepozorovali dokonale náhodný výběr všech erupcí a blízké erupce mohou být časově propojené.
+:::
+
+::: {.fragment}
+Výsledek je opatrný odhad vztahu v zachyceném procesu — ne neměnný přírodní zákon.
+:::
 
 ## Shrnutí
 
-- TODO: klíčové body přednášky
-
-# Slide Creator's Guide {.center}
-
-[Slides in this section are intended for lecture authors, not students. Delete this section and the `# Tools Overview` section before using as an actual lecture.]{.text-size-smaller .text-color-grey_olive}
-
-# Golden Rules {.center}
-
-## Rule 1 — Data story first {.bg-parchment}
-
-::: columns
-::: {.column width="48%"}
-::: {.card-warning}
-[Wrong]{.card-title}
-**Pearson correlation**
-
-Pearson's correlation coefficient measures the strength of the linear relationship between two variables...
-
-[formula]
-:::
-:::
-::: {.column width="48%"}
-::: {.card-insight}
-[Right]{.card-title}
-**How do we turn the shape of a cloud into a number?**
-
-[scatter plot the students have seen for several slides already]
-
-*What properties would such a number need to have?*
-
-→ **Correlation coefficient** [the name arrives as the answer]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-:::
-
-[A statistical term never opens a concept as a heading. Data first → observation → question → only then the name.]{.text-size-smaller .text-color-grey_olive}
-
-## Rule 2 — One idea per slide
-
-**Every slide communicates one thing.**
-
-If you need to say two things, use two slides.
-
-If you need to say three things, add an interaction between them.
-
-::: {.takeaway-strip}
-**One message. One slide. Contribute to understanding — not to overload.**
-:::
-
-[Test: cover the heading — is the main idea of the slide still clear from the visual or a single sentence?]{.text-size-smaller .text-color-grey_olive}
-
-## Rule 3 — Interaction every 10–15 minutes
-
-::: {.panel-note}
-[Six interaction types]{.panel-title}
-
-| Type | When to use |
-|---|---|
-| Prediction question | Before revealing a result, graph, or test output |
-| Conceptual MCQ | To surface a common misconception; ideally with a polling tool |
-| Think–Pair–Share | After a new concept; 30 s thinking + 1–2 min pair discussion |
-| Silent write | Before discussion or reveal; each student writes one sentence |
-| Interpretation task | After showing a graph, model output, or table |
-| Data exploration | To open a topic — what patterns / hypotheses do you see? |
-:::
-
-::: {.panel-question}
-[Example — prediction question]{.panel-title}
-
-*How does the confidence interval change if we double the sample size?*
-
-**A)** Narrows   **B)** Stays the same   **C)** Widens
-:::
-
-## Rule 4 — Always frame biologically
-
-Every statistical method must be grounded in a concrete biological question.
-
-::: {.blockquote}
-**Four steps of the biological frame:**
-
-1. **Biological question** — "we want to find out whether…"
-2. **Data** — description, type, source
-3. **Statistical method** — what and why
-4. **Interpretation in biological context** — what the result says about the world, not about numbers
-:::
-
-[Never start with "today we'll learn the t-test". Always start with "we want to know whether…"]{.text-size-smaller .text-color-grey_olive}
-
-## Rule 5 — Alternate visual patterns (3-of-5 rule)
-
-**At most 3 of 5 consecutive slides may use a named component as the primary visual element.**
-
-A plain slide — a bold question on an empty background, a full-width graph, a single prominent number — carries more weight precisely because the surrounding slides are more structured.
-
-::: {.strip-orange}
-**3 of 5 — the law of slide visual contrast** · review the block before finalising
-:::
-
-[Components: `.card-*`, `.panel-*`, `.blockquote`, `.takeaway-strip`. If you reach 4+ in a row, convert one slide to a plain visual or an unframed question.]{.text-size-smaller .text-color-grey_olive}
-
-# Five Slide Families {.center}
-
-## Five slide families
-
-::: columns
-::: {.column width="62%"}
-
-| Family | Goal | Typical component |
-|---|---|---|
-| **Interaction** | Prediction / MCQ / TPS | bold question, `.panel-question` |
-| **Data reveal** | New data or output | full-width graph, plain slide |
-| **Interpretation** | Read the result | `.panel-result`, `.takeaway-strip` |
-| **Rule / warning** | Heuristic, error | `.card-warning`, `.panel-warning` |
-| **Transition / summary** | Reset, conclusion | `.blockquote` in two columns |
-
-:::
-::: {.column width="35%"}
-::: {.card-olive}
-[Variety of families]{.card-title}
-In one lecture, cycle through all five families.
-
-No block of 5+ slides should belong to only one family.
-:::
-:::
-:::
-
-[Students should be able to recognise the role of a slide before reading the text — from the colour key, layout, or position in the structure.]{.text-size-smaller .text-color-grey_olive}
-
-# Tools Overview {.center}
-
-## `.box-*` aliases — when to use what
-
-| Alias | Maps to | Weight | Colour | When to use |
-|-------|-----------|------|-------|------------|
-| `.box-question` | `.panel-question` | panel (lighter) | orange left border | MCQ, reflection question |
-| `.box-result` | `.panel-result` | panel (lighter) | indigo left border | main conclusion, analysis result |
-| `.box-data` | `.panel-data` | panel (lighter) | olive left border | dataset description, data context |
-| `.box-rule` | `.card-rule` | card (heavier) | amethyst top strip + shadow | rule, heuristic |
-| `.box-warning` | `.card-warning` | card (heavier) | red top strip + shadow | methodological warning |
-
-[Panel aliases (lighter): coloured left border, no shadow. Card aliases (heavier): coloured top strip + shadow. Inner heading: `[text]{.panel-title}` for panels · `[text]{.card-title}` for cards.]{.text-size-smaller .text-color-grey_olive}
-
-## `.box-question` — interaction, MCQ
-
-::: columns
-::: {.column width="55%"}
-::: {.box-question}
-[Question for reflection]{.panel-title}
-
-What percentage of penguin body-mass variability is explained by bill length?
-
-**A)** less than 30 % &nbsp;&nbsp; **B)** 30–60 % &nbsp;&nbsp; **C)** more than 60 %
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.box-question}
-[Question for reflection]{.panel-title}
-
-Question text + choices A / B / C.
-:::
-```
-
-[= `.panel-question` · orange left border · heading `{.panel-title}`]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## `.box-result` — main result
-
-::: columns
-::: {.column width="55%"}
-::: {.box-result}
-[What we see]{.panel-title}
-
-Each millimetre of bill length corresponds on average to **+8.7 g** body mass
-(95% CI: 6.2–11.2 g). The model explains 45 % of body-mass variability.
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.box-result}
-[What we see]{.panel-title}
-
-Main conclusion or analysis result.
-:::
-```
-
-[= `.panel-result` · indigo left border · heading `{.panel-title}` or `{.panel-lead}`]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## `.box-data` — dataset description
-
-::: columns
-::: {.column width="55%"}
-::: {.box-data}
-[Palmer Penguins]{.panel-title}
-
-344 penguins from three islands · 3 species *(Adelie, Chinstrap, Gentoo)*
-
-Variables: bill length and depth (mm), flipper length (mm), body mass (g), sex, year
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.box-data}
-[Dataset name]{.panel-title}
-
-Brief description: number of
-observations, variables, source.
-:::
-```
-
-[= `.panel-data` · olive left border · heading `{.panel-title}`]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## `.box-warning` — methodological warning
-
-::: columns
-::: {.column width="55%"}
-::: {.box-warning}
-[Caution — correlation ≠ causation]{.card-title}
-
-A longer bill does not imply that *the bill causes* greater body mass — both traits
-may reflect overall body size.
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.box-warning}
-[Warning heading]{.card-title}
-
-Methodological error, misinterpretation,
-data limitation.
-:::
-```
-
-[= `.card-warning` · **card** · red top strip + shadow · heading `{.card-title}`]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## `.box-rule` — rule, heuristic
-
-::: columns
-::: {.column width="55%"}
-::: {.box-rule}
-[Mean or median?]{.card-title}
-
-If the data are symmetric → mean.
-
-If the data are skewed or contain outliers → median.
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.box-rule}
-[Rule heading]{.card-title}
-
-Condition → recommendation.
-Or a verbal heuristic.
-:::
-```
-
-[= `.card-rule` · **card** · amethyst top strip + shadow · heading `{.card-title}`]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## Combination: `.box-question` + `.takeaway-strip`
-
-::: columns
-::: {.column width="55%"}
-::: {.box-question}
-[Question for reflection]{.panel-title}
-
-Why does bill length differ between penguin species and within a single species?
-:::
-
-::: {.takeaway-strip}
-**Morphology as adaptation.** Bill length reflects life strategy — Gentoo penguins forage differently from Adelie.
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.box-question}
-[Question]{.panel-title}
-Question...
-:::
-
-::: {.takeaway-strip}
-**Conclusion.** Closing the conclusion.
-:::
-```
-
-[`.takeaway-strip` after `.box-question` closes a slide sequence. One slide = one question + one conclusion.]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## Fragment: incremental reveal of `.box-result`
-
-::: columns
-::: {.column width="55%"}
-Let's look at the linear model output.
-
-::: {.fragment}
-::: {.box-result}
-[Result]{.panel-title}
-
-Bill length coefficient: **+8.7 g/mm** (95% CI: 6.2–11.2 g).
-The effect is statistically and biologically significant.
-:::
-:::
-:::
-::: {.column width="42%"}
-```markdown
-Sentence before the pause.
-
-::: {.fragment}
-::: {.box-result}
-[Result]{.panel-title}
-Text that is revealed.
-:::
-:::
-```
-
-[`::: {.fragment}` wraps any `.box-*` block. Students see the sentence → click → result.]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## Tool: plain question without a frame {.center}
-
-<br>
-
-::: {.text-center .text-size-large .text-bold}
-How does the confidence interval change if we double the sample size?
-:::
-
-<br>
-
-::: {.text-center}
-**A)** Narrows &nbsp;&nbsp;&nbsp; **B)** Stays the same &nbsp;&nbsp;&nbsp; **C)** Widens
-:::
-
-<br>
-
-[Plain slide: bold question + choices without a frame. Maximum visual contrast against slides with `.box-*` components.]{.text-size-smaller .text-color-grey_olive}
-
-## Roughnotation — use sparingly
-
-Each millimetre of penguin bill length corresponds on average to
-[+8.7 g body mass]{.rn-underline-indigo} — the effect is
-[biologically significant]{.rn-box-orange}.
-
-<br>
-
-::: columns
-::: {.column width="48%"}
-```markdown
-[text]{.rn-underline-indigo}
-[text]{.rn-box-orange}
-[text]{.rn-circle-amethyst}
-[text]{.rn-bracket-indigo}
-```
-:::
-::: {.column width="48%"}
-```markdown
-[text]{.rn-highlight-orange}
-[text]{.rn-cross-graphite}
-```
-
-Colours: `indigo`, `orange`, `amethyst`,
-`olive`, `graphite`, `red`
-:::
-:::
-
-[**Sparingly:** max 1–2 effects per slide, 3–5 per lecture. Types: `underline`, `box`, `circle`, `bracket`, `highlight`, `cross`. Not as decoration — only for one key moment in a concept.]{.text-size-smaller .text-color-grey_olive}
-
-# Reference Slides: SCSS Components {.center}
-
-# Cards {.center}
-
-## Card: basic structure
-
-::: {.card-indigo}
-[Card heading]{.card-title}
-
-Card body — one or two short paragraphs. The font is intentionally smaller than the base
-slide size (0.82 em) to fit more content.
-
-- Cards can also contain a list
-- Each item on its own line
-:::
-
-[Syntax: `::: {.card-indigo}` + `[text]{.card-title}` for the coloured top strip — without the old `.slide-card` + variant combination.]{.text-size-smaller .text-color-grey_olive}
-
-## Card: .card-title
-
-::: columns
-::: {.column width="60%"}
-::: {.card-insight}
-[This is .card-title]{.card-title}
-
-`[text]{.card-title}` must be the **first thing** inside the card — it creates the coloured top strip.
-:::
-:::
-
-::: {.column width="38%"}
-```markdown
-::: {.card-insight}
-[Section name]{.card-title}
-
-Card body.
-:::
-```
-:::
-:::
-
-## Card: compact variant
-
-::: columns
-::: {.column width="48%"}
-::: {.card-orange}
-[Standard]{.card-title}
-
-`.card-orange` — padding `0.7rem 1rem`. Suitable for longer content.
-:::
-:::
-
-::: {.column width="48%"}
-::: {.card-orange .card-compact}
-[Compact]{.card-title}
-
-`.card-orange .card-compact` — reduced padding (`0.45rem 0.75rem`). For denser layouts.
-:::
-:::
-:::
-
-## Card: overview of variants
-
-::: columns
-::: {.column width="18%"}
-::: {.card-indigo}
-[indigo]{.card-title}
-`.card-indigo`
-:::
-:::
-::: {.column width="18%"}
-::: {.card-orange}
-[orange]{.card-title}
-`.card-orange`
-:::
-:::
-::: {.column width="18%"}
-::: {.card-amethyst}
-[amethyst]{.card-title}
-`.card-amethyst`
-:::
-:::
-::: {.column width="18%"}
-::: {.card-olive}
-[olive]{.card-title}
-`.card-olive`
-:::
-:::
-::: {.column width="18%"}
-::: {.card-red}
-[red]{.card-title}
-`.card-red`
-:::
-:::
-:::
-
-::: columns
-::: {.column width="16%"}
-::: {.card-question}
-[question]{.card-title}
-`.card-question`
-:::
-:::
-::: {.column width="16%"}
-::: {.card-insight}
-[insight]{.card-title}
-`.card-insight`
-:::
-:::
-::: {.column width="16%"}
-::: {.card-warning}
-[warning]{.card-title}
-`.card-warning`
-:::
-:::
-::: {.column width="16%"}
-::: {.card-data}
-[data]{.card-title}
-`.card-data`
-:::
-:::
-::: {.column width="16%"}
-::: {.card-result}
-[result]{.card-title}
-`.card-result`
-:::
-:::
-::: {.column width="16%"}
-::: {.card-rule}
-[rule]{.card-title}
-`.card-rule`
-:::
-:::
-:::
-
-[Semantic variants are aliases: `.card-question` = orange, `.card-insight` = `.card-result` = indigo, `.card-warning` = red, `.card-data` = olive, `.card-rule` = amethyst. Shorthand: `.box-question`, `.box-result`, `.box-data`, `.box-warning`, `.box-rule`.]{.text-size-smaller .text-color-grey_olive}
-
-# Panels {.center}
-
-## Panel: `.panel-result`
-
-::: columns
-::: {.column width="55%"}
-::: {.panel-result}
-[Key insight]{.panel-title}
-
-Purple left border. For the main message of a block — conclusion, analysis result, or key number.
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.panel-result}
-[Heading]{.panel-title}
-Panel text.
-:::
-```
-
-[`.panel-title` is `display: block`; gives the heading h3 appearance without `###`.]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## Panel: `.panel-question`
-
-::: columns
-::: {.column width="55%"}
-::: {.panel-question}
-[Conclusion or option]{.panel-title}
-
-Orange left border. For conclusions, comparison results, or offering multiple answer choices.
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.panel-question}
-[Conclusion or option]{.panel-title}
-Panel text.
-:::
-```
-:::
-:::
-
-## Panel: `.panel-question` + `.panel-lead`
-
-::: columns
-::: {.column width="55%"}
-::: {.panel-question}
-[Computation result]{.panel-lead}
-
-Large highlighted result — replaces the old `.answer-title`. Use at most once per slide.
-:::
-:::
-::: {.column width="42%"}
-```markdown
-::: {.panel-question}
-[Computation result]{.panel-lead}
-
-Text below the result.
-:::
-```
-
-[`.panel-lead` is large and bold. Suitable for a key number or conclusion.]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## Panel: `.panel-note` and `.panel-warning`
-
-::: columns
-::: {.column width="48%"}
-::: {.panel-note}
-[Instructions or output]{.panel-title}
-
-Neutral olive border. For instructions, workflow steps, or model output.
-:::
-:::
-::: {.column width="48%"}
-::: {.panel-warning}
-[Caution!]{.panel-title}
-
-Red left border. For warnings, common errors, or deliberate alerts.
-:::
-:::
-:::
-
-## Panel: overview of colour variants
-
-::: columns
-::: {.column width="18%"}
-::: {.panel-indigo}
-[indigo]{.panel-title}
-`.panel-indigo`
-:::
-:::
-::: {.column width="18%"}
-::: {.panel-orange}
-[orange]{.panel-title}
-`.panel-orange`
-:::
-:::
-::: {.column width="18%"}
-::: {.panel-amethyst}
-[amethyst]{.panel-title}
-`.panel-amethyst`
-:::
-:::
-::: {.column width="18%"}
-::: {.panel-olive}
-[olive]{.panel-title}
-`.panel-olive`
-:::
-:::
-::: {.column width="18%"}
-::: {.panel-red}
-[red]{.panel-title}
-`.panel-red`
-:::
-:::
-:::
-
-[Semantic variants are aliases: `.panel-result` = indigo, `.panel-question` = orange, `.panel-warning` = red, `.panel-note` = amethyst, `.panel-data` = olive. Shorthand (`.box-*`) wraps the matching panel.]{.text-size-smaller .text-color-grey_olive}
-
-# Takeaway strip {.center}
-
-## Takeaway strip: standard
-
-Sentence that leads into the conclusion — contextual paragraph above the strip.
-
-::: {.takeaway-strip}
-**Main slide conclusion.** `.takeaway-strip` — indigo-to-orange gradient background,
-indigo left border. One per slide, placed at the bottom.
-:::
-
-[`::: {.takeaway-strip}` — the gradient is built in, no extra class needed.]{.text-size-smaller .text-color-grey_olive}
-
-## Takeaway strip: compact variant
-
-Sentence above the strip as usual.
-
-::: {.takeaway-strip}
-Main conclusion — standard strip.
-:::
-
-::: {.takeaway-strip .strip-compact}
-Supplementary conclusion — `.strip-compact` reduces `margin-top`. Useful for two conclusions together.
-:::
-
-## Strip: colour variants
-
-::: columns
-::: {.column width="18%"}
-::: {.strip-indigo}
-`.strip-indigo`
-:::
-:::
-::: {.column width="18%"}
-::: {.strip-orange}
-`.strip-orange`
-:::
-:::
-::: {.column width="18%"}
-::: {.strip-amethyst}
-`.strip-amethyst`
-:::
-:::
-::: {.column width="18%"}
-::: {.strip-olive}
-`.strip-olive`
-:::
-:::
-::: {.column width="18%"}
-::: {.strip-red}
-`.strip-red`
-:::
-:::
-:::
-
-# Blockquote {.center}
-
-## Blockquote div: `.blockquote`
-
-::: {.blockquote}
-**Definition or quotation.** `.blockquote` — light purple background, indigo left border (6px),
-rounded corners. Font 0.82 em.
-
-- Can contain a list
-- Each item on its own line
-:::
-
-[Use `::: {.blockquote}`, not Markdown `>`. The div variant gets correct styling;
-Markdown blockquote gets different styles from `presentation_theme.scss`.]{.text-size-smaller .text-color-grey_olive}
-
-# Slide backgrounds {.center}
-
-## Backgrounds: dark variants {.bg-indigo}
-
-This slide has the class `{.bg-indigo}`. Text and headings are automatically white.
-
-::: columns
-::: {.column width="48%"}
-Syntax — add the class to the slide heading:
-
-```markdown
-## Slide title {.bg-indigo}
-```
-:::
-::: {.column width="48%"}
-Available dark variants:
-
-- `{.bg-indigo}` — primary indigo
-- `{.bg-amethyst}` — lighter purple
-- `{.bg-olive}` — grey-green
-- `{.bg-red}` — red
-- `{.bg-graphite}` — dark grey
-:::
-:::
-
-## Backgrounds: light variants {.bg-parchment}
-
-This slide has the class `{.bg-parchment}`. Text is automatically graphite.
-
-::: columns
-::: {.column width="48%"}
-Available light variants:
-
-- `{.bg-orange}` — orange
-- `{.bg-parchment}` — cream
-- `{.bg-white}` — pure white
-:::
-::: {.column width="48%"}
-Text and heading colour adapts automatically — no need to add `.text-color-*`.
-:::
-:::
-
-# Inline highlights {.center}
-
-## Inline highlight: `.text-hgl-{color}`
-
-The model intercept is −153.4 and the length coefficient is
-[4.05 g/mm]{.text-hgl-indigo_velvet} — each millimetre of length corresponds on average
-to four grams of body mass.
-
-Caution — this procedure works [only when the normality assumption is met]{.text-hgl-orange}.
-
-[Syntax: `[text]{.text-hgl-indigo_velvet}` — coloured chip with contrasting text. Available colours: `indigo_velvet`, `orange`, `amethyst`, `grey_olive`, `graphite`, `white`, `light_gray`, `parchment`.]{.text-size-smaller .text-color-grey_olive}
-
-## Inline highlight: `.text-bg-{color}` and `.text-color-{color}`
-
-::: columns
-::: {.column width="48%"}
-[`.text-hgl-indigo_velvet`]{.text-hgl-indigo_velvet} — chip with contrasting text
-
-[`.text-bg-indigo_velvet`]{.text-bg-indigo_velvet} — chip without text colour change
-
-[`.text-color-indigo_velvet`]{.text-color-indigo_velvet} — text colour only
-
-[`.text-color-indigo_velvet .text-bold`]{.text-color-indigo_velvet .text-bold} — colour + bold
-:::
-::: {.column width="48%"}
-```markdown
-[text]{.text-hgl-indigo_velvet}
-[text]{.text-bg-indigo_velvet}
-[text]{.text-color-indigo_velvet}
-[text]{.text-color-indigo_velvet .text-bold}
-```
-:::
-:::
-
-# Roughnotation {.center}
-
-## Roughnotation: shorthand syntax
-
-Shorthand `{.rn-{type}-{colour}}` expands via `rn-shorthand.lua`:
-
-::: columns
-::: {.column width="48%"}
-**Short form (new):**
-
-Each millimetre of length corresponds to approximately
-[four grams of body mass]{.rn-underline-indigo}.
-
-```markdown
-[text]{.rn-underline-indigo}
-```
-:::
-::: {.column width="48%"}
-**Long form (still functional):**
-
-```markdown
-[text]{.rn-fragment rn-type=underline
-  rn-color="#5D2890"}
-```
-:::
-:::
-
-[Available types: `underline`, `box`, `circle`, `highlight`, `cross`, `bracket`. Colours: `indigo`, `orange`, `amethyst`, `olive`, `graphite`, `red`.]{.text-size-smaller .text-color-grey_olive}
-
-## Roughnotation: `box`, `circle`, `bracket`
-
-::: columns
-::: {.column width="32%"}
-**box**
-
-**R² = [0.76]{.rn-box-indigo}**
-
-```markdown
-[0.76]{.rn-box-indigo}
-```
-:::
-::: {.column width="32%"}
-**circle**
-
-The relationship is [strong]{.rn-circle-orange}.
-
-```markdown
-[strong]{.rn-circle-orange}
-```
-:::
-::: {.column width="32%"}
-**bracket**
-
-**ŷ = β₀ + [β₁x]{.rn-bracket-indigo}**
-
-```markdown
-[β₁x]{.rn-bracket-indigo}
-```
-:::
-:::
-
-[Animation fires on fragment arrival. Do not use both colours on the same slide.]{.text-size-smaller .text-color-grey_olive}
-
-# Fragments and progressive disclosure {.center}
-
-## Fragment: `.fragment` block
-
-A sentence that is on the slide from the start.
-
-::: {.fragment}
-::: {.panel-result}
-[Conclusion arrives after pause]{.panel-title}
-
-This entire block appears as a single fragment — the student sees the sentence above
-and only after clicking does the panel with the conclusion reveal itself.
-:::
-:::
-
-[Syntax: `::: {.fragment}` wraps any block. Works with panels, blockquotes, strips, and cards.]{.text-size-smaller .text-color-grey_olive}
-
-## Fragment: `.incremental` list
-
-Which properties must a good correlation coefficient satisfy?
-
 ::: {.incremental}
-- It must be symmetric: correlation of X with Y = correlation of Y with X.
-- It must be dimensionless: independent of the scale of variables.
-- It must be in the interval −1 to +1.
-- +1 = perfect positive dependence, −1 = perfect negative dependence.
+- Jiná pozorování mohou dát jiný odhad stejného vztahu.
+- `Estimate` popisuje velikost vztahu; `Std. Error` přesnost odhadu.
+- Interval spolehlivosti vyjadřuje rozsah efektů slučitelných s daty a modelem.
+- Hodnota 95 % popisuje dlouhodobé pokrytí opakovaně vytvářených intervalů.
+- Vědecký závěr spojuje interpretaci, čísla, jednotky a omezení dat.
 :::
 
-[Each item appears on click.]{.text-size-smaller .text-color-grey_olive}
-
-# Typography {.center}
-
-## Typography: sizes
-
-::: columns
-::: {.column width="55%"}
-[`.text-size-heading` — 140 % of base]{.text-size-heading}
-
-[`.text-size-large` — 130 % of base]{.text-size-large}
-
-Normal text (100 %, base 30 px)
-
-[`.text-size-smaller` — 82 % of base]{.text-size-smaller}
-
-[`.text-size-tiny` — 65 % of base]{.text-size-tiny}
-:::
-::: {.column width="42%"}
-```markdown
-[text]{.text-size-heading}
-[text]{.text-size-large}
-[text]{.text-size-smaller}
-[text]{.text-size-tiny}
-```
-
-[`.text-size-body` = 100 % (explicit reset). Old `.text-larger`/`.text-smaller`/`.text-tiny` are removed.]{.text-size-smaller .text-color-grey_olive}
-:::
-:::
-
-## Typography: weight, alignment, font
-
-::: {.text-center}
-`.text-center` — horizontal centre
-:::
-
-::: {.text-right}
-`.text-right` — right alignment
-:::
+## Co budeme potřebovat příště?
 
 <br>
 
-[`.text-font-heading` — Source Sans 3, heading weight]{.text-font-heading}
+::: {.text-size-larger .text-bold .center}
+Umíme popsat velikost efektu a jeho nejistotu.
 
-[`.text-font-monospace` — JetBrains Mono]{.text-font-monospace}
-
-[`.text-bold` — bold]{.text-bold}
-
-# Colour utilities {.center}
-
-## Colours: indigo_velvet and amethyst
-
-::: columns
-::: {.column width="48%"}
-::: {.bg-indigo_velvet style="padding:0.55rem 0.8rem;border-radius:10px;margin-bottom:0.5rem;"}
-[`.bg-indigo_velvet` — primary indigo]{.text-color-white}
+**Jak pomocí dat hodnotit konkrétní tvrzení o parametru modelu?**
 :::
-[`.text-color-indigo_velvet`]{.text-color-indigo_velvet}
-
-[`.text-hgl-indigo_velvet`]{.text-hgl-indigo_velvet}
-:::
-::: {.column width="48%"}
-::: {.bg-amethyst style="padding:0.55rem 0.8rem;border-radius:10px;margin-bottom:0.5rem;"}
-[`.bg-amethyst` — lighter purple]{.text-color-white}
-:::
-[`.text-color-amethyst`]{.text-color-amethyst}
-
-[`.text-hgl-amethyst`]{.text-hgl-amethyst}
-:::
-:::
-
-## Colours: orange and graphite
-
-::: columns
-::: {.column width="48%"}
-::: {.bg-orange style="padding:0.55rem 0.8rem;border-radius:10px;margin-bottom:0.5rem;"}
-[`.bg-orange` — vivid orange]{.text-color-graphite}
-:::
-[`.text-color-orange`]{.text-color-orange}
-
-[`.text-hgl-orange`]{.text-hgl-orange}
-:::
-::: {.column width="48%"}
-::: {.bg-graphite style="padding:0.55rem 0.8rem;border-radius:10px;margin-bottom:0.5rem;"}
-[`.bg-graphite` — dark base]{.text-color-white}
-:::
-[`.text-color-graphite`]{.text-color-graphite}
-
-[`.text-hgl-graphite`]{.text-hgl-graphite}
-:::
-:::
-
-## Colours: neutral palette tones
-
-::: columns
-::: {.column width="23%"}
-::: {.bg-parchment style="padding:0.5rem 0.7rem;border-radius:10px;border:1px solid #ccc;"}
-[`.bg-parchment`]{.text-color-graphite .text-size-smaller}
-:::
-[`.text-color-parchment`]{.text-color-parchment .text-size-smaller .bg-graphite style="padding:1px 4px;border-radius:3px;"}
-
-[`.text-hgl-parchment`]{.text-hgl-parchment .text-size-smaller}
-:::
-::: {.column width="23%"}
-::: {.bg-grey_olive style="padding:0.5rem 0.7rem;border-radius:10px;"}
-[`.bg-grey_olive`]{.text-color-white .text-size-smaller}
-:::
-[`.text-color-grey_olive`]{.text-color-grey_olive .text-size-smaller}
-
-[`.text-hgl-grey_olive`]{.text-hgl-grey_olive .text-size-smaller}
-:::
-::: {.column width="23%"}
-::: {.bg-light_gray style="padding:0.5rem 0.7rem;border-radius:10px;border:1px solid #ccc;"}
-[`.bg-light_gray`]{.text-color-graphite .text-size-smaller}
-:::
-[`.text-color-light_gray`]{.text-color-light_gray .text-size-smaller .bg-graphite style="padding:1px 4px;border-radius:3px;"}
-
-[`.text-hgl-light_gray`]{.text-hgl-light_gray .text-size-smaller}
-:::
-::: {.column width="23%"}
-::: {.bg-white style="padding:0.5rem 0.7rem;border-radius:10px;border:1px solid #ccc;"}
-[`.bg-white`]{.text-color-graphite .text-size-smaller}
-:::
-[`.text-color-white`]{.text-color-white .text-size-smaller .bg-graphite style="padding:1px 4px;border-radius:3px;"}
-
-[`.text-hgl-white`]{.text-hgl-white .text-size-smaller}
-:::
-:::
-
-# Layout utilities {.center}
-
-## Layout: `.columns.align-top`
-
-::: {.columns .align-top}
-::: {.column width="48%"}
-**Left column** starts at the top — without `.align-top` the content would be vertically centred.
-
-::: {.card-indigo}
-Card in the left column.
-
-Second paragraph inside the card — the left column is taller.
-:::
-:::
-::: {.column width="48%"}
-**Right column** is shorter.
-
-Without `.align-top` the right text would shift down to the centre of the column pair.
-:::
-:::
-
-[Syntax: `::: {.columns .align-top}` — add the class `.align-top` to `.columns`.]{.text-size-smaller .text-color-grey_olive}
-
-## Layout: vertical offsets
-
-::: {.card-question}
-[Example: `.slide-margin-top-15`]{.kicker}
-
-This card would have `margin-top: 15%` if it had the class `.slide-margin-top-15`.
-Useful for vertically centring an isolated element on a slide.
-:::
-
-::: {.takeaway-strip .strip-compact}
-`.slide-margin-top-15` → `margin-top: 15%` · `.slide-margin-top-25` → `margin-top: 25%` · `.center-vertical` → absolute centre
-:::
-
