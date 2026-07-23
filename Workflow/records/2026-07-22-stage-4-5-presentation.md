@@ -77,8 +77,10 @@
 5. `summary()` output scavenger hunt.
 6. Effect-versus-precision classification.
 7. Confidence-level width ranking.
-8. Central 95% misconception MCQ with partner convincing.
-9. Peer review of a one-sentence scientific interpretation.
+8. Central 95% misconception MCQ followed by a statistical-headline editing task.
+9. Predict how 80% intervals change in width and coverage.
+10. Predict how many 50% intervals cover the reference slope.
+11. Write and peer-review a scientific interpretation using the supplied evidence card.
 
 Mentimeter is reserved for the opening prediction and the central 95% misconception check. Both prompts retain a visible no-vote fallback. The remaining interactions use partner or small-group discussion so the lecture does not become a sequence of polls.
 
@@ -107,10 +109,10 @@ Mentimeter is reserved for the opening prediction and the central 95% misconcept
 ## Stage 5 - Human review gate
 
 - Lesson-vision review completed: [x]
-- Human review completed: [ ]
+- Human review completed: [x]
 - Credible findings resolved: [x]
 - Presentation rendered and checked: [x]
-- Reviewer decision: Stage 4 approved; Stage 5 review is in progress.
+- Reviewer decision: Stage 5 approved by the human reviewer on 2026-07-23.
 
 ## Stage 5 review batch 1 - 2026-07-23
 
@@ -156,11 +158,11 @@ Mentimeter is reserved for the opening prediction and the central 95% misconcept
 - Added a data-and-model card to the scientific-sentence task with the sample size, observed ranges, slope estimate, standard error, 95% interval, and units.
 - Rendered the 37-slide deck and visually checked the three interval comparisons and the revised writing task together.
 
-## First coherent deck validation
+## Final approved deck validation
 
-- Built 35 slides with nine planned active-learning moments and a visible no-vote fallback for both voting prompts.
+- Built 37 slides with eleven planned active-learning moments and a visible no-vote fallback for both voting prompts.
 - Rendered `Presentation/presentation.html`, `Presentation/presentation.pdf`, and the matching `docs/index.html` with `R/render_presentation.R`.
-- Visually inspected all 35 rendered PDF pages, the first and final animation states, and an intermediate GIF frame.
+- Visually inspected the original 35 rendered PDF pages, both added confidence-level slides, all subsequently revised slides, both classification fragment states, both confidence-level reveal states, and beginning, intermediate, and final animation states.
 - Confirmed the linked animation contains 124 frames at 1600 x 800 pixels: 100 reports plus opening and closing pauses. Each report uses the same highlighted slope in the scatterplot and accumulating histogram.
 - Confirmed the static final frame immediately follows the GIF, so the explanation remains usable when animation playback is unavailable.
 - Confirmed `Presentation/presentation.html` and `docs/index.html` have identical SHA-256 hashes.
@@ -170,7 +172,7 @@ Mentimeter is reserved for the opening prediction and the central 95% misconcept
 
 ## Decision
 
-- [x] Slides ready for review
+- [x] Slides approved by the human reviewer
 - [x] Diff contains only Stages 4-5 sources, records, and corresponding outputs
-- [ ] Presentation PR ready to merge
-- Notes: Stage 4 was approved by the human reviewer. Five Stage 5 feedback batches have been implemented and rendered; final human approval and the presentation PR remain pending.
+- [ ] Presentation PR opened and ready to merge
+- Notes: Stage 5 was approved after five feedback batches. The presentation branch is ready to be committed, published, and opened as a pull request.
