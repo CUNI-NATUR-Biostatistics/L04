@@ -110,7 +110,51 @@ Mentimeter is reserved for the opening prediction and the central 95% misconcept
 - Human review completed: [ ]
 - Credible findings resolved: [x]
 - Presentation rendered and checked: [x]
-- Reviewer decision: Pending human review of the first coherent deck.
+- Reviewer decision: Stage 4 approved; Stage 5 review is in progress.
+
+## Stage 5 review batch 1 - 2026-07-23
+
+- Added a credited NPS Old Faithful photograph and concise dataset context to the opening.
+- Added centred ANO/NE voting cards to the opening question and corrected centring on the two sampling prompts.
+- Rebuilt the linked animation so previous fitted lines remain visible in low-alpha amethyst, the current line and matching histogram marker use indigo velvet, both panels say `Hlášení`, and axis labels remain inside the frame.
+- Removed the standalone teaching-demonstration caveat slide.
+- Combined the full `summary(mod_gejzir)` output with a fragment reveal identifying the slope row, estimate, standard error, values, and units.
+- Replaced the sentence list with four cards that reveal the two semantic colour groups on click.
+- Restyled the standard-error histogram with grey bars, an indigo estimate, and orange `± 1 SE` emphasis.
+- Reordered the 95% answer reveal directly after the MCQ, added roughnotation to the correct answer and crossed-out misconceptions, and replaced the partner-convince prompt with a short statistical-headline editing game.
+- Linked coverage back to the 100 observers as 100 independently constructed intervals. The slide explicitly avoids the incorrect interpretation that 95 sample slopes should lie inside one observed interval.
+- Reworded the summary with Czech term names followed by the R output labels in parentheses and changed the closing question to evidence and generalisation.
+- Preserved the reviewer's existing wording, spacing, and slide-local code relocations; completed the same code-placement rule throughout the source.
+
+## Stage 5 review batch 2 - 2026-07-23
+
+- Standardised every student-facing use of the dataset name to `gejzír Old Faithful`.
+- Kept all four classification sentences visible after the reveal, added pale semantic card backgrounds, and presented `Velikost vztahu` and `Přesnost odhadu` as indigo and orange legend badges.
+- Moved the interaction-specific HTML and CSS directly after the slide heading.
+- Replaced abstract long-run-coverage phrasing with concrete language about how often repeated intervals capture or miss the true slope.
+- Replaced the textual 100-observer sequence with a deterministic teaching simulation of 100 separate 95% intervals. The rendered example shows 94 intervals covering the same true slope and six orange misses.
+- Rendered both fragment states in a headless browser and confirmed that the sentences remain visible before and after the semantic-colour reveal.
+
+## Stage 5 review batch 3 - 2026-07-23
+
+- Added an explicit reveal before the sampling-variability question: the same data and same model formula always produce the same estimates, because `lm()` performs no random draw in this analysis.
+- Kept the following question focused on a genuinely different set of observations, so later changes in fitted slopes cannot be mistaken for randomness inside the model-fitting function.
+
+## Stage 5 review batch 4 - 2026-07-23
+
+- Replaced the arbitrary simulation constants with the fitted slope estimate and standard error from `mod_gejzir`.
+- Labelled the fitted slope as a known model-based reference used by the teaching simulation, not as the unknown true population slope.
+- Reused the same 100 simulated estimates and fixed x-axis for 95%, 80%, and 50% intervals, so only confidence level and interval width change.
+- Added interactive 80% and 50% comparison slides. The shared simulation produces 94, 78, and 50 covering intervals respectively and expands the deck to 37 slides.
+- Visually compared all three rendered slides and verified in a browser that the 80% and 50% figures remain hidden until their reveal.
+
+## Stage 5 review batch 5 - 2026-07-23
+
+- Replaced presenter-directed wording such as `Než kliknete` with direct questions for students while retaining the fragment reveals.
+- Made all three repeated-interval figures taller and moved their common legend to the right.
+- Recoloured intervals that miss the reference slope grey, kept covering intervals amethyst, and drew the orange reference slope as the final plot layer so it remains visible.
+- Added a data-and-model card to the scientific-sentence task with the sample size, observed ranges, slope estimate, standard error, 95% interval, and units.
+- Rendered the 37-slide deck and visually checked the three interval comparisons and the revised writing task together.
 
 ## First coherent deck validation
 
@@ -129,4 +173,4 @@ Mentimeter is reserved for the opening prediction and the central 95% misconcept
 - [x] Slides ready for review
 - [x] Diff contains only Stages 4-5 sources, records, and corresponding outputs
 - [ ] Presentation PR ready to merge
-- Notes: The storyboard and linked animation design were approved by the human reviewer. The first coherent deck is rendered and ready for Stage 5 human review; no presentation PR has been opened.
+- Notes: Stage 4 was approved by the human reviewer. Five Stage 5 feedback batches have been implemented and rendered; final human approval and the presentation PR remain pending.

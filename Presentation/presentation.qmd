@@ -75,6 +75,8 @@ slides_url <-
 
 [Moodle](https://dl2.cuni.cz/course/view.php?id=106)
 
+## Gejzír Old Faithful v číslech
+
 ```{r}
 #| label: nacist-data-pro-otazku
 #| include: false
@@ -97,18 +99,67 @@ data_gejzir <-
   )
 ```
 
+:::: {.columns}
+
+::: {.column width="58%"}
+```{r}
+#| label: zobrazit-fotografii-gejziru
+#| echo: false
+include_local_figure("old_faithful_nps_1800.jpg")
+```
+:::
+
+::: {.column width="42%"}
+::: {.panel-data}
+[Data z léta 2024]{.panel-title}
+
+- `r nrow(data_gejzir)` zaznamenaných erupcí;
+- délka erupce: přibližně **1,5–5 minut**;
+- čekání na další erupci: obvykle **50–127 minut**;
+- pozorování dobrovolníků ze služby GeyserTimes.
+:::
+:::
+
+::::
+
+::: {.footer}
+Foto: [NPS/Jim Peaco](https://www.nps.gov/media/photo/view.htm?id=9C858B86-9CDB-4BB0-8C17-EA567391FAA2), public domain. Údaje: GeyserTimes a National Park Service.
+:::
+
 ## Pomůže délka erupce předpovědět další čekání?
 
 <br>
 
-::: {.box-question}
-Old Faithful právě ukončil erupci.
+::: {.box-question style="text-align: center;"}
+Gejzír Old Faithful právě ukončil erupci.
 
 **Pomůže její délka odhadnout, za jak dlouho začne další?**
 :::
 
-::: {.fragment}
-A dostal by jiný pozorovatel stejnou odpověď?
+<br>
+
+:::: {.columns}
+
+::: {.column width="48%"}
+::: {.card-amethyst style="text-align: center;"}
+[ANO]{.card-title}
+
+Délka erupce nám pomůže.
+:::
+:::
+
+::: {.column width="48%"}
+::: {.card-amethyst style="text-align: center;"}
+[NE]{.card-title}
+
+Délka erupce nám nepomůže.
+:::
+:::
+
+::::
+
+::: {.takeaway-strip style="text-align: center;"}
+Když nehlasujeme: vyberte **ANO**, nebo **NE** a připravte jednu větu na obhajobu.
 :::
 
 ## Výsledky učení
@@ -116,11 +167,13 @@ A dostal by jiný pozorovatel stejnou odpověď?
 Po absolvování této přednášky budete schopni:
 
 ::: {.incremental}
-- vysvětlit, proč různé soubory pozorování dávají různé odhady sklonu;
+- vysvětlit, proč různé soubory pozorování dávají různé odhady sklonu lineární regrese;
 - rozlišit velikost odhadovaného vztahu od přesnosti odhadu;
-- interpretovat 95% interval spolehlivosti v kontextu Old Faithful;
-- zapsat výsledek modelu s odhadem, SE, intervalem a jednotkami.
+- interpretovat 95% interval spolehlivosti;
+- zapsat výsledek modelu s odhadem, standardní chybou (SE), intervalem spolehlivosti (CI) a jednotkami.
 :::
+
+## Co už umíme z předchozí lekce?
 
 ```{r}
 #| label: pripravit-znamy-graf
@@ -172,8 +225,6 @@ ggview::save_ggplot(
 )
 ```
 
-## Co už umíme z předchozí lekce?
-
 ```{r}
 #| label: zobrazit-vsechna-pozorovani
 #| echo: false
@@ -184,7 +235,7 @@ include_local_figure("vsechna_pozorovani.png")
 Se sousedem: popište směr vztahu a jednu věc, kterou z bodů zatím nevíme.
 :::
 
-## Stejná data, ale s modelem
+## Lineární model
 
 ```{r}
 #| label: zobrazit-model-vsech-pozorovani
@@ -192,23 +243,31 @@ Se sousedem: popište směr vztahu a jednu věc, kterou z bodů zatím nevíme.
 include_local_figure("vsechna_pozorovani_model.png")
 ```
 
-::: {.fragment}
 Fialová přímka shrnuje vztah v **tomto souboru pozorování**.
+
+::: {.fragment .takeaway-strip}
+**Stejná data + stejný modelový vzorec = vždy stejné odhady.** Funkce `lm()` zde nic náhodně nelosuje.
 :::
 
 ## Dostali bychom příště stejnou přímku?
 
 <br>
 
-::: {.text-size-larger .text-bold .center}
-Představte si, že Old Faithful pozoruje někdo jiný.
+::: {.text-size-larger .text-bold .text-center}
+Představte si, že gejzír pozoruje někdo jiný v jiných intervalech.
+
+<br>
 
 Budou jeho body — a jeho sklon — úplně stejné?
 :::
 
-::: {.takeaway-strip}
+<br>
+
+::: {.takeaway-strip .text-center}
 Když nehlasujeme: napište si „ano“ nebo „ne“ a jednu větu, kterou svou volbu obhájíte.
 :::
+
+## Pepa pozoroval pouze červen
 
 ```{r}
 #| label: pripravit-pepuv-model
@@ -247,8 +306,9 @@ plot_pepa <-
   ggplot2::labs(
     x = "Délka erupce (min)",
     y = "Čekání (min)",
+    title = "Pepa: červen",
     subtitle = paste0(
-      "Pepa: červen, n = ",
+      "n = ",
       nrow(data_pepa),
       ", sklon = ",
       formatC(
@@ -271,8 +331,6 @@ ggview::save_ggplot(
 )
 ```
 
-## Pepa pozoroval pouze červen
-
 ```{r}
 #| label: zobrazit-pepuv-model
 #| echo: false
@@ -285,13 +343,14 @@ Erupce delší o jednu minutu souvisela v Pepových datech s čekáním delším
 
 ## Co čekáte od Mařenky a Karla?
 
+<br>
+
 ::: {.panel-olive}
 [Diskuze se sousedem — 2 min]{.panel-title}
 
 Mařenka pozoruje v červenci, Karel v srpnu.
 
-1. Budou všechny tři sklony stejné?
-2. Který rozdíl by vás ještě nepřekvapil?
+**Budou všechny tři sklony stejné? Proč ano/ne?**
 :::
 
 ```{r}
@@ -411,6 +470,8 @@ ggview::save_ggplot(
 
 ## Stejný postup, tři různé výsledky
 
+<br>
+
 ```{r}
 #| label: zobrazit-tri-mesice
 #| echo: false
@@ -418,6 +479,8 @@ include_local_figure("tri_mesice.png")
 ```
 
 ## Odhad není oddělený od dat
+
+<br>
 
 :::: {.columns}
 
@@ -445,6 +508,8 @@ include_local_figure("tri_mesice.png")
 
 ::::
 
+<br>
+
 ::: {.fragment}
 Proměnlivosti odhadu mezi možnými výběry říkáme **výběrová variabilita**.
 :::
@@ -453,15 +518,22 @@ Proměnlivosti odhadu mezi možnými výběry říkáme **výběrová variabilit
 
 <br>
 
-::: {.text-size-larger .text-bold .center}
+::: {.text-size-larger .text-bold .text-center}
 Každý pošle 40 erupcí, fituje stejný model a získá jeden sklon.
+
+<br>
 
 Jak budou vypadat všechny sklony společně?
 :::
 
-::: {.takeaway-strip}
+<br>
+
+::: {.takeaway-strip .text-center}
 Ve dvojici nakreslete velmi hrubý tvar, který očekáváte po 100 hlášeních.
 :::
+
+## Sledujte cestu jednoho sklonu
+
 
 ```{r}
 #| label: vytvorit-hlaseni-a-animaci
@@ -538,6 +610,15 @@ vec_frame_paths <-
         data_odhady_hlaseni |>
         dplyr::filter(hlaseni <= .x)
 
+      data_frame_predchozi_primky <-
+        data_hlaseni |>
+        dplyr::distinct(
+          hlaseni,
+          intercept,
+          odhad_sklonu
+        ) |>
+        dplyr::filter(hlaseni < .x)
+
       aktualni_sklon <-
         data_frame_hlaseni |>
         dplyr::distinct(odhad_sklonu) |>
@@ -557,6 +638,17 @@ vec_frame_paths <-
           size = 1.8
         ) +
         ggplot2::geom_abline(
+          data = data_frame_predchozi_primky,
+          mapping = ggplot2::aes(
+            intercept = intercept,
+            slope = odhad_sklonu
+          ),
+          inherit.aes = FALSE,
+          color = biostat_cols[["amethyst"]],
+          alpha = 0.10,
+          linewidth = 0.65
+        ) +
+        ggplot2::geom_abline(
           intercept = data_frame_hlaseni$intercept[[1]],
           slope = aktualni_sklon,
           color = biostat_cols[["indigo_velvet"]],
@@ -564,7 +656,8 @@ vec_frame_paths <-
         ) +
         ggplot2::coord_cartesian(
           xlim = range(data_gejzir$delka_erupce_min),
-          ylim = range(data_gejzir$cekani_min)
+          ylim = range(data_gejzir$cekani_min),
+          clip = "off"
         ) +
         ggplot2::labs(
           title = paste0("Hlášení ", .x, "/100"),
@@ -586,10 +679,10 @@ vec_frame_paths <-
           axis.title = ggplot2::element_text(size = 13),
           axis.text = ggplot2::element_text(size = 11),
           plot.margin = ggplot2::margin(
-            t = 8,
-            r = 8,
-            b = 8,
-            l = 28
+            t = 10,
+            r = 18,
+            b = 22,
+            l = 36
           )
         )
 
@@ -601,20 +694,22 @@ vec_frame_paths <-
         ggplot2::geom_histogram(
           breaks = vec_meze_histogramu,
           fill = biostat_cols[["amethyst"]],
-          color = "white"
+          color = "white",
+          alpha = 0.75
         ) +
         ggplot2::geom_vline(
           xintercept = aktualni_sklon,
-          color = biostat_cols[["orange"]],
+          color = biostat_cols[["indigo_velvet"]],
           linewidth = 1.1
         ) +
         ggplot2::coord_cartesian(
           xlim = range(vec_meze_histogramu),
-          ylim = c(0, max_cetnost_animace + 1)
+          ylim = c(0, max_cetnost_animace + 1),
+          clip = "off"
         ) +
         ggplot2::labs(
-          title = paste0("Histogram ", .x, "/100"),
-          subtitle = "nový sklon oranžově",
+          title = paste0("Hlášení ", .x, "/100"),
+          subtitle = "stejný sklon v obou grafech",
           x = NULL,
           y = NULL
         ) +
@@ -623,7 +718,13 @@ vec_frame_paths <-
           plot.title = ggplot2::element_text(size = 16),
           plot.subtitle = ggplot2::element_text(size = 13),
           axis.title = ggplot2::element_text(size = 13),
-          axis.text = ggplot2::element_text(size = 11)
+          axis.text = ggplot2::element_text(size = 11),
+          plot.margin = ggplot2::margin(
+            t = 10,
+            r = 36,
+            b = 22,
+            l = 18
+          )
         )
 
       plot_frame <-
@@ -692,7 +793,6 @@ fs::file_copy(
 )
 ```
 
-## Sledujte cestu jednoho sklonu
 
 ```{r}
 #| label: zobrazit-animaci-hlaseni
@@ -714,6 +814,8 @@ include_local_figure("geyserwatch_100_hlaseni.png")
 
 ## Co vidíme — a co ještě nevíme?
 
+<br>
+
 :::: {.columns}
 
 ::: {.column width="48%"}
@@ -727,7 +829,7 @@ include_local_figure("geyserwatch_100_hlaseni.png")
 :::
 
 ::: {.column width="48%"}
-::: {.panel-question}
+::: {.panel-question .fragment}
 [Co ještě nevíme]{.panel-title}
 
 - jak proměnlivost popsat jedním číslem;
@@ -737,14 +839,6 @@ include_local_figure("geyserwatch_100_hlaseni.png")
 :::
 
 ::::
-
-## Výuková demonstrace není sto nových pozorování
-
-::: {.box-warning}
-Pro každé hlášení jsme vybrali 40 řádků z našich zaznamenaných erupcí.
-
-Animace ukazuje **proměnlivost možných odhadů**. Neznamená, že známe skutečný populační sklon nebo že jsme získali nová data.
-:::
 
 ## Kde R ukrývá velikost a přesnost?
 
@@ -756,6 +850,8 @@ Najděte dvě čísla:
 1. které popisuje **velikost vztahu**;
 2. které popisuje **přesnost tohoto odhadu**.
 :::
+
+## Najděte řádek sklonu
 
 ```{r}
 #| label: fitovat-model-vsech-erupci
@@ -782,8 +878,9 @@ standardni_chyba_sklonu <-
   ]
 ```
 
-## Najděte řádek sklonu
+:::: {.columns}
 
+::: {.column width="58%" .text-size-smaller}
 ```{r}
 #| label: zobrazit-souhrn-modelu
 #| echo: true
@@ -796,47 +893,151 @@ mod_gejzir <-
 
 summary(mod_gejzir)
 ```
+:::
 
-## Dvě čísla, dvě otázky
+::: {.column width="40%"}
 
-:::: {.columns}
+<br>
+<br>
 
-::: {.column width="48%"}
+::: {.fragment}
 ::: {.panel-result}
-[Estimate = `r round(odhad_sklonu, 2)`]{.panel-title}
+[Řádek]{.panel-title}
 
-**Jak velký vztah jsme odhadli?**
-
-Erupce delší o jednu minutu souvisela s čekáním delším přibližně o `r round(odhad_sklonu, 2)` minuty.
-:::
+`delka_erupce_min` = **sklon**
 :::
 
-::: {.column width="48%"}
-::: {.panel-question}
-[Std. Error = `r round(standardni_chyba_sklonu, 2)`]{.panel-title}
+::: {.panel-amethyst}
+[Odhad (Estimate)]{.panel-title}
 
-**Jak přesný je odhad sklonu?**
+**`r round(odhad_sklonu, 2)`** min čekání / min erupce
+:::
 
-Standardní chyba popisuje typickou velikost změny odhadu mezi srovnatelnými výběry.
+::: {.panel-orange}
+[Standardní chyba (Std. Error)]{.panel-title}
+
+**`r round(standardni_chyba_sklonu, 2)`** min čekání / min erupce
+:::
 :::
 :::
 
 ::::
 
-## Velikost vztahu, nebo přesnost?
+## Velikost [vztahu]{.text-hgl-indigo_velvet} nebo [přesnost]{.text-hgl-orange}?
 
-::: {.panel-olive}
-[Přiřaďte každou větu]{.panel-title}
+<br>
 
-- „O kolik minut se změní čekání?“
-- „Jak moc by se odhad měnil mezi výběry?“
-- „Je vztah prudký, nebo pozvolný?“
-- „Jak těsně se možné odhady shlukují?“
+<style>
+.reveal .classification-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.reveal .classification-card {
+  position: relative;
+  min-height: 5.8rem;
+  padding: 0.75rem 1rem;
+  overflow: hidden;
+  border: 2px solid #8A8A8A;
+  border-radius: 0.5rem;
+  background: #F0EDE8;
+  font-size: 0.84em;
+}
+
+.reveal .classification-prompt {
+  position: relative;
+  z-index: 2;
+  display: block;
+}
+
+.reveal .classification-reveal {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+}
+
+.reveal .classification-answer {
+  position: absolute;
+  z-index: 3;
+  bottom: 0.55rem;
+  left: 1rem;
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.28rem;
+  font-size: 0.82em;
+  font-weight: 700;
+}
+
+.reveal .classification-size-bg {
+  background: #EDE3F2;
+}
+
+.reveal .classification-precision-bg {
+  background: #FFF4D6;
+}
+
+.reveal .classification-size {
+  color: #FFFFFF;
+  background: #5D2890;
+}
+
+.reveal .classification-precision {
+  color: #2E2E2E;
+  background: #F3A712;
+}
+</style>
+
+::::: {.classification-grid}
+:::: {.classification-card}
+[]{.fragment .classification-reveal .classification-size-bg data-fragment-index="0"}
+
+[„O kolik minut se změní čekání?“]{.classification-prompt}
+
+::: {.fragment .classification-answer .classification-size data-fragment-index="0"}
+Velikost vztahu
 :::
+::::
+
+:::: {.classification-card}
+[]{.fragment .classification-reveal .classification-precision-bg data-fragment-index="0"}
+
+[„Jak moc by se odhad měnil mezi výběry?“]{.classification-prompt}
+
+::: {.fragment .classification-answer .classification-precision data-fragment-index="0"}
+Přesnost odhadu
+:::
+::::
+
+:::: {.classification-card}
+[]{.fragment .classification-reveal .classification-size-bg data-fragment-index="0"}
+
+[„Je vztah prudký, nebo pozvolný?“]{.classification-prompt}
+
+::: {.fragment .classification-answer .classification-size data-fragment-index="0"}
+Velikost vztahu
+:::
+::::
+
+:::: {.classification-card}
+[]{.fragment .classification-reveal .classification-precision-bg data-fragment-index="0"}
+
+[„Jak těsně se možné odhady shlukují?“]{.classification-prompt}
+
+::: {.fragment .classification-answer .classification-precision data-fragment-index="0"}
+Přesnost odhadu
+:::
+::::
+:::::
+
+<br>
 
 ::: {.takeaway-strip}
-Se sousedem vytvořte dvě skupiny: **velikost vztahu** a **přesnost odhadu**.
+Ve dvojici, přiřaďte věty
 :::
+
+## Jedna standardní chyba jako měřítko
+
 
 ```{r}
 #| label: pripravit-histogram-se
@@ -850,8 +1051,9 @@ plot_histogram_se_base <-
   ) +
   ggplot2::geom_histogram(
     breaks = vec_meze_histogramu,
-    fill = biostat_cols[["amethyst"]],
-    color = "white"
+    fill = biostat_cols[["grey_olive"]],
+    color = "white",
+    alpha = 0.60
   )
 
 max_cetnost_se <-
@@ -871,7 +1073,7 @@ plot_histogram_se <-
   plot_histogram_se_base +
   ggplot2::geom_vline(
     xintercept = odhad_sklonu,
-    color = biostat_cols[["orange"]],
+    color = biostat_cols[["indigo_velvet"]],
     linetype = "dashed",
     linewidth = 1
   ) +
@@ -883,7 +1085,7 @@ plot_histogram_se <-
       y = y
     ),
     height = 0.7,
-    color = biostat_cols[["indigo_velvet"]],
+    color = biostat_cols[["orange"]],
     linewidth = 1.6
   ) +
   ggplot2::geom_point(
@@ -892,15 +1094,25 @@ plot_histogram_se <-
       x = odhad,
       y = y
     ),
-    color = biostat_cols[["orange"]],
+    color = biostat_cols[["indigo_velvet"]],
     size = 4
   ) +
   ggplot2::annotate(
     geom = "text",
     x = odhad_sklonu,
-    y = max_cetnost_se + 2.6,
-    label = "odhad ± 1 SE",
+    y = max_cetnost_se + 3,
+    label = "odhad",
     color = biostat_cols[["indigo_velvet"]],
+    hjust = 1.05,
+    size = 5
+  ) +
+  ggplot2::annotate(
+    geom = "text",
+    x = odhad_sklonu,
+    y = max_cetnost_se + 3,
+    label = " ± 1 SE",
+    color = biostat_cols[["orange"]],
+    hjust = -0.05,
     size = 5
   ) +
   ggplot2::scale_y_continuous(
@@ -923,8 +1135,6 @@ ggview::save_ggplot(
 )
 ```
 
-## Jedna standardní chyba jako měřítko
-
 ```{r}
 #| label: zobrazit-histogram-se
 #| echo: false
@@ -933,9 +1143,15 @@ include_local_figure("histogram_a_se.png")
 
 ## Co ještě neplyne?
 
+<br>
+<br>
+
 ::: {.box-warning}
 Rozsah **odhad ± jedna standardní chyba** není interval spolehlivosti.
 :::
+
+<br>
+<br>
 
 ::: {.fragment}
 Je to měřítko přesnosti, ze kterého teprve vytvoříme interval určený pro interpretaci nejistoty.
@@ -945,7 +1161,7 @@ Je to měřítko přesnosti, ze kterého teprve vytvoříme interval určený pr
 
 <br>
 
-::: {.text-size-larger .text-bold .center}
+::: {.text-size-larger .text-bold .text-center}
 Máme odhad a jeho standardní chybu.
 
 Jak z nich vytvořit srozumitelný rozsah možných velikostí vztahu?
@@ -1128,10 +1344,13 @@ include_local_figure("interval_95.png")
 ```
 
 ::: {.fragment}
-Pro Old Faithful: **[`r round(dolni_interval, 2)`; `r round(horni_interval, 2)`] minuty čekání na minutu erupce**.
+Pro gejzír Old Faithful: **[`r round(dolni_interval, 2)`; `r round(horni_interval, 2)`] minuty čekání na minutu erupce**.
 :::
 
 ## Co se stane při vyšší hladině?
+
+<br>
+<br>
 
 ::: {.panel-olive}
 [Seřaďte intervaly od nejužšího]{.panel-title}
@@ -1140,6 +1359,9 @@ Pro Old Faithful: **[`r round(dolni_interval, 2)`; `r round(horni_interval, 2)`]
 
 Musí vyšší požadované pokrytí vést k užšímu, nebo širšímu intervalu?
 :::
+
+
+<br>
 
 ::: {.takeaway-strip}
 Ve dvojici seřaďte čtyři hladiny a připravte jedno vysvětlení.
@@ -1154,20 +1376,26 @@ include_local_figure("porovnani_intervalu.png")
 ```
 
 ::: {.fragment}
-Vyšší požadované dlouhodobé pokrytí → širší interval.
+Čím častěji má postup zachytit skutečný sklon, tím širší musí být interval.
 :::
 
 ## Užší neznamená automaticky přesnější data
+
+<br>
 
 ::: {.box-rule}
 Intervaly porovnáváme jako přesnější a méně přesné pouze při **stejné hladině spolehlivosti**.
 :::
 
+<br>
+
 ::: {.fragment}
-Snížit hladinu z 95 % na 80 % znamená přijmout nižší dlouhodobé pokrytí — nikoli získat více informace z dat.
+Snížením hladiny z 95 % na 80 % získáme užší interval, ale častěji mineme skutečný sklon. Z dat jsme nezískali více informace.
 :::
 
 ## Co znamená „95 %“?
+
+<br>
 
 :::: {.columns}
 
@@ -1188,7 +1416,7 @@ Skutečný sklon má po výpočtu 95% pravděpodobnost být uvnitř.
 :::
 
 ::: {.column width="31%"}
-::: {.card-indigo}
+::: {.card-indigo .rn-circle-orange}
 [C]{.card-title}
 
 Při mnoha opakováních pokryje skutečný sklon přibližně 95 % vytvořených intervalů.
@@ -1197,29 +1425,21 @@ Při mnoha opakováních pokryje skutečný sklon přibližně 95 % vytvořenýc
 
 ::::
 
+<br>
+
 ::: {.takeaway-strip}
 Když nehlasujeme: zapište písmeno a podtrhněte slova, která rozhodla.
 :::
 
-## Přesvědčte souseda
+## 95 % patří k postupu
 
 <br>
-
-::: {.panel-olive}
-[Partner convince — 2 min]{.panel-title}
-
-Neříkejte jen písmeno.
-
-Vysvětlete, **k čemu se číslo 95 % vztahuje** a proč zbývající možnosti znějí lákavě.
-:::
-
-## 95 % patří k postupu
 
 :::: {.columns}
 
 ::: {.column width="48%"}
 ::: {.panel-result}
-[Lepší interpretace]{.panel-title}
+[Správná odpověď]{.panel-title}
 
 Při mnoha srovnatelných opakováních pokryje skutečný sklon přibližně 95 % takto vytvořených intervalů.
 :::
@@ -1229,19 +1449,278 @@ Při mnoha srovnatelných opakováních pokryje skutečný sklon přibližně 95
 ::: {.panel-warning}
 [Neříkáme]{.panel-title}
 
-- 95 % pozorování je uvnitř;
-- tento interval má 95% šanci obsahovat pravdu;
-- interval dokazuje určitou hodnotu.
+- [95 % pozorování je uvnitř]{.rn-cross-red};
+- [tento interval má 95% šanci obsahovat pravdu]{.rn-cross-red};
+- [interval dokazuje určitou hodnotu]{.rn-cross-red}.
 :::
 :::
 
 ::::
 
+## Statistická redakce: opravte titulek
+
+<br>
+
+::: {.panel-olive}
+[Dvojice — 90 sekund]{.panel-title}
+
+Redakce napsala:
+
+> „Náš interval má 95% šanci obsahovat skutečný sklon.“
+
+Přepište titulek do **jedné přesné věty o postupu**. Maximálně 15 slov.
+:::
+
+## Sto pozorovatelů, sto 95% intervalů
+
+```{r}
+#| label: pripravit-sto-intervalu
+#| echo: false
+#| message: false
+#| warning: false
+set.seed(100)
+
+referencni_sklon_simulace <- odhad_sklonu
+referencni_se_simulace <- standardni_chyba_sklonu
+
+data_simulovane_odhady <-
+  tibble::tibble(
+    pozorovatel = seq_len(100),
+    odhad_sklonu =
+      stats::rnorm(
+        n = 100,
+        mean = referencni_sklon_simulace,
+        sd = referencni_se_simulace
+      )
+  )
+
+data_sto_intervalu <-
+  tidyr::crossing(
+    data_simulovane_odhady,
+    hladina = c(0.95, 0.80, 0.50)
+  ) |>
+  dplyr::mutate(
+    kriticka_hodnota =
+      stats::qnorm(1 - (1 - hladina) / 2),
+    dolni_mez =
+      odhad_sklonu -
+      kriticka_hodnota * referencni_se_simulace,
+    horni_mez =
+      odhad_sklonu +
+      kriticka_hodnota * referencni_se_simulace,
+    vysledek = dplyr::if_else(
+      dolni_mez <= referencni_sklon_simulace &
+        horni_mez >= referencni_sklon_simulace,
+      "Pokrývá referenční sklon",
+      "Míjí referenční sklon"
+    )
+  )
+
+pocet_pokrytych_95 <-
+  data_sto_intervalu |>
+  dplyr::filter(
+    hladina == 0.95,
+    vysledek == "Pokrývá referenční sklon"
+  ) |>
+  nrow()
+
+pocet_pokrytych_80 <-
+  data_sto_intervalu |>
+  dplyr::filter(
+    hladina == 0.80,
+    vysledek == "Pokrývá referenční sklon"
+  ) |>
+  nrow()
+
+pocet_pokrytych_50 <-
+  data_sto_intervalu |>
+  dplyr::filter(
+    hladina == 0.50,
+    vysledek == "Pokrývá referenční sklon"
+  ) |>
+  nrow()
+
+rozsah_osy_intervalu <-
+  range(
+    data_sto_intervalu$dolni_mez[
+      data_sto_intervalu$hladina == 0.95
+    ],
+    data_sto_intervalu$horni_mez[
+      data_sto_intervalu$hladina == 0.95
+    ]
+  )
+
+vytvorit_plot_sto_intervalu <- function(zvolena_hladina) {
+  data_pro_plot <-
+    data_sto_intervalu |>
+    dplyr::filter(hladina == zvolena_hladina)
+
+  ggplot2::ggplot(
+    data = data_pro_plot,
+    mapping = ggplot2::aes(
+      y = pozorovatel,
+      x = odhad_sklonu,
+      xmin = dolni_mez,
+      xmax = horni_mez,
+      color = vysledek
+    )
+  ) +
+    ggplot2::geom_errorbarh(
+      height = 0,
+      linewidth = 0.65,
+      alpha = 0.9
+    ) +
+    ggplot2::geom_point(size = 1.2) +
+    ggplot2::geom_vline(
+      data = tibble::tibble(
+        referencni_sklon = referencni_sklon_simulace,
+        legenda = "Referenční sklon"
+      ),
+      mapping = ggplot2::aes(
+        xintercept = referencni_sklon,
+        color = legenda
+      ),
+      inherit.aes = FALSE,
+      linewidth = 1.2
+    ) +
+    ggplot2::scale_color_manual(
+      values = c(
+        "Referenční sklon" =
+          biostat_cols[["orange"]],
+        "Pokrývá referenční sklon" =
+          biostat_cols[["amethyst"]],
+        "Míjí referenční sklon" =
+          biostat_cols[["grey_olive"]]
+      ),
+      breaks = c(
+        "Referenční sklon",
+        "Pokrývá referenční sklon",
+        "Míjí referenční sklon"
+      )
+    ) +
+    ggplot2::scale_x_continuous(
+      limits = rozsah_osy_intervalu
+    ) +
+    ggplot2::scale_y_continuous(
+      limits = c(0, 101),
+      expand = ggplot2::expansion(mult = c(0, 0))
+    ) +
+    ggplot2::labs(
+      x = "Sklon (min čekání / min erupce)",
+      y = NULL,
+      color = NULL
+    ) +
+    theme_biostat(base_size = 10) +
+    ggplot2::theme(
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank(),
+      panel.grid = ggplot2::element_blank(),
+      legend.position = "right"
+    ) +
+    ggview::canvas(
+      width = 1600,
+      height = 760,
+      units = "px"
+    )
+}
+
+plot_sto_intervalu_95 <-
+  vytvorit_plot_sto_intervalu(0.95)
+
+plot_sto_intervalu_80 <-
+  vytvorit_plot_sto_intervalu(0.80)
+
+plot_sto_intervalu_50 <-
+  vytvorit_plot_sto_intervalu(0.50)
+
+ggview::save_ggplot(
+  plot = plot_sto_intervalu_95,
+  file = here::here(
+    path_materials,
+    "sto_intervalu_pokryti.png"
+  )
+)
+
+ggview::save_ggplot(
+  plot = plot_sto_intervalu_80,
+  file = here::here(
+    path_materials,
+    "sto_intervalu_pokryti_80.png"
+  )
+)
+
+ggview::save_ggplot(
+  plot = plot_sto_intervalu_50,
+  file = here::here(
+    path_materials,
+    "sto_intervalu_pokryti_50.png"
+  )
+)
+```
+
+::: {.text-center}
+Jako známý referenční sklon používáme odhad z modelu (**`r round(referencni_sklon_simulace, 2)`**) a jeho SE (**`r round(referencni_se_simulace, 2)`**).
+:::
+
+```{r}
+#| label: zobrazit-sto-intervalu
+#| echo: false
+#| out-width: "88%"
+include_local_figure("sto_intervalu_pokryti.png")
+```
+
+::: {.takeaway-strip}
+**`r pocet_pokrytych_95` ze 100** 95% intervalů pokrývá referenční sklon. V reálných datech skutečný populační sklon neznáme.
+:::
+
+## Stejných sto pozorovatelů, 80% intervaly
+
+::: {.text-center}
+**Co se stane s šířkou intervalů a počtem šedých intervalů?**
+:::
+
+::: {.fragment}
+```{r}
+#| label: zobrazit-sto-intervalu-80
+#| echo: false
+#| out-width: "88%"
+include_local_figure("sto_intervalu_pokryti_80.png")
+```
+
+::: {.takeaway-strip}
+**`r pocet_pokrytych_80` ze 100** 80% intervalů pokrývá referenční sklon. Intervaly jsou užší a více z nich referenční sklon mine.
+:::
+:::
+
+## Stejných sto pozorovatelů, 50% intervaly
+
+::: {.text-center}
+**Kolik intervalů asi zasáhne oranžovou referenční čáru?**
+:::
+
+::: {.fragment}
+```{r}
+#| label: zobrazit-sto-intervalu-50
+#| echo: false
+#| out-width: "88%"
+include_local_figure("sto_intervalu_pokryti_50.png")
+```
+
+::: {.takeaway-strip}
+**`r pocet_pokrytych_50` ze 100** 50% intervalů pokrývá referenční sklon. Hladina popisuje úspěšnost postupu při opakování.
+:::
+:::
+
 ## Vraťme se k hlavní otázce
+
+<br>
 
 ::: {.box-question}
 **Pomůže délka právě skončené erupce odhadnout, za jak dlouho začne další?**
 :::
+
+<br>
+<br>
 
 :::: {.columns}
 
@@ -1265,6 +1744,10 @@ Jak pomocí dat hodnotit konkrétní tvrzení o parametru modelu?
 
 ## Napište jednu vědeckou větu
 
+:::: {.columns}
+
+::: {.column width="47%"}
+
 ::: {.panel-olive}
 [Dvojice — 3 min]{.panel-title}
 
@@ -1276,22 +1759,48 @@ Vaše věta musí obsahovat:
 - jednotky;
 - opatrný jazyk bez kauzálního tvrzení.
 :::
+:::
+
+::: {.column width="49%"}
+::: {.panel-data}
+[Data a výsledek modelu]{.panel-title}
+
+- **117 erupcí** gejzíru Old Faithful z léta 2024;
+- délka erupce: přibližně **1,5–5 min**;
+- čekání: přibližně **50–127 min**;
+- odhad sklonu: **`r round(odhad_sklonu, 2)`**;
+- SE: **`r round(standardni_chyba_sklonu, 2)`**;
+- 95% CI: **[`r round(dolni_interval, 2)`; `r round(horni_interval, 2)`]**;
+- jednotky: min čekání / min erupce.
+:::
+:::
+
+::::
+
+::: {.takeaway-strip .fragment}
+Vyměňte si větu se sousední dvojicí: jsou v ní proměnné, jednotky a nejistota?
+:::
 
 ## Jedna možná věta
+
+<br>
+<br>
 
 ::: {.box-result}
 Erupce delší o jednu minutu souvisela s čekáním delším o **`r round(odhad_sklonu, 2)` minuty** (odhad sklonu = `r round(odhad_sklonu, 2)`, SE = `r round(standardni_chyba_sklonu, 2)`, 95% CI [`r round(dolni_interval, 2)`, `r round(horni_interval, 2)`] minuty čekání na minutu erupce).
 :::
 
-::: {.takeaway-strip}
-Vyměňte si větu se sousední dvojicí: jsou v ní proměnné, jednotky a nejistota?
-:::
 
 ## Co ještě omezuje náš závěr?
+
+<br>
+<br>
 
 ::: {.box-warning}
 Dobrovolníci nepozorovali dokonale náhodný výběr všech erupcí a blízké erupce mohou být časově propojené.
 :::
+
+<br>
 
 ::: {.fragment}
 Výsledek je opatrný odhad vztahu v zachyceném procesu — ne neměnný přírodní zákon.
@@ -1301,18 +1810,18 @@ Výsledek je opatrný odhad vztahu v zachyceném procesu — ne neměnný přír
 
 ::: {.incremental}
 - Jiná pozorování mohou dát jiný odhad stejného vztahu.
-- `Estimate` popisuje velikost vztahu; `Std. Error` přesnost odhadu.
+- Odhad (`Estimate`) popisuje velikost vztahu; standardní chyba (`Std. Error`) přesnost odhadu.
 - Interval spolehlivosti vyjadřuje rozsah efektů slučitelných s daty a modelem.
-- Hodnota 95 % popisuje dlouhodobé pokrytí opakovaně vytvářených intervalů.
+- Hodnota 95 % říká, jak často opakovaně vytvářený interval zachytí skutečný sklon.
 - Vědecký závěr spojuje interpretaci, čísla, jednotky a omezení dat.
 :::
 
-## Co budeme potřebovat příště?
+## Je vztah skutečný — a zobecnitelný?
 
 <br>
 
-::: {.text-size-larger .text-bold .center}
+::: {.text-size-larger .text-bold .text-center}
 Umíme popsat velikost efektu a jeho nejistotu.
 
-**Jak pomocí dat hodnotit konkrétní tvrzení o parametru modelu?**
+**Jak silné máme důkazy, že vztah není jen náhodným výsledkem tohoto výběru — a lze jej zobecnit?**
 :::
