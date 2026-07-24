@@ -1147,8 +1147,12 @@ Věta nejprve interpretuje vztah v běžném jazyce a teprve potom uvádí kompa
 
 ### Připomenutí kvantilů
 
-<!-- TODO: add slug kvantil to pojmy.yaml -->
-V jedné z předchozích lekcí jsme pomocí **kvantilů** (anglicky *quantiles*) rozdělovali seřazené hodnoty na části. Například 2,5% kvantil odděluje nejnižších 2,5 % hodnot a 97,5% kvantil odděluje nejvyšších 2,5 %. Mezi těmito dvěma hranicemi proto leží prostředních 95 % `r render_glossary_term("rozdeleni", display = "rozdělení")`.
+V jedné z předchozích lekcí jsme pomocí
+`r render_glossary_term("kvantil", display = "kvantilů")` (anglicky
+*quantiles*) rozdělovali seřazené hodnoty na části. Například 2,5% kvantil
+odděluje nejnižších 2,5 % hodnot a 97,5% kvantil odděluje nejvyšších 2,5 %.
+Mezi těmito dvěma hranicemi proto leží prostředních 95 %
+`r render_glossary_term("rozdeleni", display = "rozdělení")`.
 
 ```{r}
 #| label: pripravit-kvantily-a-intervaly-sklonu
