@@ -20,6 +20,7 @@ format:
     number-sections: true
     output-file: "skripta_raw.pdf"
     include-in-header: "skripta_theme.typ"
+    date: last-modified
 date: 2026/07/21
 date-format: long
 date-modified: last-modified
@@ -158,6 +159,14 @@ Old Faithful leží v oblasti Upper Geyser Basin v Yellowstonském národním pa
 
 Pro analýzu použijeme `r nrow(data_gejzir)` pozorování od `r format(x = min(data_gejzir$date), format = "%d. %m. %Y")` do `r format(x = max(data_gejzir$date), format = "%d. %m. %Y")`. Dobrovolníci údaje zaznamenali prostřednictvím služby [GeyserTimes](https://geysertimes.org/). Z jejího [oficiálního archivu erupcí Old Faithful](https://geysertimes.org/archive/geysers/Old_Faithful_eruptions.tsv.gz) jsme připravili výukovou tabulku.
 
+R už obsahuje klasický dataset `faithful`, který lze načíst příkazem `data(faithful)`. Pro hlavní statistické kroky by stačil: sloupec `eruptions` obsahuje délku erupce a `waiting` čekání na další erupci. V této lekci přesto používáme archiv GeyserTimes ze tří záměrných důvodů:
+
+1. **Datum a čas:** archiv obsahuje časové údaje, takže můžeme ukázat, že různé měsíce vedou k různým odhadům.
+2. **Rozsáhlejší a aktualizovatelný zdroj:** celý archiv nabízí více záznamů než klasický dataset v R; pro přehlednou výuku z něj záměrně vybíráme `r nrow(data_gejzir)` pozorování ze tří konkrétních měsíců roku 2024.
+3. **Reprodukovatelné získání dat:** doplňující část ukazuje cestu od prvotního zdroje k analyzované tabulce, tedy dovednost použitelnou i mimo tento příklad.
+
+Všechny základní příklady bodového grafu, lineárního modelu, standardní chyby a intervalu spolehlivosti lze zopakovat také s `data(faithful)` po přejmenování `eruptions` na `delka_erupce_min` a `waiting` na `cekani_min`. Pouze příklady rozdělené podle data nebo měsíce potřebují časové údaje z GeyserTimes.
+
 Každé pozorování popisuje jednu erupci a čekání na erupci následující. Budou nás zajímat dvě `r render_glossary_term("numericka-promenna", display = "numerické proměnné")`:
 
 - `delka_erupce_min`: délka právě pozorované erupce v minutách — náš `r render_glossary_term("prediktor", display = "prediktor")`;
@@ -169,6 +178,24 @@ Každé pozorování popisuje jednu erupci a čekání na erupci následující.
 ## Doplňující
 
 **Tuto část můžete bez obav přeskočit. Pro pochopení lekce není potřeba rozumět jednotlivým řádkům ani kód spouštět.** Pro další práci stačí vědět, že výsledkem je připravený objekt `data_gejzir`.
+
+Pokud si chcete základní analýzu vyzkoušet bez stahování, následující krátký blok vytvoří stejně pojmenované proměnné z datasetu dodávaného s R:
+
+```{r}
+#| label: alternativa-faithful-v-r
+#| eval: false
+#| code-fold: true
+#| code-summary: "Ukázat alternativu s data(faithful)"
+# Načteme klasický dataset dodávaný s R
+data(faithful)
+
+# Přejmenujeme oba sloupce podle výukového příběhu
+data_gejzir <-
+  data.frame(
+    delka_erupce_min = faithful$eruptions,
+    cekani_min = faithful$waiting
+  )
+```
 
 Následující rozbalovací blok obsahuje úplný záznam stažení a přípravy dat. Jsou v něm i některé pokročilejší kroky: načtení komprimovaného souboru, převod časových údajů, výběr primárních záznamů, výpočet čekání do další erupce a kontrola počtu řádků.
 
@@ -186,18 +213,21 @@ Soubor lze stáhnout kliknutím na odkaz na archiv. Kód níže se jej pokusí s
 #| eval: false
 #| code-fold: true
 #| code-summary: "Ukázat kód pro stažení a přípravu dat"
+# Sestavíme adresu oficiálního archivu Old Faithful
 archive_url <-
   paste0(
     "https://geysertimes.org/archive/geysers/",
     "Old_Faithful_eruptions.tsv.gz"
   )
 
+# Určíme, kam se stažený soubor uloží v projektu
 archive_file <-
   here::here(
     "data",
     "Old_Faithful_eruptions.tsv.gz"
   )
 
+# Soubor stáhneme jen tehdy, když jej ještě nemáme
 if (!file.exists(archive_file)) {
   download.file(
     url = archive_url,
@@ -206,6 +236,7 @@ if (!file.exists(archive_file)) {
   )
 }
 
+# Načteme archiv, pojmenujeme potřebné sloupce a převedeme čas
 data_archive <-
   readr::read_tsv(
     file = gzfile(description = archive_file),
@@ -228,6 +259,7 @@ data_archive <-
     webcam = wc == 1,
     duration = as.numeric(duration_seconds)
   ) |>
+  # Ponecháme pouze přesně zaznamenané hlavní erupce
   dplyr::filter(
     is.na(primary_id) | eruption_id == primary_id,
     exact,
@@ -246,6 +278,7 @@ data_archive <-
     )
   )
 
+# Vybereme tři měsíce a proměnné potřebné pro výuku
 data_gejzir <-
   data_archive |>
   dplyr::filter(
@@ -272,6 +305,7 @@ data_gejzir <-
     delka_erupce_min = duration / 60
   )
 
+# Zaznamenáme tři předem prověřená odlehlá pozorování
 outlier_ids <-
   c(
     1461337, # červen
@@ -283,12 +317,14 @@ data_gejzir <-
   data_gejzir |>
   dplyr::filter(!eruption_id %in% outlier_ids)
 
+# Ověříme, že příprava dat skončila očekávaným počtem řádků
 expected_rows <- 117L
 
 if (nrow(data_gejzir) != expected_rows) {
   stop("Zdrojový soubor má neočekávaný počet řádků.")
 }
 
+# Uložíme stabilní výukovou tabulku pro další renderování
 readr::write_csv(
   x = dplyr::select(data_gejzir, -delka_erupce_min),
   file = here::here("data", "old_faithful_2024.csv"),
@@ -385,6 +421,7 @@ Tento technický krok pouze oddělí červnová pozorování od ostatních měs�
 #| echo: true
 #| eval: true
 data_pepa <-
+  # Ponecháme jen řádky, jejichž datum patří do června
   data_gejzir[
     as.integer(
       format(x = data_gejzir$date, format = "%m")
@@ -400,11 +437,13 @@ Na připravených červnových datech potom fitujeme model:
 #| echo: true
 #| eval: true
 mod_pepa <-
+  # Odhadneme čekání podle délky erupce pouze z Pepových dat
   lm(
     formula = cekani_min ~ delka_erupce_min,
     data = data_pepa
   )
 
+# Zobrazíme odhadnutý intercept a sklon
 coef(mod_pepa)
 ```
 
@@ -748,6 +787,7 @@ Většina sklonů leží ve společné oblasti, ale nejsou totožné. Nyní tuto
 #| label: fitovat-model-vsech-erupci
 #| include: false
 mod_gejzir <-
+  # Fitujeme stejný vztah nad všemi připravenými pozorováními
   lm(
     formula = cekani_min ~ delka_erupce_min,
     data = data_gejzir
@@ -781,6 +821,7 @@ mod_gejzir <-
     data = data_gejzir
   )
 
+# Souhrn obsahuje odhad sklonu i jeho standardní chybu
 summary(mod_gejzir)
 ```
 
@@ -1350,7 +1391,13 @@ Obecně zapisujeme $U = \hat{\beta}_1 + M$. Zde $U$ označuje horní hranici.
 $$
 \text{95% interval}
 =
-[\text{dolní hranice};\,\text{horní hranice}]
+\left[\text{dolní hranice};\,\text{horní hranice}\right].
+$$
+
+Teprve potom dosadíme obě vypočtené hranice:
+
+$$
+\text{95% interval}
 =
 \left[`r round(x = dolni_interval, digits = 2)`\,;
 `r round(x = horni_interval, digits = 2)`\right].
@@ -1446,6 +1493,132 @@ ggplot2::ggplot(
 
 Vraťme se ke stu návštěvníkům GeyserWatch. Každý z nich by ze svého souboru pozorování získal **jeden sklon a jeden interval**. Kdyby tento postup opakovalo mnoho srovnatelných návštěvníků, přibližně 95 ze 100 jejich **95% intervalů** by pokrylo stejnou skutečnou hodnotu sklonu a přibližně 5 by ji minulo.
 
+Následující trojice panelů používá stejných 100 simulovaných pozorovatelů a mění pouze hladinu intervalu. Jako známou srovnávací hodnotu používáme odhad sklonu z našeho modelu. Je to **modelová referenční hodnota pro demonstraci**, nikoli známý skutečný populační sklon.
+
+```{r}
+#| label: porovnat-pokryti-sta-intervalu
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-width: 10
+#| fig-height: 5.8
+#| fig-cap: >
+#|   Stejných 100 simulovaných odhadů s 95%, 80% a 50% intervaly.
+#|   Fialové intervaly pokrývají oranžovou modelovou referenční hodnotu;
+#|   šedé ji míjejí. Nižší hladina vytváří užší intervaly a nižší pokrytí.
+set.seed(100)
+
+referencni_sklon_simulace <- odhad_sklonu
+referencni_se_simulace <- standardni_chyba_sklonu
+
+data_simulovane_odhady <-
+  data.frame(
+    pozorovatel = seq_len(100),
+    odhad_sklonu = rnorm(
+      n = 100,
+      mean = referencni_sklon_simulace,
+      sd = referencni_se_simulace
+    )
+  )
+
+data_pokryti_intervalu <-
+  tidyr::crossing(
+    data_simulovane_odhady,
+    hladina = c(0.95, 0.80, 0.50)
+  ) |>
+  # Z času dvou sousedních erupcí vypočítáme dobu čekání
+  dplyr::mutate(
+    kriticka_hodnota = qnorm(1 - (1 - hladina) / 2),
+    dolni_mez =
+      odhad_sklonu -
+        kriticka_hodnota * referencni_se_simulace,
+    horni_mez =
+      odhad_sklonu +
+        kriticka_hodnota * referencni_se_simulace,
+    pokryva =
+      dolni_mez <= referencni_sklon_simulace &
+        horni_mez >= referencni_sklon_simulace
+  )
+
+data_popisky_pokryti <-
+  data_pokryti_intervalu |>
+  dplyr::group_by(hladina) |>
+  dplyr::summarise(
+    pocet_pokrytych = sum(pokryva),
+    .groups = "drop"
+  ) |>
+  dplyr::mutate(
+    panel = paste0(
+      formatC(hladina * 100, format = "f", digits = 0),
+      "% interval: ",
+      pocet_pokrytych,
+      " ze 100"
+    )
+  )
+
+data_pokryti_intervalu <-
+  data_pokryti_intervalu |>
+  dplyr::left_join(
+    data_popisky_pokryti,
+    by = "hladina"
+  ) |>
+  dplyr::mutate(
+    panel = factor(
+      panel,
+      levels = data_popisky_pokryti$panel[
+        match(
+          c(0.95, 0.80, 0.50),
+          data_popisky_pokryti$hladina
+        )
+      ]
+    )
+  )
+
+ggplot2::ggplot(
+  data = data_pokryti_intervalu,
+  mapping = ggplot2::aes(
+    x = odhad_sklonu,
+    y = pozorovatel,
+    xmin = dolni_mez,
+    xmax = horni_mez,
+    colour = pokryva
+  )
+) +
+  ggplot2::geom_errorbarh(
+    height = 0,
+    linewidth = 0.35,
+    alpha = 0.8
+  ) +
+  ggplot2::geom_point(size = 0.7) +
+  ggplot2::geom_vline(
+    xintercept = referencni_sklon_simulace,
+    colour = biostat_cols[["orange"]],
+    linewidth = 0.9
+  ) +
+  ggplot2::facet_wrap(
+    facets = ggplot2::vars(panel),
+    nrow = 1
+  ) +
+  ggplot2::scale_colour_manual(
+    values = c(
+      "TRUE" = biostat_cols[["indigo_velvet"]],
+      "FALSE" = biostat_cols[["grey_olive"]]
+    ),
+    guide = "none"
+  ) +
+  ggplot2::labs(
+    x = "Odhad sklonu a interval",
+    y = "Pozorovatel"
+  ) +
+  theme_biostat(base_size = 10) +
+  ggplot2::theme(
+    axis.text.y = ggplot2::element_blank(),
+    axis.ticks.y = ggplot2::element_blank(),
+    panel.grid = ggplot2::element_blank(),
+    strip.text = ggplot2::element_text(size = 9)
+  )
+```
+
 Je důležité rozlišit dvě věty:
 
 - U kvantilů histogramu jsme vyznačili oblast, ve které leží prostředních 95 % vytvořených **odhadů sklonu**.
@@ -1503,16 +1676,22 @@ Interpretace stále závisí na použitém modelu a na způsobu získání dat. 
 Nyní umíme popsat velikost odhadovaného efektu i jeho nejistotu. Další otázka zní: **Jak pomocí dat hodnotit konkrétní tvrzení o parametru modelu?** Formální postup a možné chyby rozhodnutí zavedeme až v následující lekci.
 :::
 
-::: {.content-visible when-format="html"}
-
 ## Slovníček pojmů {.unnumbered}
 
-Pojmy použité v těchto materiálech a jejich definice:
+Pojmy použité v těchto materiálech a jejich definice. Úplný průběžně aktualizovaný slovníček je dostupný také [online](https://cuni-natur-biostatistics.github.io/slovnik/).
 
 ```{r}
 #| label: slovnicek
 #| echo: false
-glossary::glossary_table()
+#| results: asis
+if (knitr::is_html_output()) {
+  glossary::glossary_table()
+} else {
+  cat(
+    paste0(
+      "Interaktivní slovníček je dostupný online: ",
+      "https://cuni-natur-biostatistics.github.io/slovnik/"
+    )
+  )
+}
 ```
-
-:::

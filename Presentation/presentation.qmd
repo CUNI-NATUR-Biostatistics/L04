@@ -45,7 +45,7 @@ project_name <-
   basename(here::here())
 
 display_name <-
-  paste("Biostatistika", "-", project_name)
+  "Biostatistika"
 
 github_url <-
   paste0(
@@ -164,13 +164,16 @@ Když nehlasujeme: vyberte **ANO**, nebo **NE** a připravte jednu větu na obha
 
 ## Výsledky učení
 
-Po absolvování této přednášky budete schopni:
+Po dnešní přednášce budete schopni:
 
 ::: {.incremental}
-- vysvětlit, proč různé soubory pozorování dávají různé odhady sklonu lineární regrese;
-- rozlišit velikost odhadovaného vztahu od přesnosti odhadu;
-- interpretovat 95% interval spolehlivosti;
-- zapsat výsledek modelu s odhadem, standardní chybou (SE), intervalem spolehlivosti (CI) a jednotkami.
+- vysvětlit, proč [jiný soubor pozorování]{.text-hgl-graphite}
+  může dát [jiný odhad sklonu]{.text-hgl-indigo_velvet}
+- rozlišit [velikost vztahu]{.text-hgl-indigo_velvet}
+  od [přesnosti odhadu]{.text-hgl-orange}
+- interpretovat [95% interval spolehlivosti]{.text-hgl-orange}
+- zapsat výsledek s [odhadem]{.text-hgl-indigo_velvet},
+  [SE, CI a jednotkami]{.text-hgl-orange}
 :::
 
 ## Co už umíme z předchozí lekce?
@@ -245,7 +248,7 @@ include_local_figure("vsechna_pozorovani_model.png")
 
 Fialová přímka shrnuje vztah v **tomto souboru pozorování**.
 
-::: {.fragment .takeaway-strip}
+::: {.fragment .strip-indigo}
 **Stejná data + stejný modelový vzorec = vždy stejné odhady.** Funkce `lm()` zde nic náhodně nelosuje.
 :::
 
@@ -254,11 +257,13 @@ Fialová přímka shrnuje vztah v **tomto souboru pozorování**.
 <br>
 
 ::: {.text-size-larger .text-bold .text-center}
-Představte si, že gejzír pozoruje někdo jiný v jiných intervalech.
+Představte si, že gejzír pozoruje
+[někdo jiný v jiných intervalech]{.text-hgl-orange}.
 
 <br>
 
-Budou jeho body — a jeho sklon — úplně stejné?
+Budou jeho [body]{.text-hgl-graphite} — a jeho
+[sklon]{.text-hgl-indigo_velvet} — úplně stejné?
 :::
 
 <br>
@@ -468,7 +473,7 @@ ggview::save_ggplot(
 )
 ```
 
-## Stejný postup, tři různé výsledky
+## [Stejný postup]{.text-hgl-indigo_velvet}, [tři různé výsledky]{.text-hgl-orange}
 
 <br>
 
@@ -478,7 +483,7 @@ ggview::save_ggplot(
 include_local_figure("tri_mesice.png")
 ```
 
-## Odhad není oddělený od dat
+## [Odhad]{.text-hgl-indigo_velvet} není oddělený od [dat]{.text-hgl-graphite}
 
 <br>
 
@@ -488,9 +493,9 @@ include_local_figure("tri_mesice.png")
 ::: {.panel-result}
 [Co zůstalo stejné]{.panel-title}
 
-- otázka;
+- [otázka]{.text-hgl-indigo_velvet};
 - proměnné;
-- lineární model;
+- [lineární model]{.text-hgl-indigo_velvet};
 - postup fitování.
 :::
 :::
@@ -499,9 +504,9 @@ include_local_figure("tri_mesice.png")
 ::: {.panel-question}
 [Co se změnilo]{.panel-title}
 
-- pozorované erupce;
+- [pozorované erupce]{.text-hgl-graphite};
 - poloha bodů;
-- odhadnutá přímka;
+- [odhadnutá přímka]{.text-hgl-indigo_velvet};
 - sklon.
 :::
 :::
@@ -511,19 +516,21 @@ include_local_figure("tri_mesice.png")
 <br>
 
 ::: {.fragment}
-Proměnlivosti odhadu mezi možnými výběry říkáme **výběrová variabilita**.
+Proměnlivosti odhadu mezi možnými výběry říkáme
+[výběrová variabilita]{.text-hgl-orange}.
 :::
 
-## Co udělá sto dalších pozorovatelů?
+## Co udělá [sto dalších pozorovatelů]{.text-hgl-orange}?
 
 <br>
 
 ::: {.text-size-larger .text-bold .text-center}
-Každý pošle 40 erupcí, fituje stejný model a získá jeden sklon.
+Každý pošle [40 erupcí]{.text-hgl-graphite}, fituje
+[stejný model]{.text-hgl-indigo_velvet} a získá jeden sklon.
 
 <br>
 
-Jak budou vypadat všechny sklony společně?
+Jak budou vypadat [všechny sklony společně]{.text-hgl-orange}?
 :::
 
 <br>
@@ -800,7 +807,7 @@ fs::file_copy(
 include_local_figure("geyserwatch_sklon_do_histogramu.gif")
 ```
 
-::: {.takeaway-strip}
+::: {.strip-amethyst}
 Sledujte: nový soubor bodů → nová přímka → nový sklon → další část histogramu.
 :::
 
@@ -1036,7 +1043,7 @@ Přesnost odhadu
 Ve dvojici, přiřaďte věty
 :::
 
-## Jedna standardní chyba jako měřítko
+## Jedna [standardní chyba]{.text-hgl-orange} jako měřítko
 
 
 ```{r}
@@ -1162,9 +1169,11 @@ Je to měřítko přesnosti, ze kterého teprve vytvoříme interval určený pr
 <br>
 
 ::: {.text-size-larger .text-bold .text-center}
-Máme odhad a jeho standardní chybu.
+Máme [odhad]{.text-hgl-indigo_velvet} a jeho
+[standardní chybu]{.text-hgl-orange}.
 
-Jak z nich vytvořit srozumitelný rozsah možných velikostí vztahu?
+Jak z nich vytvořit srozumitelný
+[rozsah možných velikostí vztahu]{.text-hgl-indigo_velvet}?
 :::
 
 ```{r}
@@ -1335,7 +1344,7 @@ ggview::save_ggplot(
 )
 ```
 
-## 95% interval spolehlivosti
+## [95% interval spolehlivosti]{.text-hgl-indigo_velvet}
 
 ```{r}
 #| label: zobrazit-interval-95
@@ -1344,7 +1353,9 @@ include_local_figure("interval_95.png")
 ```
 
 ::: {.fragment}
-Pro gejzír Old Faithful: **[`r round(dolni_interval, 2)`; `r round(horni_interval, 2)`] minuty čekání na minutu erupce**.
+Pro gejzír Old Faithful:
+[**[`r round(dolni_interval, 2)`; `r round(horni_interval, 2)`]**]{.text-hgl-indigo_velvet}
+minuty čekání na minutu erupce.
 :::
 
 ## Co se stane při vyšší hladině?
@@ -1367,7 +1378,7 @@ Musí vyšší požadované pokrytí vést k užšímu, nebo širšímu interval
 Ve dvojici seřaďte čtyři hladiny a připravte jedno vysvětlení.
 :::
 
-## Stejný odhad, různě široké intervaly
+## [Stejný odhad]{.text-hgl-indigo_velvet}, [různě široké intervaly]{.text-hgl-orange}
 
 ```{r}
 #| label: zobrazit-porovnani-intervalu
@@ -1376,21 +1387,26 @@ include_local_figure("porovnani_intervalu.png")
 ```
 
 ::: {.fragment}
-Čím častěji má postup zachytit skutečný sklon, tím širší musí být interval.
+Čím [častěji má postup zachytit skutečný sklon]{.text-hgl-indigo_velvet},
+tím [širší]{.text-hgl-orange} musí být interval.
 :::
 
-## Užší neznamená automaticky přesnější data
+## [Užší]{.text-hgl-orange} neznamená automaticky [přesnější data]{.text-hgl-indigo_velvet}
 
 <br>
 
 ::: {.box-rule}
-Intervaly porovnáváme jako přesnější a méně přesné pouze při **stejné hladině spolehlivosti**.
+Intervaly porovnáváme jako přesnější a méně přesné pouze při
+[stejné hladině spolehlivosti]{.text-hgl-indigo_velvet}.
 :::
 
 <br>
 
 ::: {.fragment}
-Snížením hladiny z 95 % na 80 % získáme užší interval, ale častěji mineme skutečný sklon. Z dat jsme nezískali více informace.
+Snížením hladiny z 95 % na 80 % získáme
+[užší interval]{.text-hgl-orange}, ale
+[častěji mineme skutečný sklon]{.text-hgl-orange}.
+Z dat jsme nezískali více informace.
 :::
 
 ## Co znamená „95 %“?
@@ -1431,7 +1447,7 @@ Při mnoha opakováních pokryje skutečný sklon přibližně 95 % vytvořenýc
 Když nehlasujeme: zapište písmeno a podtrhněte slova, která rozhodla.
 :::
 
-## 95 % patří k postupu
+## [95 %]{.text-hgl-orange} patří k [postupu]{.text-hgl-indigo_velvet}
 
 <br>
 
@@ -1441,7 +1457,9 @@ Když nehlasujeme: zapište písmeno a podtrhněte slova, která rozhodla.
 ::: {.panel-result}
 [Správná odpověď]{.panel-title}
 
-Při mnoha srovnatelných opakováních pokryje skutečný sklon přibližně 95 % takto vytvořených intervalů.
+Při mnoha srovnatelných opakováních
+[pokryje skutečný sklon přibližně 95 %]{.text-hgl-indigo_velvet}
+takto vytvořených intervalů.
 :::
 :::
 
@@ -1669,7 +1687,7 @@ Jako známý referenční sklon používáme odhad z modelu (**`r round(referenc
 include_local_figure("sto_intervalu_pokryti.png")
 ```
 
-::: {.takeaway-strip}
+::: {.strip-orange}
 **`r pocet_pokrytych_95` ze 100** 95% intervalů pokrývá referenční sklon. V reálných datech skutečný populační sklon neznáme.
 :::
 
@@ -1711,7 +1729,7 @@ include_local_figure("sto_intervalu_pokryti_50.png")
 :::
 :::
 
-## Vraťme se k hlavní otázce
+## Vraťme se k [hlavní otázce]{.text-hgl-indigo_velvet}
 
 <br>
 
@@ -1728,7 +1746,8 @@ include_local_figure("sto_intervalu_pokryti_50.png")
 ::: {.panel-result}
 [Co už můžeme říct]{.panel-title}
 
-Odhadli jsme velikost vztahu i rozsah efektů slučitelných s daty a modelem.
+Odhadli jsme [velikost vztahu]{.text-hgl-indigo_velvet} i
+[rozsah efektů slučitelných s daty a modelem]{.text-hgl-orange}.
 :::
 :::
 
@@ -1736,7 +1755,8 @@ Odhadli jsme velikost vztahu i rozsah efektů slučitelných s daty a modelem.
 ::: {.panel-question}
 [Co stále zůstává otevřené]{.panel-title}
 
-Jak pomocí dat hodnotit konkrétní tvrzení o parametru modelu?
+Jak pomocí dat hodnotit
+[konkrétní tvrzení o parametru modelu]{.text-hgl-orange}?
 :::
 :::
 
@@ -1787,7 +1807,12 @@ Vyměňte si větu se sousední dvojicí: jsou v ní proměnné, jednotky a neji
 <br>
 
 ::: {.box-result}
-Erupce delší o jednu minutu souvisela s čekáním delším o **`r round(odhad_sklonu, 2)` minuty** (odhad sklonu = `r round(odhad_sklonu, 2)`, SE = `r round(standardni_chyba_sklonu, 2)`, 95% CI [`r round(dolni_interval, 2)`, `r round(horni_interval, 2)`] minuty čekání na minutu erupce).
+Erupce delší o jednu minutu souvisela s čekáním delším o
+[**`r round(odhad_sklonu, 2)` minuty**]{.text-hgl-indigo_velvet}
+(odhad sklonu = `r round(odhad_sklonu, 2)`,
+[SE = `r round(standardni_chyba_sklonu, 2)`]{.text-hgl-orange},
+[95% CI [`r round(dolni_interval, 2)`, `r round(horni_interval, 2)`]]{.text-hgl-orange}
+minuty čekání na minutu erupce).
 :::
 
 
@@ -1809,11 +1834,11 @@ Výsledek je opatrný odhad vztahu v zachyceném procesu — ne neměnný přír
 ## Shrnutí
 
 ::: {.incremental}
-- Jiná pozorování mohou dát jiný odhad stejného vztahu.
-- Odhad (`Estimate`) popisuje velikost vztahu; standardní chyba (`Std. Error`) přesnost odhadu.
-- Interval spolehlivosti vyjadřuje rozsah efektů slučitelných s daty a modelem.
-- Hodnota 95 % říká, jak často opakovaně vytvářený interval zachytí skutečný sklon.
-- Vědecký závěr spojuje interpretaci, čísla, jednotky a omezení dat.
+- [Jiná pozorování]{.text-hgl-orange} mohou dát jiný odhad stejného vztahu.
+- [Odhad (`Estimate`)]{.text-hgl-indigo_velvet} popisuje velikost vztahu; [standardní chyba (`Std. Error`)]{.text-hgl-orange} přesnost odhadu.
+- [Interval spolehlivosti]{.text-hgl-indigo_velvet} vyjadřuje rozsah efektů slučitelných s daty a modelem.
+- [Hodnota 95 %]{.text-hgl-orange} říká, jak často opakovaně vytvářený interval zachytí skutečný sklon.
+- Vědecký závěr spojuje interpretaci, čísla, jednotky a [omezení dat]{.text-hgl-orange}.
 :::
 
 ## Je vztah skutečný — a zobecnitelný?
@@ -1821,7 +1846,10 @@ Výsledek je opatrný odhad vztahu v zachyceném procesu — ne neměnný přír
 <br>
 
 ::: {.text-size-larger .text-bold .text-center}
-Umíme popsat velikost efektu a jeho nejistotu.
+Umíme popsat [velikost efektu]{.text-hgl-indigo_velvet}
+a jeho [nejistotu]{.text-hgl-orange}.
 
-**Jak silné máme důkazy, že vztah není jen náhodným výsledkem tohoto výběru — a lze jej zobecnit?**
+Jak silné máme důkazy, že vztah
+[není jen náhodným výsledkem tohoto výběru]{.text-hgl-orange}
+— a [lze jej zobecnit]{.text-hgl-indigo_velvet}?
 :::
