@@ -121,6 +121,13 @@ $headingMargin:          0 0 10px 0 !default;
 .reveal table th {
   background-color: $tableHeaderBackground !important;
   color: $tableHeaderColor !important;
+  padding: 0.6rem;
+  border-bottom: 2px solid $tableBorderColor;
+}
+
+.reveal table td {
+  padding: 0.6rem;
+  border-bottom: 1px solid rgba($tableBorderColor, 0.25);
 }
 
 .reveal table tr:nth-child(even) td {
