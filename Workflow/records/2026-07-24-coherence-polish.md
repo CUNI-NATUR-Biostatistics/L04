@@ -36,10 +36,13 @@
 
 ## Decision
 
-The first comparative pass found no defect that currently justifies redesign
-of the presentation. This remains a provisional audit conclusion, not a claim
-that L04 is perfect. Only the deferred-exercise marker and audit evidence are
-changed at this point.
+The comparative pass did not justify a wholesale redesign, but it did identify
+specific improvements. The written materials now explain why the GeyserTimes
+archive is used despite the built-in `faithful` dataset and include a compact
+95%/80%/50% repeated-interval comparison. The presentation now uses semantic
+body highlights and selected coloured strips; its learning outcomes remain an
+incremental highlighted bullet list rather than a panel grid. These changes do
+not make L04 a gold standard for the other lessons.
 
 ## Validation required before merge
 
@@ -51,9 +54,17 @@ changed at this point.
 - [x] The complete approved-deck overview and high-risk animation,
   interval-comparison, and scientific-writing slides were inspected during the
   comparative audit.
-- [ ] Merge the companion glossary change, then run the written-material
-  wrapper so the new `kvantil` tooltip is available from the canonical source.
-- [ ] Rerun the presentation wrapper only if subsequent audit work changes its
-  source; no such defect has been found so far.
-- [ ] Recheck UTF-8, Quarto structure, chunk labels, links, and glossary
-  coverage immediately before publication.
+- [x] Reran the written-material and presentation wrappers after the final
+  source changes; the presentation printed all 37 states.
+- [x] Rechecked UTF-8, Quarto structure, unique chunk labels, links, glossary
+  coverage, student-visible code, and source diffs.
+- [x] Confirmed that `Presentation/presentation.html` and `docs/index.html`
+  remain byte-identical.
+
+## Human review decision
+
+Approved by the human reviewer on 2026-07-25. The review accepts the focused
+improvements above while retaining the 37-state uncertainty narrative.
+
+The companion `slovnik` PR remains a shared release dependency, but the current
+lesson source and rendered artifacts have passed their local validation.
