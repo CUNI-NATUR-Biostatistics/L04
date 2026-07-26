@@ -70,6 +70,17 @@
 )
 
 // ---------------------------------------------------------------------------
+// Tables — applies to Markdown and generated data tables
+// ---------------------------------------------------------------------------
+#show table: set table(
+  inset: 6pt,
+  stroke: 0.6pt + rgb("#8A8A8A"),
+  fill: (x, y) => if y == 0 { rgb("#5D2890") } else if calc.even(y) { rgb("#F0EDE8") } else { none }
+)
+
+#show table.cell.where(y: 0): set text(fill: rgb("#F4F1EC"), weight: 700)
+
+// ---------------------------------------------------------------------------
 // Callout blocks (override Quarto defaults with brand colours)
 // Quarto passes these background_color values per type:
 //   note     #dae6fb   tip      #ccf1e3

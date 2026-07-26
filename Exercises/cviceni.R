@@ -1,9 +1,11 @@
 #----------------------------------------------------------#
 #
 #
-#                     _L-template
+#                     L04
 #
-#                  Cvičení – TODO: téma
+# TODO[DEFERRED]: Obsah praktického cvičení je mimo aktuální
+# cyklus revize L01–L04. Tento soubor není hotový výukový
+# materiál a nesmí být takto vydán studentům.
 #
 #
 #                       O. Mottl
