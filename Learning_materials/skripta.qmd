@@ -2,6 +2,8 @@
 title: "Od odhadu k nejistotě"
 subtitle: "Proměnlivost odhadu a interval spolehlivosti"
 lang: cs
+filters:
+  - ../theme/semantic-boxes.lua
 format:
   html:
     toc: true
@@ -114,8 +116,7 @@ Gejzír Old Faithful střídá erupce a období čekání. Návštěvníky i spr
 
 Představme si, že vztah mezi délkou erupce a čekáním zkoumá jeden člověk během několika dní. Zaznamená určitý soubor erupcí, proloží jimi přímku a popíše její sklon. Jeho přímka ale vznikla pouze z erupcí, které skutečně viděl.
 
-::: {.callout-important}
-## Hlavní otázka
+::: {.box-question title="Hlavní otázka této lekce"}
 
 **Kdyby Old Faithful pozorovali jiní lidé, dostali by stejnou přímku a stejný odhad vztahu?**
 :::
@@ -174,8 +175,7 @@ Každé pozorování popisuje jednu erupci a čekání na erupci následující.
 
 ### Volitelně: odkud se soubor vzal
 
-::: {.callout-tip}
-## Doplňující
+::: {.box-data title="Doplňující: příprava dat"}
 
 **Tuto část můžete bez obav přeskočit. Pro pochopení lekce není potřeba rozumět jednotlivým řádkům ani kód spouštět.** Pro další práci stačí vědět, že výsledkem je připravený objekt `data_gejzir`.
 
@@ -381,8 +381,7 @@ ggplot2::ggplot(
   theme_biostat(base_size = 13)
 ```
 
-::: {.callout-note}
-## Než budeme fitovat model
+::: {.box-question title="Než budeme fitovat model"}
 
 1. Jaký směr má vztah mezi délkou erupce a čekáním?
 2. Které části grafu obsahují nejvíce bodů?
@@ -411,8 +410,7 @@ mod_pepa <-
 
 Pro výukový příběh si představme výzkumníka **Pepu**. V červnu zaznamenal `r nrow(data_pepa)` erupcí a pomocí známého lineárního modelu zjišťuje, o kolik minut se změní očekávané čekání, když je erupce o jednu minutu delší.
 
-::: {.callout-tip collapse="true"}
-## Doplňující: výběr červnových pozorování
+::: {.box-data title="Doplňující: výběr červnových pozorování" collapse="true"}
 
 Tento technický krok pouze oddělí červnová pozorování od ostatních měsíců.
 
@@ -698,8 +696,7 @@ data_ukazkova_hlaseni <-
 
 Tři měsíce nám daly pouze tři přímky. Abychom si představili mnoho opakování, zavedeme fiktivní aplikaci **GeyserWatch**. Sto návštěvníků pošle hlášení a každý z nich změří 40 erupcí, které během své návštěvy viděl. Z každého hlášení fitujeme jeden model a uložíme jeho sklon.
 
-::: {.callout-tip}
-## Doplňující: jak vzniklo 100 hlášení
+::: {.box-data title="Doplňující: jak vzniklo 100 hlášení"}
 
 Ve skutečnosti nemáme sto nových návštěvníků. Pro každé hlášení náhodně vybereme 40 různých řádků z našich `r nrow(data_gejzir)` pozorování. Jeden řádek se může objevit v hlášení jiného návštěvníka. Demonstrace tedy **nepřidává nová data a neznamená, že známe skutečný populační sklon**. Tento technický detail není pro hlavní myšlenku lekce zásadní; důležité je sledovat, že různé soubory pozorování vytvářejí různé sklony.
 :::
@@ -1176,8 +1173,7 @@ Histogram ukazuje, že sklony ze sta čtyřicetiřádkových hlášení nejsou s
 
 Rozsah **odhad ± jedna standardní chyba** není interval spolehlivosti. Je to vizuální jednotka, která ukazuje měřítko přesnosti. V dalším kroku z této informace vytvoříme širší interval určený pro interpretaci nejistoty.
 
-::: {.callout-note}
-## Jak lze výsledek uvést ve vědeckém textu
+::: {.box-result title="Vzor zápisu: odhad a standardní chyba"}
 
 „Lineární model odhadl, že erupce delší o jednu minutu souvisela s čekáním delším o `r round(odhad_sklonu, 2)` minuty (odhad sklonu = `r round(odhad_sklonu, 2)`, SE = `r round(standardni_chyba_sklonu, 2)` minuty čekání na minutu erupce).“
 
@@ -1628,22 +1624,19 @@ Jeden vypočtený interval tedy neříká, že uvnitř musí ležet 95 ze 100 sk
 
 Nižší hladina, například 80 %, vytvoří z týchž dat užší interval. To ale neznamená, že jsme z dat získali přesnější informaci: pouze jsme přijali nižší pokrytí. Při mnoha opakováních by skutečný sklon pokrylo přibližně 80 ze 100 takových intervalů a přibližně 20 by jej minulo. **Užší interval znamená vyšší přesnost pouze tehdy, porovnáváme-li intervaly se stejnou hladinou**, například dva 95% intervaly získané z různě informativních dat.
 
-::: {.callout-note}
-## Proč právě 95 %?
+::: {.box-rule title="Proč právě 95 %?"}
 
 Hodnota 95 % není dána přírodním zákonem ani našimi daty. Je to historicky ustálená vědecká konvence, která představuje kompromis: vyšší hladina dává širší interval, nižší hladina užší interval. V následující lekci uvidíme, proč se 95 % často objevuje společně s formálním hodnocením statistických tvrzení. Pro tuto lekci je důležité vědět, že **95 % je standardní volba, nikoli jediná správná volba**.
 :::
 
-::: {.callout-warning}
-## Co interval spolehlivosti neříká
+::: {.box-warning title="Co interval spolehlivosti neříká"}
 
 - **Neobsahuje prostředních 95 % erupcí ani čekacích dob.** Popisuje nejistotu odhadu sklonu, nikoli rozdělení jednotlivých pozorování.
 - **Nedokazuje, že některá hodnota je pravdivá nebo nepravdivá.** Ukazuje, které velikosti efektu jsou s daty a modelem slučitelné.
 - **Neříká, že skutečný parametr má po výpočtu tohoto intervalu 95% pravděpodobnost ležet uvnitř.** Číslo 95 % patří k dlouhodobému postupu vytváření intervalů.
 :::
 
-::: {.callout-note}
-## Rozšířený zápis pro vědecký text
+::: {.box-result title="Vzor zápisu: odhad, standardní chyba a interval"}
 
 „Erupce delší o jednu minutu souvisela s čekáním delším o `r round(odhad_sklonu, 2)` minuty (odhad sklonu = `r round(odhad_sklonu, 2)`, SE = `r round(standardni_chyba_sklonu, 2)`, 95% CI [`r round(dolni_interval, 2)`, `r round(horni_interval, 2)`] minuty čekání na minutu erupce).“
 
@@ -1670,8 +1663,7 @@ Interpretace stále závisí na použitém modelu a na způsobu získání dat. 
 - Interval spolehlivosti vyjadřuje rozsah efektů slučitelných s daty a modelem.
 - Vědecký zápis má spojit interpretaci, odhad, standardní chybu, interval a jednotky.
 
-::: {.callout-note}
-## Most k následující lekci
+::: {.box-question title="Most k následující lekci"}
 
 Nyní umíme popsat velikost odhadovaného efektu i jeho nejistotu. Další otázka zní: **Jak pomocí dat hodnotit konkrétní tvrzení o parametru modelu?** Formální postup a možné chyby rozhodnutí zavedeme až v následující lekci.
 :::
