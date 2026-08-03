@@ -2199,10 +2199,6 @@ vertical-align: -.125em;
 
      Do not edit directly. Run R/generate_theme.R to regenerate. -->
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
 <style type="text/css">@font-face {
 font-family: 'Inter';
 font-style: normal;
@@ -2799,7 +2795,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Upraveno</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">25. července 2026</p>
+      <p class="date-modified">26. července 2026</p>
     </div>
   </div>
     
@@ -2882,15 +2878,15 @@ document.addEventListener('DOMContentLoaded', function() {
 <p><strong>Kdyby Old Faithful pozorovali jiní lidé, dostali by stejnou přímku a stejný odhad vztahu?</strong></p>
 </div>
 </div>
-<p>V této lekci budeme nejprve mluvit o <strong>souboru pozorování</strong> nebo jednoduše o <strong>datech</strong>. Statistický termín <em>výběr</em> zavedeme až ve chvíli, kdy už bude z příběhu jasné, co označuje. K již známému modelu potom přidáme <a class="glossary" href>nejistotu<span class="def">Rozsah, v nemž nevíme presnou hodnotu parametru kvuli omezenému a variabilnímu vzorku; kvantifikuje se pomocí intervalu spolehlivosti nebo smerodatných chyb.</span></a>: nestačí vědět, jak velký <a class="glossary" href>efekt<span class="def">Kvantitativní popis toho, jak silne prediktor ovlivnuje odezvu - zahrnuje smer, velikost a nejistotu (interval spolehlivosti).</span></a> jsme odhadli, potřebujeme také vědět, jak přesný tento odhad je.</p>
+<p>V této lekci budeme nejprve mluvit o <strong>souboru pozorování</strong> nebo jednoduše o <strong>datech</strong>. Statistický termín <em>výběr</em> zavedeme až ve chvíli, kdy už bude z příběhu jasné, co označuje. K již známému modelu potom přidáme <a class="glossary" href>nejistotu<span class="def">Rozsah, v němž nevíme přesnou hodnotu parametru kvůli omezenému a variabilnímu vzorku; kvantifikuje se pomocí intervalů spolehlivosti nebo směrodatných chyb.</span></a>: nestačí vědět, jak velký <a class="glossary" href>efekt<span class="def">Kvantitativní popis toho, jak se podle modelu mění odezva s prediktorem; zahrnuje směr, velikost a nejistotu odhadu, ale sám o sobě nedokládá příčinu.</span></a> jsme odhadli, potřebujeme také vědět, jak přesný tento odhad je.</p>
 </section>
 <section id="výsledky-učení" class="level2" data-number="2">
 <h2 data-number="2" class="anchored" data-anchor-id="výsledky-učení"><span class="header-section-number">2</span> Výsledky učení</h2>
 <p>Po prostudování těchto materiálů budete schopni:</p>
 <ul>
 <li>vysvětlit, proč různé soubory pozorování dávají různé odhady sklonu;</li>
-<li>v tabulce z <code>summary()</code> najít odhad sklonu a jeho <a class="glossary" href>standardní chybu<span class="def">Míra presnosti odhadu parametru (typicky prumeru) z dat; udává, jak moc by se odhadnutý parametr lišil pri opakovaném vzorkování ze stejné populace.</span></a> a vysvětlit rozdíl mezi velikostí vztahu a přesností odhadu;</li>
-<li>interpretovat <a class="glossary" href>95% interval spolehlivosti<span class="def">Rozsah hodnot, v nemž se s danou spolehlivostí (typicky 95 %) nachází odhadovaný parametr.</span></a> sklonu v kontextu čekání na další erupci;</li>
+<li>v tabulce z <code>summary()</code> najít odhad sklonu a jeho <a class="glossary" href>standardní chybu<span class="def">Míra přesnosti odhadu parametru (typicky průměru) z dat; udává, jak moc by se odhadnutý parametr lišil při opakovaném vzorkování ze stejné populace.</span></a> a vysvětlit rozdíl mezi velikostí vztahu a přesností odhadu;</li>
+<li>interpretovat <a class="glossary" href>95% interval spolehlivosti<span class="def">Rozsah hodnot, v němž se s danou spolehlivostí (typicky 95 %) nachází odhadovaný parametr.</span></a> sklonu v kontextu čekání na další erupci;</li>
 <li>zapsat výsledek lineárního modelu jednou věcnou větou s odhadem, standardní chybou a intervalem spolehlivosti.</li>
 </ul>
 </section>
@@ -2905,10 +2901,10 @@ document.addEventListener('DOMContentLoaded', function() {
 <li><strong>Reprodukovatelné získání dat:</strong> doplňující část ukazuje cestu od prvotního zdroje k analyzované tabulce, tedy dovednost použitelnou i mimo tento příklad.</li>
 </ol>
 <p>Všechny základní příklady bodového grafu, lineárního modelu, standardní chyby a intervalu spolehlivosti lze zopakovat také s <code>data(faithful)</code> po přejmenování <code>eruptions</code> na <code>delka_erupce_min</code> a <code>waiting</code> na <code>cekani_min</code>. Pouze příklady rozdělené podle data nebo měsíce potřebují časové údaje z GeyserTimes.</p>
-<p>Každé pozorování popisuje jednu erupci a čekání na erupci následující. Budou nás zajímat dvě <a class="glossary" href>numerické proměnné<span class="def">Promenná nabývající libovolných císelných hodnot na spojité nebo diskrétní císelné stupnici (délky, hmotnosti, teploty, pocty).</span></a>:</p>
+<p>Každé pozorování popisuje jednu erupci a čekání na erupci následující. Budou nás zajímat dvě <a class="glossary" href>numerické proměnné<span class="def">Proměnná, jejíž hodnoty jsou čísla se smysluplnou velikostí nebo rozdílem; může být diskrétní, například počet, nebo spojitá, například délka.</span></a>:</p>
 <ul>
-<li><code>delka_erupce_min</code>: délka právě pozorované erupce v minutách — náš <a class="glossary" href>prediktor<span class="def">Promenná, pomocí níž vysvetlujeme variabilitu odezvy; v notaci y ~ x je prediktor x.</span></a>;</li>
-<li><code>cekani_min</code>: čekání do následující erupce v minutách — naše <a class="glossary" href>odezva<span class="def">Promenná, jejíž variabilitu se snažíme vysvetlit nebo predpovedet; v notaci modelu y ~ x je odezva y.</span></a>.</li>
+<li><code>delka_erupce_min</code>: délka právě pozorované erupce v minutách — náš <a class="glossary" href>prediktor<span class="def">Proměnná, pomocí níž vysvětlujeme variabilitu odezvy; v notaci y ~ x je prediktor x.</span></a>;</li>
+<li><code>cekani_min</code>: čekání do následující erupce v minutách — naše <a class="glossary" href>odezva<span class="def">Proměnná, jejíž variabilitu se snažíme vysvětlit nebo předpovědět; v notaci modelu y ~ x je odezva y.</span></a>.</li>
 </ul>
 <section id="volitelně-odkud-se-soubor-vzal" class="level3" data-number="3.1">
 <h3 data-number="3.1" class="anchored" data-anchor-id="volitelně-odkud-se-soubor-vzal"><span class="header-section-number">3.1</span> Volitelně: odkud se soubor vzal</h3>
@@ -2941,7 +2937,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <p>Následující rozbalovací blok obsahuje úplný záznam stažení a přípravy dat. Jsou v něm i některé pokročilejší kroky: načtení komprimovaného souboru, převod časových údajů, výběr primárních záznamů, výpočet čekání do další erupce a kontrola počtu řádků.</p>
 <p>Kód ponecháváme přímo v těchto výukových materiálech, aby bylo dohledatelné, odkud data pocházejí a jak jsme z původního souboru získali proměnné použité v lekci.</p>
 <p>Čekání počítáme jako rozdíl mezi časy dvou po sobě jdoucích erupcí. Ponecháváme intervaly od 50 do 127 minut, což odpovídá <a href="https://www.nps.gov/places/old-faithful-geyser.htm">rozsahu uváděnému National Park Service</a>. Delší mezera v dobrovolnických záznamech pravděpodobně znamená, že některá erupce nebyla zaznamenána.</p>
-<p>Pro přehlednější výukový příklad navíc odstraňujeme tři <a class="glossary" href>odlehlá pozorování<span class="def">Hodnota, která se výrazne odlišuje od ostatních pozorování; muže být zpusobena chybou merení nebo jít o skutecne extrémní prípad.</span></a>, vždy jedno z každého měsíce. Jejich identifikátory jsou uvedené přímo v kódu, takže je toto rozhodnutí zaznamenáno.</p>
+<p>Pro přehlednější výukový příklad navíc odstraňujeme tři <a class="glossary" href>odlehlá pozorování<span class="def">Hodnota, která se výrazně odlišuje od ostatních pozorování; může být způsobena chybou měření nebo jít o skutečně extrémní případ.</span></a>, vždy jedno z každého měsíce. Jejich identifikátory jsou uvedené přímo v kódu, takže je toto rozhodnutí zaznamenáno.</p>
 <p>Soubor lze stáhnout kliknutím na odkaz na archiv. Kód níže se jej pokusí stáhnout automaticky; pokud GeyserTimes požádá o ověření v prohlížeči, stačí soubor ručně uložit do složky <code>data</code> pod názvem <code>Old_Faithful_eruptions.tsv.gz</code> a automatické stažení přeskočit.</p>
 </div>
 </div>
@@ -3202,7 +3198,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </div>
 </div>
-<p>Pepův odhad <a class="glossary" href>sklonu<span class="def">Parametr lineárního modelu udávající, o kolik se zmení odezva, pokud prediktor vzroste o jednu jednotku (pri zachování ostatních prediktoru).</span></a> je 12.92 minuty čekání na jednu minutu erupce. V jeho červnových datech tedy erupce delší o jednu minutu souvisí v průměru s čekáním delším přibližně o 12.92 minuty.</p>
+<p>Pepův odhad <a class="glossary" href>sklonu<span class="def">Parametr lineárního modelu udávající, o kolik se změní odezva, pokud prediktor vzroste o jednu jednotku (při zachování ostatních prediktorů).</span></a> je 12.92 minuty čekání na jednu minutu erupce. V jeho červnových datech tedy erupce delší o jednu minutu souvisí v průměru s čekáním delším přibližně o 12.92 minuty.</p>
 <p>Tento výsledek je správným popisem <strong>Pepových dat</strong>. Neznamená však, že by každý další člověk musel získat stejný sklon.</p>
 </section>
 <section id="mařenka-a-karel-jiné-měsíce-jiné-přímky" class="level2" data-number="5">
@@ -3254,7 +3250,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </div>
 <p>Pepa, Mařenka i Karel použili <strong>stejný postup</strong>: každý fitoval lineární model se stejnými proměnnými. Vznikly ale tři různé modely, protože každý vycházel z jiných pozorování. Rozdíly mezi měsíci mohou zahrnovat náhodnou proměnlivost i skutečné časové změny; tři měsíce proto nejsou dokonale kontrolovaný experiment. Pro nás jsou konkrétním prvním důkazem, že <strong>odhad není neměnné číslo oddělené od dat, ze kterých vznikl</strong>.</p>
-<p>V odborném jazyce se jednomu takovému souboru pozorování říká <strong>výběr</strong> (anglicky <em>sample</em>). Česky se používá také <strong>výběrový soubor</strong> nebo méně formální <strong>vzorek</strong>. Proměnlivosti odhadu mezi možnými výběry říkáme <strong>výběrová <a class="glossary" href>variabilita<span class="def">Obecný termín pro rozsah, v nemž se hodnoty promenné liší od sebe navzájem; kvantifikuje se pomocí rozptylu, SD, IQR nebo rozsahu.</span></a></strong> (anglicky <em>sampling variability</em>). Srozumitelněji ji můžeme popsat jako <strong>proměnlivost odhadů mezi výběry</strong>: jiné pozorované erupce mohou vytvořit jinou přímku.</p>
+<p>V odborném jazyce se jednomu takovému souboru pozorování říká <strong>výběr</strong> (anglicky <em>sample</em>). Česky se používá také <strong>výběrový soubor</strong> nebo méně formální <strong>vzorek</strong>. Proměnlivosti odhadu mezi možnými výběry říkáme <strong>výběrová <a class="glossary" href>variabilita<span class="def">Obecný termín pro rozsah, v němž se hodnoty proměnné liší od sebe navzájem; kvantifikuje se pomocí rozptylu, SD, IQR nebo rozsahu.</span></a></strong> (anglicky <em>sampling variability</em>). Srozumitelněji ji můžeme popsat jako <strong>proměnlivost odhadů mezi výběry</strong>: jiné pozorované erupce mohou vytvořit jinou přímku.</p>
 </section>
 <section id="sto-hlášení-v-aplikaci-geyserwatch" class="level2" data-number="6">
 <h2 data-number="6" class="anchored" data-anchor-id="sto-hlášení-v-aplikaci-geyserwatch"><span class="header-section-number">6</span> Sto hlášení v aplikaci GeyserWatch</h2>
@@ -3284,7 +3280,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 </div>
 <p>Každý panel opakuje stejný postup, ale body, přímky i sklony se mění. Některé přímky jsou strmější, jiné plošší. Kdybychom měli pouze jedno hlášení, neviděli bychom, jak široká je množina dalších rozumně možných odhadů.</p>
-<p>Sto hlášení nám dává sto sklonů. Jejich <a class="glossary" href>histogram<span class="def">Graf zobrazující rozdelení hodnot numerické promenné: hodnoty jsou serazeny do tríd, výška sloupce udává cetnost v dané tríde.</span></a> ukazuje všechny odhady společně:</p>
+<p>Sto hlášení nám dává sto sklonů. Jejich <a class="glossary" href>histogram<span class="def">Graf zobrazující rozdělení hodnot numerické proměnné: hodnoty jsou seřazeny do tříd, výška sloupce udává četnost v dané třídě.</span></a> ukazuje všechny odhady společně:</p>
 <div class="cell">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -3336,13 +3332,13 @@ F-statistic: 411.4 on 1 and 115 DF,  p-value: &lt; 2.2e-16</code></pre>
 <li><code>Residuals</code> shrnují svislé odchylky bodů od přímky, se kterými jsme pracovali v předchozí lekci.</li>
 <li>V tabulce <code>Coefficients</code> obsahuje sloupec <code>Estimate</code> stejné odhady, které vrací <code>coef(mod_gejzir)</code>. V řádku <code>delka_erupce_min</code> proto znovu najdeme <strong>odhad sklonu</strong> (anglicky <em>slope estimate</em>; česky také <strong>odhad koeficientu sklonu</strong>) 13.34: při erupci delší o jednu minutu se očekávané čekání prodlouží přibližně o 13.34 minuty.</li>
 </ol>
-<p>Teprve vedle známého sloupce <code>Estimate</code> přidáme novou informaci. <code>Std. Error</code> = 0.66 je <a class="glossary" href>standardní chyba<span class="def">Míra presnosti odhadu parametru (typicky prumeru) z dat; udává, jak moc by se odhadnutý parametr lišil pri opakovaném vzorkování ze stejné populace.</span></a> odhadu sklonu (anglicky <em>standard error of the slope estimate</em>, zkratka <strong>SE</strong>). Česky se používá také překlad <strong>směrodatná chyba</strong>; v této lekci budeme důsledně používat termín <strong>standardní chyba</strong>. Je ve stejných jednotkách jako sklon a popisuje typickou velikost změny odhadu mezi srovnatelnými soubory pozorování.</p>
+<p>Teprve vedle známého sloupce <code>Estimate</code> přidáme novou informaci. <code>Std. Error</code> = 0.66 je <a class="glossary" href>standardní chyba<span class="def">Míra přesnosti odhadu parametru (typicky průměru) z dat; udává, jak moc by se odhadnutý parametr lišil při opakovaném vzorkování ze stejné populace.</span></a> odhadu sklonu (anglicky <em>standard error of the slope estimate</em>, zkratka <strong>SE</strong>). Česky se používá také překlad <strong>směrodatná chyba</strong>; v této lekci budeme důsledně používat termín <strong>standardní chyba</strong>. Je ve stejných jednotkách jako sklon a popisuje typickou velikost změny odhadu mezi srovnatelnými soubory pozorování.</p>
 <p>Sloupce <code>t value</code> a <code>Pr(&gt;|t|)</code> zatím pouze přeskočíme. Souvisí s formálním hodnocením statistických tvrzení, kterému se budeme věnovat v následující lekci.</p>
-<p>Standardní chyba tedy není další efekt, který by „patřil“ ke sklonu bez vysvětlení. Je to <strong>měřítko přesnosti odhadu</strong>. Menší standardní chyba znamená, že by se sklony ze srovnatelných opakování shlukovaly těsněji. Větší standardní chyba znamená širší <a class="glossary" href>rozptyl<span class="def">Prumer ctvercu odchylek od prumeru; míra variability dat. Odmocnina rozptylu je smerodatná odchylka.</span></a> možných sklonů.</p>
+<p>Standardní chyba tedy není další efekt, který by „patřil“ ke sklonu bez vysvětlení. Je to <strong>měřítko přesnosti odhadu</strong>. Menší standardní chyba znamená, že by se sklony ze srovnatelných opakování shlukovaly těsněji. Větší standardní chyba znamená širší <a class="glossary" href>rozptyl<span class="def">Průměr čtverců odchylek od průměru; míra variability dat. Odmocnina rozptylu je směrodatná odchylka.</span></a> možných sklonů.</p>
 <p>V reálném výzkumu obvykle nemáme sto nezávislých opakování. <code>lm()</code> proto standardní chybu odhaduje z jediného souboru pomocí počtu pozorování, rozmístění hodnot prediktoru a odchylek bodů od přímky. Tento výpočet spoléhá na předpoklady lineárního modelu.</p>
 <section id="jak-se-standardní-chyba-sklonu-počítá" class="level3" data-number="7.1">
 <h3 data-number="7.1" class="anchored" data-anchor-id="jak-se-standardní-chyba-sklonu-počítá"><span class="header-section-number">7.1</span> Jak se standardní chyba sklonu počítá?</h3>
-<p>Nejprve výpočet zpomalíme na malém souboru konkrétních erupcí. Sloupec <code>residuum</code> ukazuje <a class="glossary" href>residuum<span class="def">Rozdíl mezi pozorovanou hodnotou odezvy a hodnotou predikovanou modelem: e&lt;U+1D62&gt; = y&lt;U+1D62&gt; - y&lt;U+1D62&gt;.</span></a> (anglicky <em>residual</em>) — svislou odchylku bodu od přímky, kterou známe z předchozí lekce. Česky se někdy používá také <strong>reziduální odchylka</strong>; samotné slovo „chyba“ by zde bylo méně přesné, protože skutečnou chybu měření neznáme.</p>
+<p>Nejprve výpočet zpomalíme na malém souboru konkrétních erupcí. Sloupec <code>residuum</code> ukazuje <a class="glossary" href>residuum<span class="def">Rozdíl mezi pozorovanou hodnotou odezvy a hodnotou predikovanou modelem: eᵢ = yᵢ − ŷᵢ.</span></a> (anglicky <em>residual</em>) — svislou odchylku bodu od přímky, kterou známe z předchozí lekce. Česky se někdy používá také <strong>reziduální odchylka</strong>; samotné slovo „chyba“ by zde bylo méně přesné, protože skutečnou chybu měření neznáme.</p>
 <div class="cell" data-tbl-cap="Malý soubor erupcí použitý k rozebrání výpočtu standardní chyby sklonu.">
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -3396,7 +3392,7 @@ F-statistic: 411.4 on 1 and 115 DF,  p-value: &lt; 2.2e-16</code></pre>
 </table>
 </div>
 </div>
-<p>Standardní chyba sklonu porovnává dvě informace. V čitateli je reziduální směrodatná odchylka; ve jmenovateli je součet čtverců odchylek délek erupcí od jejich <a class="glossary" href>průměru<span class="def">Soucet hodnot vydelený jejich poctem; nejbežnejší míra polohy (strední hodnoty).</span></a>.</p>
+<p>Standardní chyba sklonu porovnává dvě informace. V čitateli je reziduální směrodatná odchylka; ve jmenovateli je součet čtverců odchylek délek erupcí od jejich <a class="glossary" href>průměru<span class="def">Součet hodnot vydělený jejich počtem; nejběžnější míra polohy (střední hodnoty).</span></a>.</p>
 <section id="součet-čtverců-residuí" class="level4 unnumbered unlisted">
 <h4 class="unnumbered unlisted anchored" data-anchor-id="součet-čtverců-residuí">1. Součet čtverců residuí</h4>
 <p>Nejprve sečteme druhé mocniny všech residuí. Tento mezivýsledek se nazývá <strong>součet čtverců residuí</strong> (anglicky <em>residual sum of squares</em>, <strong>RSS</strong>; česky také <strong>reziduální součet čtverců</strong>).</p>
@@ -3507,7 +3503,7 @@ S_{xx} = \sum_{i=1}^{n}(x_i - \bar{x})^2.
 </div>
 </div>
 </div>
-<p>Histogram ukazuje, že sklony ze sta čtyřicetiřádkových hlášení nejsou stejné. Jejich <a class="glossary" href>směrodatná odchylka<span class="def">Odmocnina rozptylu; vyjadruje prumernou vzdálenost hodnot od prumeru ve stejných jednotkách jako puvodní data.</span></a> je 0.82 minuty čekání na minutu erupce. Model ze všech 117 erupcí odhaduje svůj sklon s menší standardní chybou 0.66, protože využívá více pozorování než jedno hlášení.</p>
+<p>Histogram ukazuje, že sklony ze sta čtyřicetiřádkových hlášení nejsou stejné. Jejich <a class="glossary" href>směrodatná odchylka<span class="def">Odmocnina rozptylu; vyjadřuje průměrnou vzdálenost hodnot od průměru ve stejných jednotkách jako původní data.</span></a> je 0.82 minuty čekání na minutu erupce. Model ze všech 117 erupcí odhaduje svůj sklon s menší standardní chybou 0.66, protože využívá více pozorování než jedno hlášení.</p>
 <p>Rozsah <strong>odhad ± jedna standardní chyba</strong> není interval spolehlivosti. Je to vizuální jednotka, která ukazuje měřítko přesnosti. V dalším kroku z této informace vytvoříme širší interval určený pro interpretaci nejistoty.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -3529,7 +3525,7 @@ S_{xx} = \sum_{i=1}^{n}(x_i - \bar{x})^2.
 <h2 data-number="8" class="anchored" data-anchor-id="jak-vyjádřit-rozsah-nejistoty"><span class="header-section-number">8</span> Jak vyjádřit rozsah nejistoty?</h2>
 <section id="připomenutí-kvantilů" class="level3" data-number="8.1">
 <h3 data-number="8.1" class="anchored" data-anchor-id="připomenutí-kvantilů"><span class="header-section-number">8.1</span> Připomenutí kvantilů</h3>
-<p>V jedné z předchozích lekcí jsme pomocí <a class="glossary" href>kvantilů<span class="def"></span></a> (anglicky <em>quantiles</em>) rozdělovali seřazené hodnoty na části. Například 2,5% kvantil odděluje nejnižších 2,5 % hodnot a 97,5% kvantil odděluje nejvyšších 2,5 %. Mezi těmito dvěma hranicemi proto leží prostředních 95 % <a class="glossary" href>rozdělení<span class="def">Matematický popis, jak jsou hodnoty promenné rozloženy; klícové parametry závisí na konkrétním rozdelení (prumer a rozptyl pro normální, &lt;U+03BB&gt; pro Poissonovo).</span></a>.</p>
+<p>V jedné z předchozích lekcí jsme pomocí <a class="glossary" href>kvantilů<span class="def">Hodnota, pod níž leží určený podíl seřazených dat; medián je 50% kvantil.</span></a> (anglicky <em>quantiles</em>) rozdělovali seřazené hodnoty na části. Například 2,5% kvantil odděluje nejnižších 2,5 % hodnot a 97,5% kvantil odděluje nejvyšších 2,5 %. Mezi těmito dvěma hranicemi proto leží prostředních 95 % <a class="glossary" href>rozdělení<span class="def">Popis toho, jaké hodnoty proměnná nabývá a jak často se vyskytují; může jít o pozorované rozdělení dat nebo o teoretické pravděpodobnostní rozdělení.</span></a>.</p>
 <p>Na histogramu sta sklonů z GeyserWatch nyní vyznačíme právě tyto dva kvantily.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -3541,7 +3537,7 @@ S_{xx} = \sum_{i=1}^{n}(x_i - \bar{x})^2.
 </div>
 </div>
 </div>
-<p>Kvantily vždy patří k určitému rozdělení hodnot. Zde popisují rozdělení sta uměle vytvořených sklonů. <a class="glossary" href>Interval spolehlivosti<span class="def">Rozsah hodnot, v nemž se s danou spolehlivostí (typicky 95 %) nachází odhadovaný parametr.</span></a> (anglicky <em>confidence interval</em>, <strong>CI</strong>; česky také <strong>konfidenční interval</strong>) naproti tomu používá odhad sklonu, jeho standardní chybu a předpoklady modelu, aby vyjádřil rozsah hodnot <a class="glossary" href>efektu<span class="def">Kvantitativní popis toho, jak silne prediktor ovlivnuje odezvu - zahrnuje smer, velikost a nejistotu (interval spolehlivosti).</span></a> slučitelných s daty.</p>
+<p>Kvantily vždy patří k určitému rozdělení hodnot. Zde popisují rozdělení sta uměle vytvořených sklonů. <a class="glossary" href>Interval spolehlivosti<span class="def">Rozsah hodnot, v němž se s danou spolehlivostí (typicky 95 %) nachází odhadovaný parametr.</span></a> (anglicky <em>confidence interval</em>, <strong>CI</strong>; česky také <strong>konfidenční interval</strong>) naproti tomu používá odhad sklonu, jeho standardní chybu a předpoklady modelu, aby vyjádřil rozsah hodnot <a class="glossary" href>efektu<span class="def">Kvantitativní popis toho, jak se podle modelu mění odezva s prediktorem; zahrnuje směr, velikost a nejistotu odhadu, ale sám o sobě nedokládá příčinu.</span></a> slučitelných s daty.</p>
 </section>
 <section id="od-odhadu-a-standardní-chyby-k-intervalu" class="level3" data-number="8.2">
 <h3 data-number="8.2" class="anchored" data-anchor-id="od-odhadu-a-standardní-chyby-k-intervalu"><span class="header-section-number">8.2</span> Od odhadu a standardní chyby k intervalu</h3>
@@ -3801,71 +3797,71 @@ t_{1-\alpha/2,\,n-2}
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">efekt</td>
-<td style="text-align: left;">Kvantitativní popis toho, jak silne prediktor ovlivnuje odezvu - zahrnuje smer, velikost a nejistotu (interval spolehlivosti).</td>
+<td style="text-align: left;">Kvantitativní popis toho, jak se podle modelu mění odezva s prediktorem; zahrnuje směr, velikost a nejistotu odhadu, ale sám o sobě nedokládá příčinu.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">histogram</td>
-<td style="text-align: left;">Graf zobrazující rozdelení hodnot numerické promenné: hodnoty jsou serazeny do tríd, výška sloupce udává cetnost v dané tríde.</td>
+<td style="text-align: left;">Graf zobrazující rozdělení hodnot numerické proměnné: hodnoty jsou seřazeny do tříd, výška sloupce udává četnost v dané třídě.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">interval-spolehlivosti</td>
-<td style="text-align: left;">Rozsah hodnot, v nemž se s danou spolehlivostí (typicky 95 %) nachází odhadovaný parametr.</td>
+<td style="text-align: left;">Rozsah hodnot, v němž se s danou spolehlivostí (typicky 95 %) nachází odhadovaný parametr.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">kvantil</td>
-<td style="text-align: left;"></td>
+<td style="text-align: left;">Hodnota, pod níž leží určený podíl seřazených dat; medián je 50% kvantil.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">nejistota</td>
-<td style="text-align: left;">Rozsah, v nemž nevíme presnou hodnotu parametru kvuli omezenému a variabilnímu vzorku; kvantifikuje se pomocí intervalu spolehlivosti nebo smerodatných chyb.</td>
+<td style="text-align: left;">Rozsah, v němž nevíme přesnou hodnotu parametru kvůli omezenému a variabilnímu vzorku; kvantifikuje se pomocí intervalů spolehlivosti nebo směrodatných chyb.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">numericka-promenna</td>
-<td style="text-align: left;">Promenná nabývající libovolných císelných hodnot na spojité nebo diskrétní císelné stupnici (délky, hmotnosti, teploty, pocty).</td>
+<td style="text-align: left;">Proměnná, jejíž hodnoty jsou čísla se smysluplnou velikostí nebo rozdílem; může být diskrétní, například počet, nebo spojitá, například délka.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">odezva</td>
-<td style="text-align: left;">Promenná, jejíž variabilitu se snažíme vysvetlit nebo predpovedet; v notaci modelu `y ~ x` je odezva `y`.</td>
+<td style="text-align: left;">Proměnná, jejíž variabilitu se snažíme vysvětlit nebo předpovědět; v notaci modelu `y ~ x` je odezva `y`.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">odlehla-pozorovani</td>
-<td style="text-align: left;">Hodnota, která se výrazne odlišuje od ostatních pozorování; muže být zpusobena chybou merení nebo jít o skutecne extrémní prípad.</td>
+<td style="text-align: left;">Hodnota, která se výrazně odlišuje od ostatních pozorování; může být způsobena chybou měření nebo jít o skutečně extrémní případ.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">prediktor</td>
-<td style="text-align: left;">Promenná, pomocí níž vysvetlujeme variabilitu odezvy; v notaci `y ~ x` je prediktor `x`.</td>
+<td style="text-align: left;">Proměnná, pomocí níž vysvětlujeme variabilitu odezvy; v notaci `y ~ x` je prediktor `x`.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">prumer</td>
-<td style="text-align: left;">Soucet hodnot vydelený jejich poctem; nejbežnejší míra polohy (strední hodnoty).</td>
+<td style="text-align: left;">Součet hodnot vydělený jejich počtem; nejběžnější míra polohy (střední hodnoty).</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">residuum</td>
-<td style="text-align: left;">Rozdíl mezi pozorovanou hodnotou odezvy a hodnotou predikovanou modelem: e&lt;U+1D62&gt; = y&lt;U+1D62&gt; - y&lt;U+1D62&gt;.</td>
+<td style="text-align: left;">Rozdíl mezi pozorovanou hodnotou odezvy a hodnotou predikovanou modelem: eᵢ = yᵢ − ŷᵢ.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">rozdeleni</td>
-<td style="text-align: left;">Matematický popis, jak jsou hodnoty promenné rozloženy; klícové parametry závisí na konkrétním rozdelení (prumer a rozptyl pro normální, &lt;U+03BB&gt; pro Poissonovo).</td>
+<td style="text-align: left;">Popis toho, jaké hodnoty proměnná nabývá a jak často se vyskytují; může jít o pozorované rozdělení dat nebo o teoretické pravděpodobnostní rozdělení.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">rozptyl</td>
-<td style="text-align: left;">Prumer ctvercu odchylek od prumeru; míra variability dat. Odmocnina rozptylu je smerodatná odchylka.</td>
+<td style="text-align: left;">Průměr čtverců odchylek od průměru; míra variability dat. Odmocnina rozptylu je směrodatná odchylka.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">sklon</td>
-<td style="text-align: left;">Parametr lineárního modelu udávající, o kolik se zmení odezva, pokud prediktor vzroste o jednu jednotku (pri zachování ostatních prediktoru).</td>
+<td style="text-align: left;">Parametr lineárního modelu udávající, o kolik se změní odezva, pokud prediktor vzroste o jednu jednotku (při zachování ostatních prediktorů).</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">smerodatna-odchylka</td>
-<td style="text-align: left;">Odmocnina rozptylu; vyjadruje prumernou vzdálenost hodnot od prumeru ve stejných jednotkách jako puvodní data.</td>
+<td style="text-align: left;">Odmocnina rozptylu; vyjadřuje průměrnou vzdálenost hodnot od průměru ve stejných jednotkách jako původní data.</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">standardni-chyba</td>
-<td style="text-align: left;">Míra presnosti odhadu parametru (typicky prumeru) z dat; udává, jak moc by se odhadnutý parametr lišil pri opakovaném vzorkování ze stejné populace.</td>
+<td style="text-align: left;">Míra přesnosti odhadu parametru (typicky průměru) z dat; udává, jak moc by se odhadnutý parametr lišil při opakovaném vzorkování ze stejné populace.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">variabilita</td>
-<td style="text-align: left;">Obecný termín pro rozsah, v nemž se hodnoty promenné liší od sebe navzájem; kvantifikuje se pomocí rozptylu, SD, IQR nebo rozsahu.</td>
+<td style="text-align: left;">Obecný termín pro rozsah, v němž se hodnoty proměnné liší od sebe navzájem; kvantifikuje se pomocí rozptylu, SD, IQR nebo rozsahu.</td>
 </tr>
 </tbody>
 </table>

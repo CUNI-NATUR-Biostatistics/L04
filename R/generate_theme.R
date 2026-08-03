@@ -36,7 +36,7 @@ dir.create(
 )
 
 # Prefer local _brand repo when it exists (dev workspace). This avoids a
-# GitHub round-trip and uses the commited-but-not-yet-pushed version during
+# GitHub round-trip and uses the committed-but-not-yet-pushed version during
 # active development. Falls back to GitHub download on any other machine.
 local_brand_canonical <-
   normalizePath(
