@@ -1,0 +1,22 @@
+schema_version: 1
+course: MB120P163
+lesson: L04
+academic_year: "2026-27"
+title: "Od odhadu k nejistotě"
+subtitle: "Proměnlivost odhadu a interval spolehlivosti"
+resources:
+  learning:
+    html: Learning_materials/skripta.html
+    pdf: Learning_materials/skripta.pdf
+    source: Learning_materials/skripta.qmd
+  presentation:
+    html: Presentation/presentation.html
+    pdf: Presentation/presentation.pdf
+    source: Presentation/presentation.qmd
+  exercises:
+    - label: "R skript ke cvičení"
+      path: Exercises/cviceni.R
+  data:
+    - label: "Data Old Faithful 2024"
+      path: data/old_faithful_2024.csv
+  extras: []
