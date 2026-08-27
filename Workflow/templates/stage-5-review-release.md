@@ -38,6 +38,12 @@
 - Interaction fallback wording present: [ ]
 - Rendered outputs updated: [ ]
 - Release artefacts verified: [ ]
+- `website-release.yml` validates and lists exactly the intended public files: [ ]
+- Every listed source, exercise, data file, and extra passed privacy, assessment-security, provenance, and reuse review: [ ]
+- Public README distinguishes the HUB stable release from `main` and `preview`: [ ]
+- Repository visibility matches the HUB repository link: [ ]
+- Approved licensing status checked; missing license recorded as a human decision: [ ]
+- Lesson Pages routes and expected HUB refresh path recorded: [ ]
 - Borrowed source patterns were adapted rather than copied mechanically: [ ]
 
 ## Release summary

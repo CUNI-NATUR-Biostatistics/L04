@@ -37,8 +37,7 @@ review and revisions on that same branch/PR, and merge it before creating the
 next stage branch. Assistants must still obtain user authorization before
 creating or switching branches, pushing, or opening/merging pull requests.
 
-Stage 6 release validation happens after the presentation PR is merged. If it
-finds a source problem, fix that on a separate release-fix branch and PR.
+Stage 6 release validation happens after the presentation PR is merged. It checks the exact public allowlist, privacy and assessment boundaries, provenance and reuse terms, repository visibility, licensing status, stable lesson routes, and the expected HUB refresh. If it finds a source problem, fix that on a separate release-fix branch and PR.
 
 ## Recommended sequence
 
