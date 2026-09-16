@@ -4264,6 +4264,11 @@
       "Maintainer": "Yihui Xie <xie@yihui.name>",
       "Repository": "https://packagemanager.posit.co/cran/latest"
     },
+    "tinytable": {
+      "Package": "tinytable",
+      "Version": "0.16.0",
+      "Source": "Repository"
+    },
     "tzdb": {
       "Package": "tzdb",
       "Version": "0.5.0",

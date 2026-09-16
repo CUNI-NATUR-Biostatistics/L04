@@ -15,13 +15,17 @@ format:
     embed-resources: true
     theme: [flatly, ../theme/skripta_theme.scss]
     highlight-style: github
-    include-in-header: "../theme/fonts-include.html"
+    include-in-header:
+      - "../theme/fonts-include.html"
+      - "../theme/skripta-favicon.html"
   typst:
     toc: true
     toc-depth: 3
     number-sections: true
     output-file: "skripta_raw.pdf"
-    include-in-header: "skripta_theme.typ"
+    include-in-header:
+      - "skripta_theme.typ"
+      - "skripta-logo.typ"
     date: last-modified
 date: 2026/07/21
 date-format: long
@@ -1646,6 +1650,8 @@ Tento zápis obsahuje velikost vztahu i jeho přesnost. Stále musí být doprov
 ## Co můžeme říct o Old Faithful?
 
 V zaznamenaných datech od června do srpna 2024 jsme odhadli, že erupce delší o jednu minutu souvisí v průměru s čekáním delším o `r round(odhad_sklonu, 2)` minuty. 95% interval spolehlivosti sahá od `r round(dolni_interval, 2)` do `r round(horni_interval, 2)` minuty čekání na minutu erupce.
+
+Tento interval se vztahuje ke **sklonu**, tedy k odhadované průměrné změně čekání při změně délky erupce. Neříká, v jakém rozmezí bude čekání po jedné konkrétní budoucí erupci: jednotlivá čekání se navíc rozptylují kolem modelové přímky. Pro takovou předpověď bychom potřebovali jiný interval, který zde nepočítáme.
 
 Toto tvrzení sděluje dvě věci současně:
 

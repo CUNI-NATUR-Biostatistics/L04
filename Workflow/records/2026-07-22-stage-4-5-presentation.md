@@ -176,3 +176,7 @@ Mentimeter is reserved for the opening prediction and the central 95% misconcept
 - [x] Diff contains only Stages 4-5 sources, records, and corresponding outputs
 - [ ] Presentation PR opened and ready to merge
 - Notes: Stage 5 was approved after five feedback batches. The presentation branch is ready to be committed, published, and opened as a pull request.
+
+## Issue #5 title-screen retrofit (2026-09-16)
+
+Ondřej Mottl approved sketch A for L03–L06 on 2026-09-16. The first slide of L04 now leads with the existing lesson question, while the original formal topic remains secondary. The next biological or visual hook, learning outcomes, and remaining teaching sequence are unchanged. This title-only retrofit does not rewrite the historical story-map approval or approve the later Issue #6 illustration pass.

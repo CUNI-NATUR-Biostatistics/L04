@@ -1,0 +1,98 @@
+{
+  "$schema": "https://raw.githubusercontent.com/CUNI-NATUR-Biostatistics/_internal/main/pollslive/quiz.schema.json",
+  "schemaVersion": 2,
+  "academicYear": "2026-27",
+  "lesson": "L04",
+  "retrievesLesson": "L03",
+  "lectureDate": "2026-10-26",
+  "title": "L04 – Opakování předchozí lekce – 2026/27",
+  "questions": [
+    {
+      "id": "odezva-ve-vzorci",
+      "text": "Ve vzorci delka_listku ~ sirka_listku je která proměnná odezvou?",
+      "options": [
+        {
+          "id": "delka-listku",
+          "label": "delka_listku"
+        },
+        {
+          "id": "sirka-listku",
+          "label": "sirka_listku"
+        },
+        {
+          "id": "obe-prediktory",
+          "label": "Obě jsou prediktory"
+        },
+        {
+          "id": "role-neurceny",
+          "label": "Vzorec role proměnných neurčuje"
+        }
+      ],
+      "correctOptionId": "delka-listku",
+      "explanation": "Proměnná vlevo od ~ je odezva; proměnná vpravo je prediktor.",
+      "media": {
+        "path": "assets/l03-formula-roles.png",
+        "alt": "Karta zobrazuje vzorec delka_listku vlnovka sirka_listku bez označení rolí proměnných.",
+        "provenance": "Deterministically rendered by R/render_pollslive_assets.R from the approved L03 formula and variable roles."
+      }
+    },
+    {
+      "id": "interpretace-sklonu",
+      "text": "Sklon modelu je přibližně 2,23 cm/cm. Která interpretace je správná?",
+      "options": [
+        {
+          "id": "prumerna-zmena",
+          "label": "Při zvýšení šířky korunního lístku o 1 cm model odhaduje průměrné zvýšení délky asi o 2,23 cm."
+        },
+        {
+          "id": "presna-zmena",
+          "label": "Každý jednotlivý lístek se prodlouží přesně o 2,23 cm."
+        },
+        {
+          "id": "intercept",
+          "label": "Intercept modelu je 2,23 cm."
+        },
+        {
+          "id": "bez-jednotek",
+          "label": "Sklon nemá jednotky."
+        }
+      ],
+      "correctOptionId": "prumerna-zmena",
+      "explanation": "Sklon udává odhadovanou průměrnou změnu odezvy na jednotku prediktoru, zde cm délky na cm šířky.",
+      "media": {
+        "path": "assets/l03-slope-estimate.png",
+        "alt": "Karta zobrazuje odhad sklonu 2,23 centimetru na centimetr bez připojené interpretace.",
+        "provenance": "Deterministically rendered by R/render_pollslive_assets.R from lm(delka_listku ~ sirka_listku) fitted to the iris data used in approved L03."
+      }
+    },
+    {
+      "id": "vypocet-residua",
+      "text": "Jaké je residuum tohoto květu, když residuum počítáme jako naměřená minus odhadnutá délka?",
+      "options": [
+        {
+          "id": "minus-0-6",
+          "label": "−0,6 cm"
+        },
+        {
+          "id": "plus-0-6",
+          "label": "+0,6 cm"
+        },
+        {
+          "id": "6-6",
+          "label": "6,6 cm"
+        },
+        {
+          "id": "12-6",
+          "label": "12,6 cm"
+        }
+      ],
+      "correctOptionId": "minus-0-6",
+      "explanation": "6,0 − 6,6 = −0,6 cm. Záporné residuum znamená, že měření leží pod modelovým odhadem.",
+      "media": {
+        "path": "assets/l03-residual-example.png",
+        "alt": "Graf jednoho květu: naměřená délka je 6,0 cm, modelový odhad 6,6 cm a svislá vzdálenost mezi nimi představuje residuum.",
+        "provenance": "Byte-identical copy of approved L03 figure Presentation/Materials/reziduum_s_popisky.png; checksum pinned by R/render_pollslive_assets.R."
+      }
+    }
+  ]
+}
