@@ -166,6 +166,8 @@ Délka erupce nám nepomůže.
 Když nehlasujeme: vyberte **ANO**, nebo **NE** a připravte jednu větu na obhajobu.
 :::
 
+{{< include ../pollslive/generated/active.qmd >}}
+
 ## Výsledky učení
 
 Po dnešní přednášce budete schopni:
@@ -179,8 +181,6 @@ Po dnešní přednášce budete schopni:
 - zapsat výsledek s [odhadem]{.text-hgl-indigo_velvet},
   [SE, CI a jednotkami]{.text-hgl-orange}
 :::
-
-{{< include ../pollslive/generated/active.qmd >}}
 
 ```{r}
 #| label: pripravit-znamy-graf
