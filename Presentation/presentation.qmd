@@ -61,19 +61,23 @@ slides_url <-
   )
 ```
 
-## Od odhadu k nejistotě
+## Pomůže délka erupce předpovědět další čekání? {.course-title .bg-indigo}
 
-<br>
-
-::: {.text-color-indigo_velvet .text-font-heading .text-size-heading1 .text-bold}
-`r display_name`
+::: {.course-title-mark}
+![Logo kurzu Biostatistika](../theme/course-logo-reversed.svg) BIOSTATISTIKA
 :::
 
-<br>
+::: {.course-title-number}
+L04
+:::
 
-[👤](https://ondrejmottl.github.io/) Ondřej Mottl
+::: {.course-title-formal}
+Od odhadu k nejistotě
+:::
 
-[Moodle](https://dl2.cuni.cz/course/view.php?id=106)
+::: {.course-title-link}
+[cuni-natur-biostatistics.github.io/materialy.html](https://cuni-natur-biostatistics.github.io/materialy.html)
+:::
 
 ## Gejzír Old Faithful v číslech
 
@@ -176,11 +180,11 @@ Po dnešní přednášce budete schopni:
   [SE, CI a jednotkami]{.text-hgl-orange}
 :::
 
-## Co už umíme z předchozí lekce?
+{{< include ../pollslive/generated/active.qmd >}}
 
 ```{r}
 #| label: pripravit-znamy-graf
-#| echo: false
+#| include: false
 #| message: false
 #| warning: false
 plot_data <-
@@ -228,14 +232,10 @@ ggview::save_ggplot(
 )
 ```
 
-```{r}
-#| label: zobrazit-vsechna-pozorovani
-#| echo: false
-include_local_figure("vsechna_pozorovani.png")
-```
+## Od jedné přímky k její nejistotě {.safe-title}
 
-::: {.takeaway-strip}
-Se sousedem: popište směr vztahu a jednu věc, kterou z bodů zatím nevíme.
+::: {.takeaway-strip .text-center}
+Jeden model dává jeden odhad sklonu. Dnes zjistíme, **jak moc by se tento odhad měnil mezi dalšími výběry**.
 :::
 
 ## Lineární model
@@ -270,6 +270,21 @@ Budou jeho [body]{.text-hgl-graphite} — a jeho
 
 ::: {.takeaway-strip .text-center}
 Když nehlasujeme: napište si „ano“ nebo „ne“ a jednu větu, kterou svou volbu obhájíte.
+:::
+
+## Tři pozorovatelé, tři odhady
+
+```{r}
+#| label: zobrazit-pozorovatele-gejziru
+#| echo: false
+#| out-width: "90%"
+#| fig-alt: "Tři terénní pozorovatelé sledují stejný gejzír a na kreslicích deskách mají tři různě skloněné fialové přímky."
+#| fig-cap: "Ilustrační obraz vytvořen AI."
+include_local_figure("geyser_observers_slopes.png")
+```
+
+::: {.takeaway-strip .text-center}
+Jiný výběr pozorování může vést k jinému odhadu sklonu.
 :::
 
 ## Pepa pozoroval pouze červen
@@ -482,6 +497,10 @@ ggview::save_ggplot(
 #| echo: false
 include_local_figure("tri_mesice.png")
 ```
+
+::: {.takeaway-strip .fragment}
+Rozdíly mezi měsíci mohou odrážet jiný výběr pozorování i skutečnou časovou změnu. Tři měsíce samy tyto příčiny neoddělí.
+:::
 
 ## [Odhad]{.text-hgl-indigo_velvet} není oddělený od [dat]{.text-hgl-graphite}
 
@@ -869,20 +888,45 @@ mod_gejzir <-
     data = data_gejzir
   )
 
-table_souhrn_modelu <-
-  summary(mod_gejzir)$coefficients
+model_gejzir_tidy <-
+  broom::tidy(
+    mod_gejzir,
+    conf.int = TRUE
+  )
+
+radek_sklonu_gejzir <-
+  model_gejzir_tidy |>
+  dplyr::filter(term == "delka_erupce_min")
 
 odhad_sklonu <-
-  table_souhrn_modelu[
-    "delka_erupce_min",
-    "Estimate"
-  ]
+  radek_sklonu_gejzir |>
+  dplyr::pull(estimate)
 
 standardni_chyba_sklonu <-
-  table_souhrn_modelu[
-    "delka_erupce_min",
-    "Std. Error"
-  ]
+  radek_sklonu_gejzir |>
+  dplyr::pull(std.error)
+
+tabulka_sklonu_gejzir <-
+  radek_sklonu_gejzir |>
+  dplyr::transmute(
+    Parametr = "Sklon",
+    Odhad = formatC(estimate, format = "f", digits = 2, decimal.mark = ","),
+    `Std. chyba` = formatC(std.error, format = "f", digits = 2, decimal.mark = ",")
+  )
+
+stopifnot(
+  isTRUE(all.equal(
+    unname(odhad_sklonu),
+    unname(coef(mod_gejzir)[["delka_erupce_min"]])
+  )),
+  isTRUE(all.equal(
+    unname(standardni_chyba_sklonu),
+    unname(summary(mod_gejzir)$coefficients[
+      "delka_erupce_min",
+      "Std. Error"
+    ])
+  ))
+)
 ```
 
 :::: {.columns}
@@ -914,17 +958,13 @@ summary(mod_gejzir)
 `delka_erupce_min` = **sklon**
 :::
 
-::: {.panel-amethyst}
-[Odhad (Estimate)]{.panel-title}
+```{r}
+#| label: zobrazit-tabulku-sklonu-gejziru
+#| echo: false
+tinytable::tt(tabulka_sklonu_gejzir)
+```
 
-**`r round(odhad_sklonu, 2)`** min čekání / min erupce
-:::
-
-::: {.panel-orange}
-[Standardní chyba (Std. Error)]{.panel-title}
-
-**`r round(standardni_chyba_sklonu, 2)`** min čekání / min erupce
-:::
+**Jednotka:** min čekání / min erupce
 :::
 :::
 
@@ -1184,8 +1224,10 @@ Jak z nich vytvořit srozumitelný
 vec_hladiny_intervalu <-
   c(0.80, 0.90, 0.95, 0.99)
 
-data_intervaly <-
-  vec_hladiny_intervalu |>
+# Srovnávací hladiny počítáme samostatně; hlavní 95% interval níže
+# přebírá meze přímo z jediného objektu vytvořeného broom::tidy().
+data_intervaly_srovnani <-
+  c(0.80, 0.90, 0.99) |>
   purrr::map(
     .f = ~ {
       table_jeden_interval <-
@@ -1206,7 +1248,22 @@ data_intervaly <-
       )
     }
   ) |>
-  purrr::list_rbind() |>
+  purrr::list_rbind()
+
+data_interval_95 <-
+  radek_sklonu_gejzir |>
+  dplyr::transmute(
+    hladina = 0.95,
+    popisek = "95% interval",
+    dolni = conf.low,
+    horni = conf.high
+  )
+
+data_intervaly <-
+  dplyr::bind_rows(
+    data_intervaly_srovnani,
+    data_interval_95
+  ) |>
   dplyr::mutate(
     odhad = odhad_sklonu,
     popisek = factor(
@@ -1223,14 +1280,12 @@ data_intervaly <-
   )
 
 dolni_interval <-
-  data_intervaly |>
-  dplyr::filter(hladina == 0.95) |>
-  dplyr::pull(dolni)
+  radek_sklonu_gejzir |>
+  dplyr::pull(conf.low)
 
 horni_interval <-
-  data_intervaly |>
-  dplyr::filter(hladina == 0.95) |>
-  dplyr::pull(horni)
+  radek_sklonu_gejzir |>
+  dplyr::pull(conf.high)
 
 plot_interval_95 <-
   ggplot2::ggplot(
@@ -1356,6 +1411,10 @@ include_local_figure("interval_95.png")
 Pro gejzír Old Faithful:
 [**[`r round(dolni_interval, 2)`; `r round(horni_interval, 2)`]**]{.text-hgl-indigo_velvet}
 minuty čekání na minutu erupce.
+:::
+
+::: {.fragment}
+Tento interval popisuje nejistotu **sklonu**, nikoli rozsah čekání u jedné budoucí erupce. To závisí také na tom, jak se jednotlivá pozorování rozptylují kolem přímky.
 :::
 
 ## Co se stane při vyšší hladině?
