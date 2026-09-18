@@ -12,7 +12,7 @@ Human approval: approved by the human author in this session on 2026-09-16, with
 
 ## Scope and integration map
 
-The retrieval block replaces only `Co už umíme z předchozí lekce?`. It appears after `Výsledky učení` and before the existing full-data/model callback. The standard sequence is participation, aggregate results, three native question-and-explanation slides, and `Od jedné přímky k její nejistotě`.
+The retrieval block replaces only `Co už umíme z předchozí lekce?`. It appears before `Výsledky učení` and before the existing full-data/model callback. The standard sequence is participation, aggregate results, three native question-and-explanation slides, the learning outcomes, and `Od jedné přímky k její nejistotě`.
 
 | Position | Teaching move | Student knowledge used | Bridge |
 |---|---|---|---|
@@ -77,7 +77,7 @@ Code/output cards are rendered reproducibly from the approved L03 model; the res
 ## Implementation and validation
 
 - `pollslive/quiz.json` uses schema version 2 and contains the three approved questions.
-- The standard include is placed immediately after the learning outcomes and is followed by the approved bridge.
+- The standard include is placed after the opening question and before the learning outcomes; the approved bridge follows the outcomes.
 - `node pollslive/validate.mjs` passes without credentials.
 - All R chunks parse; checked source files are UTF-8 without BOM or replacement characters; no duplicate chunk labels were found.
 - Offline PollsLive rendering completed through the canonical presentation wrapper. The final PDF has 42 pages, and `Presentation/presentation.html` is byte-identical to `docs/index.html`.
@@ -97,3 +97,9 @@ The first read-only review found answer-revealing evidence in L03 Q1 and L04 Q1/
 ## Operational limitations
 
 Remote PollsLive synchronization, remote setting verification, QR/link testing on a second device, and schedule activation require an immutable pushed lesson commit and therefore remain pending. No remote poll operation was performed and no production response was submitted. Activation remains disabled.
+
+## 2026-09-18 author feedback revision
+
+The existing PollsLive include now appears after the opening question and before `Výsledky učení`; quiz content and evidence remain unchanged.
+
+Validation: canonical offline render produced a 42-page PDF with retrieval on page 4 and outcomes on page 8; HTML matches `docs/index.html`. The local `_internal` client was used because the pinned cache is absent.
