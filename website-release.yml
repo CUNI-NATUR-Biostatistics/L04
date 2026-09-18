@@ -13,9 +13,7 @@ resources:
     html: Presentation/presentation.html
     pdf: Presentation/presentation.pdf
     source: Presentation/presentation.qmd
-  exercises:
-    - label: "R skript ke cvičení"
-      path: Exercises/cviceni.R
+  exercises: []
   data:
     - label: "Data Old Faithful 2024"
       path: data/old_faithful_2024.csv

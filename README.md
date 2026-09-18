@@ -33,7 +33,6 @@ Následující odkazy vedou vždy na nejnovější schválené vydání L04. Roz
 | Skripta | [Číst online](https://cuni-natur-biostatistics.github.io/L04/current/learning/) | [Stáhnout PDF](https://cuni-natur-biostatistics.github.io/L04/current/learning/skripta.pdf) |
 | Prezentace | [Otevřít slidy](https://cuni-natur-biostatistics.github.io/L04/current/presentation/) | [Stáhnout PDF](https://cuni-natur-biostatistics.github.io/L04/current/presentation/presentation.pdf) |
 
-Pro navazující praktické cvičení je připraven [R skript ke stažení](https://cuni-natur-biostatistics.github.io/L04/current/code/cviceni.R). Skript obsahuje úlohy a kód, se kterými budete pracovat během praktika.
 
 - [HUB kurzu](https://cuni-natur-biostatistics.github.io/) je hlavní vstup ke všem veřejným studijním materiálům.
 - [Moodle kurzu](https://dl2.cuni.cz/course/view.php?id=106) slouží zapsaným studentům pro oznámení, testy, zadání, odevzdávání a individuální výsledky.
@@ -44,7 +43,6 @@ Pro navazující praktické cvičení je připraven [R skript ke stažení](http
 
 - `Learning_materials/skripta.qmd` je zdroj skript; výsledky jsou `Learning_materials/skripta.html` a `Learning_materials/skripta.pdf`.
 - `Presentation/presentation.qmd` je zdroj slidů; výsledky jsou `Presentation/presentation.html` a `Presentation/presentation.pdf`.
-- `Exercises/cviceni.R` je studentský R skript pro praktické cvičení.
 - `data/old_faithful_2024.csv` je připravený výukový dataset erupcí Old Faithful.
 - `R/` obsahuje podporované renderovací a tematické nástroje.
 - `theme/` obsahuje synchronizovanou lokální kopii společné vizuální identity kurzu.
