@@ -32,6 +32,8 @@ Následující odkazy vedou vždy na nejnovější schválené vydání L04. Roz
 | --- | --- | --- |
 | Skripta | [Číst online](https://cuni-natur-biostatistics.github.io/L04/current/learning/) | [Stáhnout PDF](https://cuni-natur-biostatistics.github.io/L04/current/learning/skripta.pdf) |
 | Prezentace | [Otevřít slidy](https://cuni-natur-biostatistics.github.io/L04/current/presentation/) | [Stáhnout PDF](https://cuni-natur-biostatistics.github.io/L04/current/presentation/presentation.pdf) |
+| Praktické cvičení | [Stáhnout R skript](https://cuni-natur-biostatistics.github.io/L04/current/code/cviceni.R) | — |
+| Data ke cvičení | [Stáhnout CSV](https://cuni-natur-biostatistics.github.io/L04/current/data/old_faithful_2024.csv) | — |
 
 
 - [HUB kurzu](https://cuni-natur-biostatistics.github.io/) je hlavní vstup ke všem veřejným studijním materiálům.
