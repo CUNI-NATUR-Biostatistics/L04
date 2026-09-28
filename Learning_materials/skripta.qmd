@@ -840,6 +840,8 @@ Standardní chyba tedy není další efekt, který by „patřil“ ke sklonu be
 
 V reálném výzkumu obvykle nemáme sto nezávislých opakování. `lm()` proto standardní chybu odhaduje z jediného souboru pomocí počtu pozorování, rozmístění hodnot prediktoru a odchylek bodů od přímky. Tento výpočet spoléhá na předpoklady lineárního modelu.
 
+{{< pagebreak >}}
+
 ::: {.box-data collapse="true" title="Doplňující: co standardní chyba nezahrnuje"}
 
 Standardní chyba popisuje výběrovou proměnlivost **za předpokladu, že použitý model a způsob zacházení s pozorováními jsou přiměřené**. Sama automaticky neopraví systematickou chybu měření, nereprezentativní výběr, opakovaná měření vydávaná za nezávislá ani zřetelné zakřivení či změnu rozptylu residuí.

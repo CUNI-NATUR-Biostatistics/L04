@@ -41,4 +41,4 @@
 - Independent amendment review: passed with no findings.
 - Glossary coverage: checked for the added prose; no missing first-occurrence wrapper was identified.
 - Source checks: UTF-8 without BOM, no replacement characters, `git diff --check` passed.
-- Render: project-native HTML and PDF render passed; all 23 PDF pages were inspected through contact sheets with no clipping, overlap or broken layout.
+- Render: project-native HTML and PDF render passed; all 23 PDF pages were inspected through lesson-wide contact sheets and both new Extra pages at readable size. An orphaned Extra header was corrected with a print page break and the final rerender has no clipping, overlap, broken glyphs or orphaned blocks.
