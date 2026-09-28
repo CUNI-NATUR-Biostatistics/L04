@@ -840,6 +840,15 @@ Standardní chyba tedy není další efekt, který by „patřil“ ke sklonu be
 
 V reálném výzkumu obvykle nemáme sto nezávislých opakování. `lm()` proto standardní chybu odhaduje z jediného souboru pomocí počtu pozorování, rozmístění hodnot prediktoru a odchylek bodů od přímky. Tento výpočet spoléhá na předpoklady lineárního modelu.
 
+{{< pagebreak >}}
+
+::: {.box-data collapse="true" title="Doplňující: co standardní chyba nezahrnuje"}
+
+Standardní chyba popisuje výběrovou proměnlivost **za předpokladu, že použitý model a způsob zacházení s pozorováními jsou přiměřené**. Sama automaticky neopraví systematickou chybu měření, nereprezentativní výběr, opakovaná měření vydávaná za nezávislá ani zřetelné zakřivení či změnu rozptylu residuí.
+
+Malá SE tedy neznamená, že studie nemůže být systematicky zavádějící. Můžeme velmi přesně odhadnout vztah v nereprezentativním souboru nebo získat příliš optimistickou SE, pokud jsme přehlédli závislost pozorování. Proto se nejistota z tabulky modelu čte společně s diagnostikou z předchozí lekce a s popisem získání dat.
+:::
+
 ### Jak se standardní chyba sklonu počítá?
 
 ```{r}
@@ -1652,6 +1661,13 @@ Tento zápis obsahuje velikost vztahu i jeho přesnost. Stále musí být doprov
 V zaznamenaných datech od června do srpna 2024 jsme odhadli, že erupce delší o jednu minutu souvisí v průměru s čekáním delším o `r round(odhad_sklonu, 2)` minuty. 95% interval spolehlivosti sahá od `r round(dolni_interval, 2)` do `r round(horni_interval, 2)` minuty čekání na minutu erupce.
 
 Tento interval se vztahuje ke **sklonu**, tedy k odhadované průměrné změně čekání při změně délky erupce. Neříká, v jakém rozmezí bude čekání po jedné konkrétní budoucí erupci: jednotlivá čekání se navíc rozptylují kolem modelové přímky. Pro takovou předpověď bychom potřebovali jiný interval, který zde nepočítáme.
+
+::: {.box-data collapse="true" title="Doplňující: interval pro průměrný vztah není interval pro další erupci"}
+
+Interval spolehlivosti pro průměrný vztah se ptá, kde může ležet **průměrné čekání** odpovídající určité délce erupce nebo jaký může být sklon tohoto průměrného trendu. Jedna budoucí erupce se však může od trendu odchýlit, stejně jako se od přímky odchylují už pozorované body.
+
+Interval pro jednotlivé nové čekání proto musí zahrnout dvě nejistoty současně: nejistotu polohy průměrného trendu a přirozený rozptyl jednotlivých čekání kolem něj. Bývá tedy širší než interval pro průměr. Úplný výpočet predikčního intervalu zde nepotřebujeme; důležité je nejprve pojmenovat, zda chceme odhadnout průměrný vztah, nebo předpovědět jeden nový případ.
+:::
 
 Toto tvrzení sděluje dvě věci současně:
 
