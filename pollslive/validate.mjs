@@ -71,6 +71,11 @@ for (const question of definition.questions) {
   assert(mediaStatus.isFile() && !mediaStatus.isSymbolicLink(), `${question.id} media must be a regular file, not a symlink.`);
 }
 
+const correctPositions = definition.questions.map((question) =>
+  question.options.findIndex((option) => option.id === question.correctOptionId)
+);
+assert(new Set(correctPositions).size > 1, "Correct answers must not all occupy the same option position.");
+
 assertObject(config, "config.json");
 rejectUnknownKeys(config, configKeys, "config.json");
 assert(config.schemaVersion === 1, "config.json schemaVersion must be 1.");
