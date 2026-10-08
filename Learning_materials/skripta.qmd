@@ -1,9 +1,10 @@
 ---
-title: "Od odhadu k nejistotě"
-subtitle: "Proměnlivost odhadu a interval spolehlivosti"
+title: "O kolik déle čekáme po delší erupci — a jak jistě to víme?"
+subtitle: "Od odhadu k nejistotě: výběrová variabilita a interval spolehlivosti"
 lang: cs
 filters:
   - ../theme/semantic-boxes.lua
+  - glossary-headings.lua
 format:
   html:
     toc: true
@@ -35,34 +36,70 @@ date-modified: last-modified
 ```{r}
 #| label: nastaveni
 #| include: false
-if (!requireNamespace("here", quietly = TRUE)) install.packages("here")
-if (!requireNamespace("readr", quietly = TRUE)) install.packages("readr")
-if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
-if (!requireNamespace("tidyr", quietly = TRUE)) install.packages("tidyr")
-if (!requireNamespace("purrr", quietly = TRUE)) install.packages("purrr")
-if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
-if (!requireNamespace("glossary", quietly = TRUE)) install.packages("glossary")
+if (!require("here")) install.packages("here")
 
 here::i_am("Learning_materials/skripta.qmd")
-source(here::here("R", "set_r_theme.R"))
 
-local_pojmy <- tempfile(fileext = ".yaml")
-tryCatch(
-  {
-    download.file(
-      url = paste0(
-        "https://raw.githubusercontent.com/",
-        "CUNI-NATUR-Biostatistics/slovnik/main/pojmy.yaml"
-      ),
-      destfile = local_pojmy,
-      quiet = TRUE
-    )
-    glossary::glossary_path(local_pojmy)
-  },
-  error = function(e) {
-    message("Glossary YAML unavailable: ", conditionMessage(e))
+# Visible code reads data/old_faithful_2024.csv relative to the project root,
+#   exactly as students do in their own R project.
+knitr::opts_knit$set(root.dir = here::here())
+
+# Hidden figures use Czech decimal commas on their axes. Visible chunks keep
+#   R's default output so that it matches what students see in R.
+knitr::knit_hooks$set(
+  desetinna_carka = function(before) {
+    if (before) {
+      options(OutDec = ",")
+    } else {
+      options(OutDec = ".")
+    }
   }
 )
+knitr::opts_hooks$set(
+  echo = function(options) {
+    if (isFALSE(options$echo)) {
+      options$desetinna_carka <- TRUE
+    }
+    options
+  }
+)
+
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("glossary")) install.packages("glossary")
+
+library(tidyverse)
+library(glossary)
+glossary::glossary_popup("hover")
+
+source(here::here("R", "set_r_theme.R"))
+source(here::here("R", "Functions", "format_cz.R"))
+source(here::here("R", "Functions", "format_cz_math.R"))
+source(here::here("R", "Functions", "simulate_reports.R"))
+source(here::here("R", "Functions", "summarise_reports.R"))
+
+# Glossary: use local slovnik/pojmy.yaml when available, otherwise remote fallback.
+# Terms are looked up by slug ID (e.g. "histogram", "median", "boxplot").
+# Usage in text: `r render_glossary_term("slug", display = "Czech term")`
+local_pojmy <- here::here("..", "slovnik", "pojmy.yaml")
+
+if (file.exists(local_pojmy)) {
+  glossary::glossary_path(local_pojmy)
+} else {
+  remote_pojmy <- tempfile(fileext = ".yaml")
+  tryCatch(
+    {
+      download.file(
+        url = "https://raw.githubusercontent.com/CUNI-NATUR-Biostatistics/slovnik/main/pojmy.yaml",
+        destfile = remote_pojmy,
+        quiet = TRUE
+      )
+      glossary::glossary_path(remote_pojmy)
+    },
+    error = function(e) {
+      message("Glossary YAML unavailable: ", conditionMessage(e))
+    }
+  )
+}
 tryCatch(
   {
     source(
@@ -88,132 +125,173 @@ if (knitr::is_html_output()) {
   glossary::glossary_style(
     color = biostat_cols[["indigo_velvet"]],
     text_decoration = "underline",
-    def_bg = "#FFFFFF",
-    def_color = "#2E2E2E"
-  )
-  cat(
-    "<style>",
-    "a.glossary:hover .def { display: inline-block; }",
-    "a.glossary:hover .def::after {",
-    "  content: ' '; position: absolute; top: 100%; left: 50%;",
-    "  margin-left: -5px; border-width: 5px; border-style: solid;",
-    "  border-color: #FFFFFF transparent transparent transparent;",
-    "}",
-    "a.glossary:active .def { display: none; }",
-    "a.glossary:active .def::after { display: none; }",
-    "</style>",
-    "<script>",
-    "document.addEventListener('DOMContentLoaded', function() {",
-    "  document.querySelectorAll('a.glossary').forEach(function(a) {",
-    "    a.addEventListener('click', function(e) { e.preventDefault(); });",
-    "  });",
-    "});",
-    "</script>",
-    sep = "\n"
+    def_bg = biostat_cols[["white"]],
+    def_color = biostat_cols[["graphite"]]
   )
 }
 ```
 
-## Co nám mohou pozorované erupce říct o skutečném vztahu?
+## Úvod
 
-Gejzír Old Faithful střídá erupce a období čekání. Návštěvníky i správu parku proto zajímá praktická otázka: **pomůže délka právě skončené erupce odhadnout, za jak dlouho začne další?**
+Gejzír Old Faithful v Yellowstonském národním parku střídá erupce a období klidu. Podle [National Park Service](https://www.nps.gov/places/old-faithful-geyser.htm) trvá erupce přibližně 1,5 až 5 minut a čekání na další erupci se obvykle pohybuje od 50 do 127 minut. Návštěvníci i správa parku se proto ptají, zda délka právě skončené erupce napoví, jak dlouho budeme čekat na další.
 
-Představme si, že vztah mezi délkou erupce a čekáním zkoumá jeden člověk během několika dní. Zaznamená určitý soubor erupcí, proloží jimi přímku a popíše její sklon. Jeho přímka ale vznikla pouze z erupcí, které skutečně viděl.
+V předchozí lekci jsme se naučili odhadnout `r render_glossary_term("linearni-model", display = "lineárním modelem")`, o kolik se v průměru liší `r render_glossary_term("odezva", display = "odezva")` dvou `r render_glossary_term("pozorovani", display = "pozorování")`, jejichž `r render_glossary_term("prediktor", display = "prediktor")` se liší o jednu jednotku. `r render_glossary_term("odhad", display = "Odhad")` z jednoho souboru dat ale není celá odpověď. Kdyby gejzír pozoroval někdo jiný v jiných dnech, zaznamenal by jiné erupce a jeho odhad by mohl vyjít jinak. Potřebujeme proto znát nejen velikost `r render_glossary_term("efekt", display = "efektu")`, ale také to, jak přesně jsme ji odhadli.
 
 ::: {.box-question title="Hlavní otázka této lekce"}
 
-**Kdyby Old Faithful pozorovali jiní lidé, dostali by stejnou přímku a stejný odhad vztahu?**
+**O kolik déle čekáme po delší erupci — a jak jistě to víme?**
 :::
 
-V této lekci budeme nejprve mluvit o **souboru pozorování** nebo jednoduše o **datech**. Statistický termín *výběr* zavedeme až ve chvíli, kdy už bude z příběhu jasné, co označuje. K již známému modelu potom přidáme `r render_glossary_term("nejistota", display = "nejistotu")`: nestačí vědět, jak velký `r render_glossary_term("efekt", display = "efekt")` jsme odhadli, potřebujeme také vědět, jak přesný tento odhad je.
+::: {.box-question title="Co čekáte ještě před prvním grafem?"}
+
+Představte si, že gejzír pozorují další lidé v jiných dnech a každý z nich spočítá vlastní `r render_glossary_term("sklon", display = "sklon")` přímky. Jaké sklony dostanou?
+
+- **A:** Přesně stejný sklon jako my.
+- **B:** Podobné, ale ne stejné sklony.
+- **C:** Zcela odlišné sklony, které spolu nesouvisejí.
+
+Než budete číst dál, vyberte možnost, která vám připadá nejpravděpodobnější, a zdůvodněte ji.
+:::
+
+::: {.box-result collapse="true" title="Odpověď: podobné, ale ne stejné sklony"}
+
+Nejpravděpodobnější je **možnost B**. Každý pozorovatel zaznamená jiné erupce. Pokud vztah mezi délkou erupce a čekáním skutečně existuje, budou si odhady podobné; protože však body nikdy neleží přesně na přímce, budou se navzájem trochu lišit. Tato lekce ukazuje, jak velký takový rozdíl bývá a jak jej popsat čísly.
+:::
 
 ## Výsledky učení
 
-Po prostudování těchto materiálů budete schopni:
+Po prostudování této lekce budete schopni:
 
-- vysvětlit, proč různé soubory pozorování dávají různé odhady sklonu;
-- v tabulce z `summary()` najít odhad sklonu a jeho `r render_glossary_term("standardni-chyba", display = "standardní chybu")` a vysvětlit rozdíl mezi velikostí vztahu a přesností odhadu;
-- interpretovat `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` sklonu v kontextu čekání na další erupci;
-- zapsat výsledek lineárního modelu jednou věcnou větou s odhadem, standardní chybou a intervalem spolehlivosti.
+- vysvětlit, proč jiný soubor `r render_glossary_term("pozorovani", display = "pozorování")` dává jiný `r render_glossary_term("odhad", display = "odhad")` `r render_glossary_term("sklon", display = "sklonu")`;
+- najít ve výstupu `summary()` odhad sklonu a jeho `r render_glossary_term("standardni-chyba", display = "standardní chybu")` a rozlišit velikost vztahu od přesnosti odhadu;
+- získat `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` funkcí `confint()` a interpretovat ho bez tvrzení, že obsahuje 95 % pozorování nebo dokazuje hypotézu;
+- zapsat výsledek jednou větou s odhadem, standardní chybou, intervalem a jednotkami.
 
-## Data: erupce gejzíru Old Faithful
+## Každý řádek je jedna erupce
 
-```{r}
-#| label: nacist-data-gejziru-pro-vyuku
-#| include: false
-data_gejzir <-
-  readr::read_csv(
-    file = here::here("data", "old_faithful_2024.csv"),
-    col_types = readr::cols(
-      eruption_id = readr::col_double(),
-      geyser = readr::col_character(),
-      date = readr::col_date(format = "%Y-%m-%d"),
-      time = readr::col_double(),
-      cekani_min = readr::col_double(),
-      webcam = readr::col_character(),
-      duration = readr::col_double()
-    )
-  ) |>
-  tidyr::drop_na(duration, cekani_min) |>
-  dplyr::mutate(
-    delka_erupce_min = duration / 60
-  )
+Používáme skutečná `r render_glossary_term("pozorovani", display = "pozorování")` erupcí Old Faithful z léta 2024, která zaznamenali dobrovolníci prostřednictvím služby [GeyserTimes](https://geysertimes.org/). Jeden řádek tabulky odpovídá jedné erupci a čekání na erupci následující.
+
+Soubor [old_faithful_2024.csv](../data/old_faithful_2024.csv) je součástí materiálů. Pro následující kód jej uložte do složky `data` ve svém projektu v R. Délka erupce je v souboru v sekundách; pro výklad ji převedeme na minuty, aby obě měření měla stejnou jednotku:
+
+```{=typst}
+#block(breakable: false)[
 ```
 
-Old Faithful leží v oblasti Upper Geyser Basin v Yellowstonském národním parku. Patří k velkým gejzírům, které zde vybuchují nejčastěji, ale jeho jméno neznamená, že by erupce přicházely v dokonale pravidelných rozestupech. Podle [National Park Service](https://www.nps.gov/places/old-faithful-geyser.htm) trvá jedna erupce přibližně 1,5 až 5 minut a čekání mezi erupcemi se obvykle pohybuje od 50 do 127 minut. Právě proměnlivost čekání vytváří naši praktickou otázku: pomůže nám délka jedné erupce předvídat příchod další?
+```{r}
+#| label: data-gejzir-prehled
+#| echo: true
+# Načteme tabulku erupcí ze souboru CSV
+data_gejzir <-
+  read.csv(file = "data/old_faithful_2024.csv")
 
-Pro analýzu použijeme `r nrow(data_gejzir)` pozorování od `r format(x = min(data_gejzir$date), format = "%d. %m. %Y")` do `r format(x = max(data_gejzir$date), format = "%d. %m. %Y")`. Dobrovolníci údaje zaznamenali prostřednictvím služby [GeyserTimes](https://geysertimes.org/). Z jejího [oficiálního archivu erupcí Old Faithful](https://geysertimes.org/archive/geysers/Old_Faithful_eruptions.tsv.gz) jsme připravili výukovou tabulku.
+# Datum převedeme z textu na kalendářní datum
+data_gejzir$date <-
+  as.Date(x = data_gejzir$date)
 
-R už obsahuje klasický dataset `faithful`, který lze načíst příkazem `data(faithful)`. Pro hlavní statistické kroky by stačil: sloupec `eruptions` obsahuje délku erupce a `waiting` čekání na další erupci. V této lekci přesto používáme archiv GeyserTimes ze tří záměrných důvodů:
+# Délku erupce převedeme ze sekund na minuty
+data_gejzir$delka_erupce_min <-
+  data_gejzir$duration / 60
 
-1. **Datum a čas:** archiv obsahuje časové údaje, takže můžeme ukázat, že různé měsíce vedou k různým odhadům.
-2. **Rozsáhlejší a aktualizovatelný zdroj:** celý archiv nabízí více záznamů než klasický dataset v R; pro přehlednou výuku z něj záměrně vybíráme `r nrow(data_gejzir)` pozorování ze tří konkrétních měsíců roku 2024.
-3. **Reprodukovatelné získání dat:** doplňující část ukazuje cestu od prvotního zdroje k analyzované tabulce, tedy dovednost použitelnou i mimo tento příklad.
+# Zkontrolujeme názvy a typy sloupců
+str(object = data_gejzir)
+```
 
-Všechny základní příklady bodového grafu, lineárního modelu, standardní chyby a intervalu spolehlivosti lze zopakovat také s `data(faithful)` po přejmenování `eruptions` na `delka_erupce_min` a `waiting` na `cekani_min`. Pouze příklady rozdělené podle data nebo měsíce potřebují časové údaje z GeyserTimes.
+```{=typst}
+]
+```
 
-Každé pozorování popisuje jednu erupci a čekání na erupci následující. Budou nás zajímat dvě `r render_glossary_term("numericka-promenna", display = "numerické proměnné")`:
+V lekci budeme pracovat se dvěma `r render_glossary_term("numericka-promenna", display = "numerickými proměnnými")`:
 
 - `delka_erupce_min`: délka právě pozorované erupce v minutách — náš `r render_glossary_term("prediktor", display = "prediktor")`;
 - `cekani_min`: čekání do následující erupce v minutách — naše `r render_glossary_term("odezva", display = "odezva")`.
 
-### Volitelně: odkud se soubor vzal
+Sloupec `date` použijeme k rozdělení pozorování podle měsíců. Ostatní sloupce popisují identifikátor erupce, čas a to, zda erupci zachytila webkamera.
 
-::: {.box-data title="Doplňující: příprava dat"}
+Kontrola dat pokračuje rozsahy obou měření, chybějícími hodnotami a počtem erupcí v jednotlivých měsících:
 
-**Tuto část můžete bez obav přeskočit. Pro pochopení lekce není potřeba rozumět jednotlivým řádkům ani kód spouštět.** Pro další práci stačí vědět, že výsledkem je připravený objekt `data_gejzir`.
+```{=typst}
+#block(breakable: false)[
+```
 
-Pokud si chcete základní analýzu vyzkoušet bez stahování, následující krátký blok vytvoří stejně pojmenované proměnné z datasetu dodávaného s R:
+```{r}
+#| label: data-gejzir-kontrola
+#| echo: true
+# Minimum, kvartily, průměr a maximum obou měření
+summary(
+  object = data_gejzir[, c("delka_erupce_min", "cekani_min")]
+)
+
+# Počet chybějících hodnot v každém sloupci
+colSums(x = is.na(x = data_gejzir))
+
+# Počet erupcí v jednotlivých měsících (06 = červen)
+table(format(x = data_gejzir$date, format = "%m"))
+```
+
+```{=typst}
+]
+```
+
+```{r}
+#| label: spocitat-erupce-po-mesicich
+#| include: false
+vec_pocty_mesicu <-
+  as.vector(table(format(x = data_gejzir$date, format = "%m")))
+```
+
+Tabulka obsahuje `r format_cz(nrow(data_gejzir))` erupcí od `r format(x = min(data_gejzir$date), format = "%d. %m. %Y")` do `r format(x = max(data_gejzir$date), format = "%d. %m. %Y")`: v červnu, červenci a srpnu postupně `r paste(format_cz(vec_pocty_mesicu), collapse = ", ")`. Erupce trvaly od `r format_cz(min(data_gejzir$delka_erupce_min))` do `r format_cz(max(data_gejzir$delka_erupce_min))` minuty a čekání se pohybovalo od `r format_cz(min(data_gejzir$cekani_min))` do `r format_cz(max(data_gejzir$cekani_min))` minut; žádný sloupec nemá chybějící hodnoty. Oba rozsahy leží uvnitř hodnot uváděných National Park Service, takže nic nenaznačuje chybu jednotek.
+
+```{=typst}
+#block(breakable: false)[
+```
+
+```{r}
+#| label: tabulka-prvnich-erupci
+#| echo: false
+#| message: false
+#| warning: false
+#| tbl-cap: "Prvních šest erupcí: datum, délka erupce a čekání na další erupci."
+data_gejzir |>
+  dplyr::transmute(
+    Datum = format(x = date, format = "%d. %m. %Y"),
+    `Délka erupce (min)` = format_cz(delka_erupce_min),
+    `Čekání (min)` = format_cz(cekani_min)
+  ) |>
+  head(n = 6) |>
+  knitr::kable(align = "lrr")
+```
+
+```{=typst}
+]
+```
+
+::: {.box-data collapse="true" title="Doplňující: jak vznikl soubor old_faithful_2024.csv"}
+
+Erupce Old Faithful zaznamenávají dobrovolníci v databázi [GeyserTimes](https://geysertimes.org/). Tabulku z roku 2024 připravili autoři učebnice ModernDive jako tabulku `old_faithful_2024` v balíčku [moderndive](https://moderndive.github.io/moderndive/reference/old_faithful_2024.html). Pro tuto lekci jsme stejný postup zopakovali přímo z [oficiálního archivu erupcí Old Faithful](https://geysertimes.org/archive/geysers/Old_Faithful_eruptions.tsv.gz):
+
+- ponechali jsme pouze přesně zaznamenané hlavní erupce z června, července a srpna 2024;
+- čekání jsme spočítali jako rozdíl časů dvou po sobě jdoucích erupcí a ponechali intervaly od 50 do 127 minut, což odpovídá [rozsahu uváděnému National Park Service](https://www.nps.gov/places/old-faithful-geyser.htm); delší mezera v dobrovolnických záznamech pravděpodobně znamená, že některá erupce nebyla zaznamenána;
+- pro přehlednější výukový příklad jsme odstranili tři `r render_glossary_term("odlehla-pozorovani", display = "odlehlá pozorování")`, jedno z každého měsíce; jejich identifikátory jsou uvedeny přímo v kódu.
+
+Základní postup lekce si můžete vyzkoušet i s klasickou tabulkou `faithful`, která je součástí R. Neobsahuje však data erupcí, takže s ní nelze zopakovat rozdělení podle měsíců:
 
 ```{r}
 #| label: alternativa-faithful-v-r
+#| echo: true
 #| eval: false
-#| code-fold: true
-#| code-summary: "Ukázat alternativu s data(faithful)"
-# Načteme klasický dataset dodávaný s R
-data(faithful)
-
-# Přejmenujeme oba sloupce podle výukového příběhu
-data_gejzir <-
+# Přejmenujeme sloupce klasické tabulky podle této lekce
+data_faithful <-
   data.frame(
     delka_erupce_min = faithful$eruptions,
     cekani_min = faithful$waiting
   )
 ```
 
-Následující rozbalovací blok obsahuje úplný záznam stažení a přípravy dat. Jsou v něm i některé pokročilejší kroky: načtení komprimovaného souboru, převod časových údajů, výběr primárních záznamů, výpočet čekání do další erupce a kontrola počtu řádků.
-
-Kód ponecháváme přímo v těchto výukových materiálech, aby bylo dohledatelné, odkud data pocházejí a jak jsme z původního souboru získali proměnné použité v lekci.
-
-Čekání počítáme jako rozdíl mezi časy dvou po sobě jdoucích erupcí. Ponecháváme intervaly od 50 do 127 minut, což odpovídá [rozsahu uváděnému National Park Service](https://www.nps.gov/places/old-faithful-geyser.htm). Delší mezera v dobrovolnických záznamech pravděpodobně znamená, že některá erupce nebyla zaznamenána.
-
-Pro přehlednější výukový příklad navíc odstraňujeme tři `r render_glossary_term("odlehla-pozorovani", display = "odlehlá pozorování")`, vždy jedno z každého měsíce. Jejich identifikátory jsou uvedené přímo v kódu, takže je toto rozhodnutí zaznamenáno.
-
-Soubor lze stáhnout kliknutím na odkaz na archiv. Kód níže se jej pokusí stáhnout automaticky; pokud GeyserTimes požádá o ověření v prohlížeči, stačí soubor ručně uložit do složky `data` pod názvem `Old_Faithful_eruptions.tsv.gz` a automatické stažení přeskočit.
-:::
+Úplný záznam stažení a přípravy dat používá i pokročilejší kroky, které pro lekci není nutné rozumět ani spouštět. Pokud GeyserTimes požádá o ověření v prohlížeči, uložte archiv ručně do složky `data` pod názvem `Old_Faithful_eruptions.tsv.gz`.
 
 ```{r}
 #| label: stahnout-a-pripravit-data-gejziru
+#| echo: true
 #| eval: false
 #| code-fold: true
 #| code-summary: "Ukázat kód pro stažení a přípravu dat"
@@ -232,7 +310,9 @@ archive_file <-
   )
 
 # Soubor stáhneme jen tehdy, když jej ještě nemáme
-if (!file.exists(archive_file)) {
+if (
+  !file.exists(archive_file)
+) {
   download.file(
     url = archive_url,
     destfile = archive_file,
@@ -272,6 +352,7 @@ data_archive <-
     !questionable
   ) |>
   dplyr::arrange(datetime) |>
+  # Z časů dvou sousedních erupcí vypočítáme dobu čekání
   dplyr::mutate(
     waiting = as.numeric(
       difftime(
@@ -283,7 +364,7 @@ data_archive <-
   )
 
 # Vybereme tři měsíce a proměnné potřebné pro výuku
-data_gejzir <-
+data_export <-
   data_archive |>
   dplyr::filter(
     datetime >= lubridate::ymd(
@@ -305,11 +386,10 @@ data_gejzir <-
       lubridate::minute(datetime),
     cekani_min = waiting,
     webcam = dplyr::if_else(webcam, "Yes", "No"),
-    duration,
-    delka_erupce_min = duration / 60
+    duration
   )
 
-# Zaznamenáme tři předem prověřená odlehlá pozorování
+# Odstraníme tři předem prověřená odlehlá pozorování
 outlier_ids <-
   c(
     1461337, # červen
@@ -317,55 +397,39 @@ outlier_ids <-
     1471579  # srpen
   )
 
-data_gejzir <-
-  data_gejzir |>
+data_export <-
+  data_export |>
   dplyr::filter(!eruption_id %in% outlier_ids)
 
 # Ověříme, že příprava dat skončila očekávaným počtem řádků
 expected_rows <- 117L
 
-if (nrow(data_gejzir) != expected_rows) {
+if (
+  nrow(data_export) != expected_rows
+) {
   stop("Zdrojový soubor má neočekávaný počet řádků.")
 }
 
-# Uložíme stabilní výukovou tabulku pro další renderování
+# Uložíme stabilní výukovou tabulku
 readr::write_csv(
-  x = dplyr::select(data_gejzir, -delka_erupce_min),
+  x = data_export,
   file = here::here("data", "old_faithful_2024.csv"),
   na = ""
 )
 ```
 
-Prvních několik řádků ukazuje, co představuje jedno pozorování:
+Pro výuku používáme samostatný soubor CSV, protože v praktiku stačí načíst jediný soubor pomocí `read.csv()`. Původ dat a podmínky jejich použití shrnuje také soubor `data/README.md`.
+:::
 
-```{r}
-#| label: tabulka-prvnich-erupci
-#| echo: false
-#| message: false
-#| warning: false
-#| tbl-cap: "Ukázka pozorování erupcí gejzíru Old Faithful."
-data_gejzir |>
-  dplyr::transmute(
-    datum = date,
-    delka_erupce_min = round(delka_erupce_min, digits = 2),
-    cekani_min
-  ) |>
-  head(n = 6) |>
-  knitr::kable()
-```
-
-Data jsou skutečná, ale nevznikla jako dokonale náhodné pozorování všech erupcí Old Faithful. Dobrovolníci měřili v dostupných termínech a blízké erupce mohou být časově propojené. Při interpretaci proto musíme oddělovat **vztah v zaznamenaných datech** od širšího procesu, který chceme popsat.
-
-### Nejprve se podívejme na všechna pozorování
+## Delší erupce, delší čekání?
 
 ```{r}
 #| label: vztah-delky-a-cekani
 #| echo: false
 #| message: false
 #| warning: false
-#| fig-cap: >
-#|   Vztah mezi délkou erupce a čekáním na následující erupci.
-#|   Každý bod je jedna zaznamenaná erupce.
+#| fig-cap: "Každý bod je jedna zaznamenaná erupce: její délka a čekání na další erupci."
+#| fig-alt: "Bodový graf všech erupcí. Délka erupce je na vodorovné ose, čekání na další erupci na svislé. Body tvoří dvě skupiny, krátké erupce kolem dvou minut a dlouhé kolem čtyř minut, a celkově stoupají."
 ggplot2::ggplot(
   data = data_gejzir,
   mapping = ggplot2::aes(
@@ -379,74 +443,162 @@ ggplot2::ggplot(
     size = 2.3
   ) +
   ggplot2::labs(
-    x = "Délka erupce (minuty)",
-    y = "Čekání na další erupci (minuty)"
+    x = "Délka erupce (min)",
+    y = "Čekání na další erupci (min)"
   ) +
   theme_biostat(base_size = 13)
 ```
 
-::: {.box-question title="Než budeme fitovat model"}
+::: {.box-question title="Co v grafu vidíte?"}
 
 1. Jaký směr má vztah mezi délkou erupce a čekáním?
 2. Které části grafu obsahují nejvíce bodů?
-3. Myslíte, že by body z jediného měsíce vypadaly úplně stejně?
+3. Leží body na jediné přímce?
 :::
 
-Vztah je celkově kladný: po delších erupcích zpravidla čekáme déle. Body však neleží na jediné přesné přímce. To znamená, že přímka odhadnutá z dat bude záviset také na tom, které erupce jsme skutečně zaznamenali.
+::: {.box-result collapse="true" title="Odpověď: rostoucí vztah s rozptýlenými body"}
 
-## Pepa: jeden měsíc, jeden odhad
+Vztah je rostoucí: po delších erupcích zpravidla čekáme déle. Body tvoří dvě skupiny — krátké erupce kolem dvou minut a dlouhé erupce kolem čtyř minut — a ani v jedné neleží na jediné přímce. Při stejné délce erupce se čekání liší o několik minut.
+:::
+
+Stejný vztah shrneme `r render_glossary_term("linearni-model", display = "lineárním modelem")`, jak jsme to dělali v předchozí lekci:
+
+```{=typst}
+#block(breakable: false)[
+```
 
 ```{r}
-#| label: pripravit-cervnova-data-a-model
-#| include: false
-data_pepa <-
-  data_gejzir |>
-  dplyr::filter(
-    as.integer(format(x = date, format = "%m")) == 6L
-  )
-
-mod_pepa <-
+#| label: fitovat-model-vsech-erupci
+#| echo: true
+# Odhadneme čekání podle délky erupce ze všech erupcí
+mod_gejzir <-
   lm(
     formula = cekani_min ~ delka_erupce_min,
-    data = data_pepa
+    data = data_gejzir
   )
+
+# Zobrazíme odhadnutý intercept a sklon
+coef(object = mod_gejzir)
 ```
 
-Pro výukový příběh si představme výzkumníka **Pepu**. V červnu zaznamenal `r nrow(data_pepa)` erupcí a pomocí známého lineárního modelu zjišťuje, o kolik minut se změní očekávané čekání, když je erupce o jednu minutu delší.
-
-::: {.box-data title="Doplňující: výběr červnových pozorování" collapse="true"}
-
-Tento technický krok pouze oddělí červnová pozorování od ostatních měsíců.
+```{=typst}
+]
+```
 
 ```{r}
-#| label: vybrat-pepova-cervnova-pozorovani
-#| echo: true
-#| eval: true
-data_pepa <-
-  # Ponecháme jen řádky, jejichž datum patří do června
-  data_gejzir[
-    as.integer(
-      format(x = data_gejzir$date, format = "%m")
-    ) == 6L,
-  ]
+#| label: pripravit-odhad-vsech-erupci
+#| echo: false
+odhad_sklonu <-
+  coef(object = mod_gejzir)[["delka_erupce_min"]]
 ```
-:::
 
-Na připravených červnových datech potom fitujeme model:
+```{r}
+#| label: graf-primky-vsech-erupci
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-cap: "Stejné erupce s přímkou odhadnutou ze všech zaznamenaných erupcí."
+#| fig-alt: "Stejný bodový graf jako výše s fialovou rostoucí přímkou lineárního modelu."
+ggplot2::ggplot(
+  data = data_gejzir,
+  mapping = ggplot2::aes(
+    x = delka_erupce_min,
+    y = cekani_min
+  )
+) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.65,
+    size = 2.3
+  ) +
+  ggplot2::geom_abline(
+    intercept = coef(object = mod_gejzir)[["(Intercept)"]],
+    slope = odhad_sklonu,
+    color = biostat_cols[["indigo_velvet"]],
+    linewidth = 1.1
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (min)",
+    y = "Čekání na další erupci (min)"
+  ) +
+  theme_biostat(base_size = 13)
+```
+
+Odhadnutý `r render_glossary_term("sklon", display = "sklon")` je `r format_cz(odhad_sklonu)` minuty čekání na minutu erupce: dvě erupce, jejichž délky se liší o jednu minutu, se podle modelu v průměru liší čekáním na další erupci přibližně o `r format_cz(odhad_sklonu)` minuty. Stejná data a stejný vzorec modelu dávají vždy stejné `r render_glossary_term("odhad", display = "odhady")`; funkce `lm()` nic náhodně nelosuje. Odhad se může změnit jen tehdy, když se změní pozorované erupce.
+
+### Sedí přímka k datům?
+
+Než budeme odhadu věřit, zkontrolujeme jako v předchozí lekci graf `r render_glossary_term("residuum", display = "residuí")` proti `r render_glossary_term("odhadnuta-hodnota", display = "odhadnutým hodnotám")`:
+
+```{=typst}
+#block(breakable: false)[
+```
+
+```{r}
+#| label: graf-rezidui-gejzir
+#| echo: true
+#| fig-width: 8
+#| fig-height: 5
+#| fig-alt: "Odhadnuté čekání proti residuu každé erupce. Body tvoří dvě skupiny kolem nuly; několik erupcí střední délky leží výrazně nad nulovou čarou."
+plot(
+  # Každý bod spojuje odhad modelu s residuem stejné erupce
+  x = fitted(object = mod_gejzir),
+  y = resid(object = mod_gejzir),
+  xlab = "Odhadnuté čekání (min)",
+  ylab = "Residuum (min)",
+  pch = 16,
+  col = "#8A8A8A",
+  cex = 1.3,
+  cex.axis = 1.4,
+  cex.lab = 1.4
+)
+
+abline(
+  # Body hledáme rozptýlené kolem nulového residua
+  h = 0,
+  lty = 2,
+  col = "#5D2890"
+)
+```
+
+```{=typst}
+]
+```
+
+Residua tvoří dvě skupiny podle krátkých a dlouhých erupcí a v obou leží kolem nuly bez zřetelného trychtýře. Několik erupcí střední délky ale leží výrazně nad nulou: po nich se čekalo déle, než přímka odhaduje. Přímka tedy vztah dobře shrnuje, ale ne dokonale. Tuto výhradu si ponecháme, protože i `r render_glossary_term("standardni-chyba", display = "standardní chyba")` a `r render_glossary_term("interval-spolehlivosti", display = "interval spolehlivosti")`, ke kterým lekce směřuje, platí jen za předpokladu, že model data přiměřeně popisuje.
+
+Data jsou navíc skutečná, ale dobrovolníci nezaznamenali náhodně všechny erupce: pozorovali v dostupných termínech a blízké erupce mohou být časově propojené. Při interpretaci proto oddělujeme **vztah v zaznamenaných datech** od širšího procesu, který chceme popsat.
+
+## Pepa: jeden měsíc, jeden `r render_glossary_term("odhad", display = "odhad")`
+
+Představme si výzkumníka **Pepu**, který gejzír pozoroval pouze v červnu. Ze všech erupcí ponechá jen ty červnové a fituje stejný model:
+
+```{=typst}
+#block(breakable: false)[
+```
 
 ```{r}
 #| label: fitovat-pepuv-model
 #| echo: true
-#| eval: true
+# Ponecháme jen řádky, jejichž datum patří do června
+data_pepa <-
+  data_gejzir[
+    format(x = data_gejzir$date, format = "%m") == "06",
+  ]
+
+# Odhadneme stejný vztah pouze z Pepových dat
 mod_pepa <-
-  # Odhadneme čekání podle délky erupce pouze z Pepových dat
   lm(
     formula = cekani_min ~ delka_erupce_min,
     data = data_pepa
   )
 
 # Zobrazíme odhadnutý intercept a sklon
-coef(mod_pepa)
+coef(object = mod_pepa)
+```
+
+```{=typst}
+]
 ```
 
 ```{r}
@@ -454,9 +606,8 @@ coef(mod_pepa)
 #| echo: false
 #| message: false
 #| warning: false
-#| fig-cap: >
-#|   Pepova červnová pozorování a přímka odhadnutá pouze z nich.
-#|   Fialová přímka je výsledkem Pepova modelu.
+#| fig-cap: "Pepova červnová pozorování a přímka odhadnutá pouze z nich."
+#| fig-alt: "Bodový graf červnových erupcí s fialovou rostoucí přímkou odhadnutou pouze z nich."
 ggplot2::ggplot(
   data = data_pepa,
   mapping = ggplot2::aes(
@@ -470,21 +621,21 @@ ggplot2::ggplot(
     size = 2.5
   ) +
   ggplot2::geom_abline(
-    intercept = coef(mod_pepa)[["(Intercept)"]],
-    slope = coef(mod_pepa)[["delka_erupce_min"]],
+    intercept = coef(object = mod_pepa)[["(Intercept)"]],
+    slope = coef(object = mod_pepa)[["delka_erupce_min"]],
     color = biostat_cols[["indigo_velvet"]],
     linewidth = 1.1
   ) +
   ggplot2::labs(
-    x = "Délka erupce (minuty)",
-    y = "Čekání na další erupci (minuty)"
+    x = "Délka erupce (min)",
+    y = "Čekání na další erupci (min)"
   ) +
   theme_biostat(base_size = 13)
 ```
 
-Pepův odhad `r render_glossary_term("sklon", display = "sklonu")` je `r round(coef(mod_pepa)[["delka_erupce_min"]], 2)` minuty čekání na jednu minutu erupce. V jeho červnových datech tedy erupce delší o jednu minutu souvisí v průměru s čekáním delším přibližně o `r round(coef(mod_pepa)[["delka_erupce_min"]], 2)` minuty.
+Pepa zaznamenal `r format_cz(nrow(data_pepa))` erupcí. Jeho odhad `r render_glossary_term("sklon", display = "sklonu")` je `r format_cz(coef(object = mod_pepa)[["delka_erupce_min"]])` minuty čekání na minutu erupce: v jeho datech se dvě erupce, jejichž délky se liší o jednu minutu, v průměru liší čekáním přibližně o `r format_cz(coef(object = mod_pepa)[["delka_erupce_min"]])` minuty.
 
-Tento výsledek je správným popisem **Pepových dat**. Neznamená však, že by každý další člověk musel získat stejný sklon.
+Tento výsledek správně popisuje **Pepova data**. Neznamená však, že by každý další pozorovatel musel získat stejný sklon.
 
 ## Mařenka a Karel: jiné měsíce, jiné přímky
 
@@ -501,11 +652,11 @@ vec_poradi_vyzkumniku <-
 data_mesicni <-
   data_gejzir |>
   dplyr::mutate(
-    mesic = as.integer(format(x = date, format = "%m")),
+    mesic = format(x = date, format = "%m"),
     vyzkumnik = dplyr::case_when(
-      mesic == 6L ~ "Pepa – červen",
-      mesic == 7L ~ "Mařenka – červenec",
-      mesic == 8L ~ "Karel – srpen"
+      mesic == "06" ~ "Pepa – červen",
+      mesic == "07" ~ "Mařenka – červenec",
+      mesic == "08" ~ "Karel – srpen"
     ),
     vyzkumnik = factor(
       x = vyzkumnik,
@@ -544,15 +695,10 @@ data_modely_mesicni <-
       "\nn = ",
       pocet_erupci,
       "; sklon = ",
-      formatC(x = sklon, digits = 2, format = "f")
+      format_cz(sklon)
     )
   ) |>
-  dplyr::arrange(
-    match(
-      x = as.character(vyzkumnik),
-      table = vec_poradi_vyzkumniku
-    )
-  ) |>
+  dplyr::arrange(vyzkumnik) |>
   dplyr::mutate(
     popisek = factor(
       x = popisek,
@@ -569,7 +715,12 @@ data_mesicni_graf <-
   )
 ```
 
-Nyní si představme, že **Mařenka** pozorovala gejzír v červenci a **Karel** v srpnu.
+Dalšími pozorovateli jsou **Mařenka**, která sledovala gejzír v červenci, a **Karel**, který jej sledoval v srpnu. Oba použijí stejné `r render_glossary_term("promenna", display = "proměnné")` a stejný model jako Pepa.
+
+::: {.box-question title="Co čekáte?"}
+
+Budou mít Pepa, Mařenka a Karel stejný `r render_glossary_term("sklon", display = "sklon")`? Pokud ne, čím se jejich výpočty liší?
+:::
 
 ```{r}
 #| label: porovnat-mesicni-primky
@@ -578,9 +729,8 @@ Nyní si představme, že **Mařenka** pozorovala gejzír v červenci a **Karel*
 #| warning: false
 #| fig-width: 10
 #| fig-height: 4.5
-#| fig-cap: >
-#|   Tři lineární modely fitované stejným postupem na třech souborech pozorování.
-#|   Číslo v záhlaví každého panelu je odhad sklonu.
+#| fig-cap: "Tři lineární modely fitované stejným postupem na erupcích ze tří měsíců. V záhlaví každého panelu je počet erupcí a odhad sklonu."
+#| fig-alt: "Tři bodové grafy vedle sebe pro červen, červenec a srpen. Každý má vlastní fialovou přímku s mírně odlišným sklonem."
 ggplot2::ggplot(
   data = data_mesicni_graf,
   mapping = ggplot2::aes(
@@ -605,10 +755,10 @@ ggplot2::ggplot(
     ncol = 3
   ) +
   ggplot2::labs(
-    x = "Délka erupce (minuty)",
-    y = "Čekání na další erupci (minuty)"
+    x = "Délka erupce (min)",
+    y = "Čekání na další erupci (min)"
   ) +
-  theme_biostat(base_size = 12)
+  theme_biostat(base_size = 15)
 ```
 
 ```{r}
@@ -619,27 +769,39 @@ ggplot2::ggplot(
 #| tbl-cap: "Koeficienty tří modelů odhadnutých odděleně po měsících."
 data_modely_mesicni |>
   dplyr::transmute(
-    vyzkumnik = as.character(vyzkumnik),
-    pocet_erupci,
-    intercept,
-    sklon
+    `Výzkumník a měsíc` = as.character(vyzkumnik),
+    `Počet erupcí` = format_cz(pocet_erupci),
+    `Intercept (min)` = format_cz(intercept),
+    `Sklon (min/min)` = format_cz(sklon)
   ) |>
-  knitr::kable(
-    digits = 2,
-    col.names = c(
-      "Výzkumník a měsíc",
-      "Počet erupcí",
-      "Intercept",
-      "Sklon"
-    )
-  )
+  knitr::kable(align = "lrrr")
 ```
 
-Pepa, Mařenka i Karel použili **stejný postup**: každý fitoval lineární model se stejnými proměnnými. Vznikly ale tři různé modely, protože každý vycházel z jiných pozorování. Rozdíly mezi měsíci mohou zahrnovat náhodnou proměnlivost i skutečné časové změny; tři měsíce proto nejsou dokonale kontrolovaný experiment. Pro nás jsou konkrétním prvním důkazem, že **odhad není neměnné číslo oddělené od dat, ze kterých vznikl**.
+Pepa, Mařenka i Karel použili **stejný postup**: stejné proměnné, stejný model a stejnou funkci `lm()`. Změnila se pouze pozorovaná data — a s nimi přímka i sklon. Rozdíly mezi měsíci mohou zahrnovat náhodnou proměnlivost i skutečné změny chování gejzíru; tři měsíce proto nejsou dokonale kontrolovaný experiment. Jsou ale prvním konkrétním důkazem, že **`r render_glossary_term("odhad", display = "odhad")` není neměnné číslo oddělené od dat, ze kterých vznikl**.
 
-V odborném jazyce se jednomu takovému souboru pozorování říká **výběr** (anglicky *sample*). Česky se používá také **výběrový soubor** nebo méně formální **vzorek**. Proměnlivosti odhadu mezi možnými výběry říkáme **výběrová `r render_glossary_term("variabilita", display = "variabilita")`** (anglicky *sampling variability*). Srozumitelněji ji můžeme popsat jako **proměnlivost odhadů mezi výběry**: jiné pozorované erupce mohou vytvořit jinou přímku.
+Jednomu souboru `r render_glossary_term("pozorovani", display = "pozorování")`, ze kterého počítáme odhad, se odborně říká `r render_glossary_term("vyber", display = "výběr")` (anglicky *sample*). Česky se používá také **výběrový soubor** nebo méně formálně **vzorek**. Proměnlivost odhadu mezi možnými výběry nazýváme `r render_glossary_term("vyberova-variabilita", display = "výběrová variabilita")` (anglicky *sampling variability*): jiné pozorované erupce mohou vytvořit jinou přímku.
 
 ## Sto hlášení v aplikaci GeyserWatch
+
+```{r}
+#| label: nastavit-hlaseni-geyserwatch
+#| include: false
+pocet_hlaseni <- 100L
+pocet_erupci_v_hlaseni <- 40L
+pocet_ukazkovych_hlaseni <- 15L
+vec_hladiny_pokryti <- c(0.95, 0.80, 0.50)
+```
+
+Tři měsíce nám daly pouze tři přímky. Abychom viděli, jak se `r render_glossary_term("odhad", display = "odhady")` chovají při mnoha opakováních, zavedeme fiktivní aplikaci **GeyserWatch**. Do ní pošle hlášení `r format_cz(pocet_hlaseni)` návštěvníků; každé hlášení obsahuje `r format_cz(pocet_erupci_v_hlaseni)` erupcí. Z každého hlášení fitujeme stejný model a uložíme jeho `r render_glossary_term("sklon", display = "sklon")`.
+
+Hlášení jsou **simulovaná**. Délky erupcí v každém hlášení vybereme z našich skutečných erupcí. Čekání k nim vytvoříme podle přímky odhadnuté ze všech erupcí a k přímce přidáme náhodné odchylky, které jsou typicky stejně velké jako `r render_glossary_term("residuum", display = "residua")` kolem ní. Každé hlášení tak přináší nová čekání, jako by šlo o nové erupce. Stejný zůstává model, přímka, ze které čekání vytváříme, i typická velikost odchylek. Sklon této přímky (`r format_cz(odhad_sklonu)` minuty na minutu) je proto v simulaci známý **referenční sklon**; skutečný sklon všech erupcí Old Faithful neznáme.
+
+::: {.box-data collapse="true" title="Doplňující: proč hlášení simulujeme a co z toho plyne"}
+
+Sto skutečných nezávislých pozorovatelů nemáme. Simulace vychází z přímky odhadnuté ze všech `r format_cz(nrow(data_gejzir))` erupcí. **V této ukázce proto známe „správný“ sklon** — je to sklon `r format_cz(odhad_sklonu)` minuty na minutu, ze kterého jsme čekání vytvořili. Tato **referenční hodnota** platí jen pro simulaci; skutečný sklon všech erupcí Old Faithful neznáme.
+
+Mezi hlášeními se mění vybrané délky erupcí a náhodné odchylky čekání. Stejný zůstává model, referenční přímka i typická velikost odchylek. Proč nepoužíváme přímo `r render_glossary_term("vyber", display = "výběry")` ze `r format_cz(nrow(data_gejzir))` skutečných erupcí? Všechna hlášení by pak sdílela tytéž erupce, byla by si podobnější než skutečně nové výběry a jejich sklony by se lišily méně, než odpovídá novým `r render_glossary_term("pozorovani", display = "pozorováním")`.
+:::
 
 ```{r}
 #| label: vytvorit-hlaseni-geyserwatch
@@ -647,65 +809,38 @@ V odborném jazyce se jednomu takovému souboru pozorování říká **výběr**
 set.seed(900723)
 
 data_hlaseni <-
-  seq_len(100) |>
-  purrr::map(
-    .f = ~ {
-      data_jedno_hlaseni <-
-        data_gejzir |>
-        dplyr::slice_sample(
-          n = 40,
-          replace = FALSE
-        )
-
-      mod_jedno_hlaseni <-
-        lm(
-          formula = cekani_min ~ delka_erupce_min,
-          data = data_jedno_hlaseni
-        )
-
-      odhad_jednoho_sklonu <-
-        coef(mod_jedno_hlaseni)[["delka_erupce_min"]]
-
-      data_jedno_hlaseni |>
-        dplyr::mutate(
-          hlaseni = .x,
-          odhad_sklonu = odhad_jednoho_sklonu,
-          popisek = paste0(
-            "Hlášení ",
-            formatC(x = .x, width = 2, flag = "0"),
-            "\nsklon = ",
-            formatC(
-              odhad_jednoho_sklonu,
-              digits = 2,
-              format = "f"
-            )
-          )
-        )
-    }
-  ) |>
-  purrr::list_rbind()
+  simulate_reports(
+    data_source = data_gejzir,
+    mod_reference = mod_gejzir,
+    n_reports = pocet_hlaseni,
+    n_eruptions = pocet_erupci_v_hlaseni
+  )
 
 data_odhady_hlaseni <-
-  data_hlaseni |>
-  dplyr::distinct(
-    hlaseni,
-    odhad_sklonu,
-    popisek
+  summarise_reports(
+    data_reports = data_hlaseni,
+    vec_levels = vec_hladiny_pokryti
   )
 
 data_ukazkova_hlaseni <-
   data_hlaseni |>
-  dplyr::filter(hlaseni <= 15L)
+  dplyr::filter(hlaseni <= pocet_ukazkovych_hlaseni) |>
+  dplyr::left_join(
+    data_odhady_hlaseni |>
+      dplyr::select(hlaseni, odhad_sklonu),
+    by = dplyr::join_by(hlaseni)
+  ) |>
+  dplyr::mutate(
+    popisek = paste0(
+      "Hlášení ",
+      formatC(x = hlaseni, width = 2, flag = "0"),
+      "\nsklon = ",
+      format_cz(odhad_sklonu)
+    )
+  )
 ```
 
-Tři měsíce nám daly pouze tři přímky. Abychom si představili mnoho opakování, zavedeme fiktivní aplikaci **GeyserWatch**. Sto návštěvníků pošle hlášení a každý z nich změří 40 erupcí, které během své návštěvy viděl. Z každého hlášení fitujeme jeden model a uložíme jeho sklon.
-
-::: {.box-data title="Doplňující: jak vzniklo 100 hlášení"}
-
-Ve skutečnosti nemáme sto nových návštěvníků. Pro každé hlášení náhodně vybereme 40 různých řádků z našich `r nrow(data_gejzir)` pozorování. Jeden řádek se může objevit v hlášení jiného návštěvníka. Demonstrace tedy **nepřidává nová data a neznamená, že známe skutečný populační sklon**. Tento technický detail není pro hlavní myšlenku lekce zásadní; důležité je sledovat, že různé soubory pozorování vytvářejí různé sklony.
-:::
-
-Nejprve se podívejme na patnáct ze sta vytvořených hlášení:
+Takto vypadá `r format_cz(pocet_ukazkovych_hlaseni)` ze `r format_cz(pocet_hlaseni)` hlášení:
 
 ```{r}
 #| label: patnact-hlaseni-a-modelu
@@ -714,9 +849,8 @@ Nejprve se podívejme na patnáct ze sta vytvořených hlášení:
 #| warning: false
 #| fig-width: 11
 #| fig-height: 7.5
-#| fig-cap: >
-#|   Patnáct náhodně vytvořených hlášení GeyserWatch.
-#|   Každý panel obsahuje 40 erupcí, vlastní přímku a vlastní sklon.
+#| fig-cap: !expr paste0("Prvních ", pocet_ukazkovych_hlaseni, " simulovaných hlášení GeyserWatch. Každý panel obsahuje ", pocet_erupci_v_hlaseni, " erupcí, vlastní přímku a vlastní sklon.")
+#| fig-alt: "Mřížka malých bodových grafů simulovaných hlášení. Každý obsahuje body jednoho hlášení a fialovou přímku; některé přímky jsou strmější, jiné plošší."
 ggplot2::ggplot(
   data = data_ukazkova_hlaseni,
   mapping = ggplot2::aes(
@@ -741,18 +875,18 @@ ggplot2::ggplot(
     ncol = 5
   ) +
   ggplot2::labs(
-    x = "Délka erupce (minuty)",
-    y = "Čekání na další erupci (minuty)"
+    x = "Délka erupce (min)",
+    y = "Čekání na další erupci (min)"
   ) +
-  theme_biostat(base_size = 10) +
+  theme_biostat(base_size = 12) +
   ggplot2::theme(
-    strip.text = ggplot2::element_text(size = 8)
+    strip.text = ggplot2::element_text(size = 10)
   )
 ```
 
-Každý panel opakuje stejný postup, ale body, přímky i sklony se mění. Některé přímky jsou strmější, jiné plošší. Kdybychom měli pouze jedno hlášení, neviděli bychom, jak široká je množina dalších rozumně možných odhadů.
+*Které přímky jsou strmější a které plošší? Dokázali byste z jediného panelu poznat, jak moc by se mohl lišit panel další?*
 
-Sto hlášení nám dává sto sklonů. Jejich `r render_glossary_term("histogram", display = "histogram")` ukazuje všechny odhady společně:
+Každý panel opakuje stejný postup, ale body, přímky i sklony se mění. Kdybychom měli pouze jedno hlášení, neviděli bychom, jak široká je množina dalších rozumně možných odhadů. Všech `r format_cz(pocet_hlaseni)` hlášení nám dává `r format_cz(pocet_hlaseni)` sklonů a jejich `r render_glossary_term("histogram", display = "histogram")` je ukazuje společně:
 
 ```{r}
 #| label: histogram-sta-sklonu
@@ -761,47 +895,160 @@ Sto hlášení nám dává sto sklonů. Jejich `r render_glossary_term("histogra
 #| warning: false
 #| fig-width: 8
 #| fig-height: 4.8
-#| fig-cap: >
-#|   Sto hlášení GeyserWatch vytvořilo sto odhadů sklonu.
-#|   Odhady se liší, přestože všechna hlášení používají stejný postup.
-ggplot2::ggplot(
-  data = data_odhady_hlaseni,
-  mapping = ggplot2::aes(x = odhad_sklonu)
-) +
+#| fig-cap: !expr paste0("Všech ", pocet_hlaseni, " simulovaných hlášení GeyserWatch vytvořilo ", pocet_hlaseni, " odhadů sklonu.")
+#| fig-alt: "Histogram sta odhadů sklonu. Většina leží uprostřed, méně odhadů je na obou okrajích."
+graf_histogram_sklonu <-
+  ggplot2::ggplot(
+    data = data_odhady_hlaseni,
+    mapping = ggplot2::aes(x = odhad_sklonu)
+  ) +
   ggplot2::geom_histogram(
     bins = 18,
     fill = biostat_cols[["amethyst"]],
-    color = "white"
+    color = biostat_cols[["white"]]
   ) +
   ggplot2::labs(
-    x = "Odhad sklonu (minuty čekání na minutu erupce)",
+    x = "Odhad sklonu (min čekání / min erupce)",
     y = "Počet hlášení"
   ) +
   theme_biostat(base_size = 12)
+
+graf_histogram_sklonu
 ```
 
-Většina sklonů leží ve společné oblasti, ale nejsou totožné. Nyní tuto viditelnou proměnlivost spojíme s číslem, které model vypočítá už z jediného souboru pozorování.
+Většina sklonů leží ve společné oblasti, ale nejsou totožné. Odhady z různých výběrů tvoří vlastní `r render_glossary_term("rozdeleni", display = "rozdělení")`: některé hodnoty jsou časté, jiné vzácné.
 
-## Velikost vztahu a přesnost jsou dvě informace
+## Co měří `r render_glossary_term("standardni-chyba", display = "standardní chyba")`?
 
 ```{r}
-#| label: fitovat-model-vsech-erupci
+#| label: spocitat-rozptyleni-sklonu
 #| include: false
-mod_gejzir <-
-  # Fitujeme stejný vztah nad všemi připravenými pozorováními
-  lm(
-    formula = cekani_min ~ delka_erupce_min,
-    data = data_gejzir
+sd_sklonu_hlaseni <-
+  sd(data_odhady_hlaseni$odhad_sklonu)
+
+typicka_se_hlaseni <-
+  median(data_odhady_hlaseni$se_sklonu)
+
+vec_kvantily_se_hlaseni <-
+  c(0.10, 0.90)
+
+vec_rozsah_se_hlaseni <-
+  quantile(
+    x = data_odhady_hlaseni$se_sklonu,
+    probs = vec_kvantily_se_hlaseni,
+    names = FALSE
   )
 
-table_souhrn_modelu <-
-  summary(mod_gejzir)$coefficients
+pocet_v_jedne_se <-
+  sum(
+    abs(data_odhady_hlaseni$odhad_sklonu - odhad_sklonu) <=
+      typicka_se_hlaseni
+  )
+```
 
-odhad_sklonu <-
-  table_souhrn_modelu[
-    "delka_erupce_min",
-    "Estimate"
-  ]
+V první lekci jsme odlišili dvě otázky. `r render_glossary_term("smerodatna-odchylka", display = "Směrodatná odchylka")` (SD) odpovídá na otázku **jak rozdílná jsou `r render_glossary_term("pozorovani", display = "pozorování")`?** Druhá otázka zní **jak přesný je náš `r render_glossary_term("odhad", display = "odhad")`?** `r render_glossary_term("histogram", display = "Histogram")` `r render_glossary_term("sklon", display = "sklonů")` nám na ni dává první odpověď: kdyby se odhady z různých `r render_glossary_term("vyber", display = "výběrů")` téměř nelišily, byl by histogram úzký; čím víc se liší, tím je širší.
+
+Šířku histogramu můžeme shrnout stejně jako jakékoli jiné hodnoty, směrodatnou odchylkou. Všech `r format_cz(pocet_hlaseni)` sklonů z GeyserWatch má směrodatnou odchylku **`r format_cz(sd_sklonu_hlaseni)` minuty čekání na minutu erupce**.
+
+Skutečný výzkumník ale tolik hlášení nemá — má jediné. Přesto mu R tuto velikost odhadne. Z jediného hlášení vypočítá u sklonu číslo, které ve výstupu `summary()` nazývá `Std. Error` (celý výstup uvidíme v následující kapitole). Porovnejme je se směrodatnou odchylkou všech sklonů:
+
+```{r}
+#| label: tabulka-se-hlaseni
+#| echo: false
+#| message: false
+#| warning: false
+#| tbl-cap: "Rozptýlení sta sklonů a standardní chyba, kterou R vypočítá z jediného hlášení."
+tibble::tibble(
+  `Co počítáme` = c(
+    paste0(
+      "Směrodatná odchylka ", pocet_hlaseni, " sklonů (potřebuje všech ",
+      pocet_hlaseni, " hlášení)"
+    ),
+    "Std. Error z jednoho hlášení, typická hodnota (medián)",
+    paste0(
+      "Std. Error z jednoho hlášení, rozmezí u prostředních ",
+      format_cz(100 * diff(vec_kvantily_se_hlaseni), digits = 0),
+      " % hlášení"
+    )
+  ),
+  `Hodnota (min/min)` = c(
+    format_cz(sd_sklonu_hlaseni),
+    format_cz(typicka_se_hlaseni),
+    paste0(
+      format_cz(vec_rozsah_se_hlaseni[[1]]),
+      " až ",
+      format_cz(vec_rozsah_se_hlaseni[[2]])
+    )
+  )
+) |>
+  knitr::kable(align = "lr")
+```
+
+Obě čísla jsou téměř stejná. `Std. Error` je standardní chyba odhadu sklonu (anglicky *standard error*, zkratka **SE**; česky se používá také **směrodatná chyba**). **Standardní chyba odhaduje, jak moc by se odhady sklonu typicky lišily mezi výběry stejné velikosti — a odhaduje to z jediného výběru.** Má stejné jednotky jako sklon. Hodnota z jednoho hlášení se od hlášení k hlášení trochu liší, protože i ona je odhadem.
+
+```{r}
+#| label: histogram-a-jedna-se
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-width: 8
+#| fig-height: 5.2
+#| fig-cap: "Histogram simulovaných sklonů s referenčním sklonem simulace (tmavá čára) a rozsahem plus minus jedna typická standardní chyba (oranžová úsečka)."
+#| fig-alt: "Histogram sta sklonů. Svislá tmavá čára označuje referenční sklon. Nad histogramem je oranžová úsečka sahající jednu standardní chybu na každou stranu; pokrývá střední část histogramu."
+max_cetnost_sklonu <-
+  max(
+    ggplot2::ggplot_build(graf_histogram_sklonu)$data[[1]]$count
+  )
+
+data_rozsah_se <-
+  tibble::tibble(
+    dolni = odhad_sklonu - typicka_se_hlaseni,
+    horni = odhad_sklonu + typicka_se_hlaseni,
+    y = max_cetnost_sklonu + 1.5
+  )
+
+graf_histogram_sklonu +
+  ggplot2::geom_vline(
+    xintercept = odhad_sklonu,
+    color = biostat_cols[["graphite"]],
+    linetype = "dashed",
+    linewidth = 0.9
+  ) +
+  ggplot2::geom_errorbarh(
+    data = data_rozsah_se,
+    mapping = ggplot2::aes(
+      xmin = dolni,
+      xmax = horni,
+      y = y
+    ),
+    inherit.aes = FALSE,
+    height = 0.7,
+    color = biostat_cols[["orange"]],
+    linewidth = 1.6
+  ) +
+  ggplot2::annotate(
+    geom = "text",
+    x = odhad_sklonu + typicka_se_hlaseni,
+    y = max_cetnost_sklonu + 1.5,
+    label = "  ± 1 SE",
+    hjust = 0,
+    color = biostat_cols[["graphite"]],
+    size = 4
+  ) +
+  ggplot2::scale_y_continuous(
+    expand = ggplot2::expansion(mult = c(0, 0.18))
+  )
+```
+
+Do vzdálenosti jedné typické standardní chyby od referenčního sklonu padlo `r format_cz(pocet_v_jedne_se)` ze `r format_cz(pocet_hlaseni)` sklonů — zhruba dvě třetiny. Rozsah **± jedna standardní chyba** ale ještě není `r render_glossary_term("interval-spolehlivosti", display = "interval spolehlivosti")`. Je to měřítko přesnosti, ze kterého se interval vytváří.
+
+## Kde ve výstupu najdeme velikost a přesnost?
+
+```{r}
+#| label: pripravit-souhrn-modelu
+#| include: false
+table_souhrn_modelu <-
+  summary(object = mod_gejzir)$coefficients
 
 standardni_chyba_sklonu <-
   table_souhrn_modelu[
@@ -810,43 +1057,49 @@ standardni_chyba_sklonu <-
   ]
 ```
 
-Nakonec se vrátíme ke všem `r nrow(data_gejzir)` erupcím a fitujeme jeden model z celého zaznamenaného souboru. Tentokrát si zobrazíme celý výstup `summary()`, abychom se naučili najít důležité údaje v podobě, v jaké je R skutečně vypisuje.
+Vraťme se k našemu jedinému skutečnému souboru všech `r format_cz(nrow(data_gejzir))` erupcí. Tentokrát si zobrazíme celý výstup `summary()` tak, jak jej R skutečně vypisuje:
 
 ```{r}
 #| label: precist-odhad-a-standardni-chybu
 #| echo: true
-#| eval: true
-mod_gejzir <-
-  lm(
-    formula = cekani_min ~ delka_erupce_min,
-    data = data_gejzir
-  )
-
 # Souhrn obsahuje odhad sklonu i jeho standardní chybu
-summary(mod_gejzir)
+summary(object = mod_gejzir)
 ```
 
-Výstup čteme shora a nejprve v něm vyhledáme věci, které už známe:
+::: {.box-question title="Najděte ve výstupu dvě čísla"}
 
-1. `Call` připomíná vzorec modelu `cekani_min ~ delka_erupce_min`: čekání vysvětlujeme délkou předchozí erupce.
-2. `Residuals` shrnují svislé odchylky bodů od přímky, se kterými jsme pracovali v předchozí lekci.
-3. V tabulce `Coefficients` obsahuje sloupec `Estimate` stejné odhady, které vrací `coef(mod_gejzir)`. V řádku `delka_erupce_min` proto znovu najdeme **odhad sklonu** (anglicky *slope estimate*; česky také **odhad koeficientu sklonu**) `r round(coef(mod_gejzir)[["delka_erupce_min"]], 2)`: při erupci delší o jednu minutu se očekávané čekání prodlouží přibližně o `r round(coef(mod_gejzir)[["delka_erupce_min"]], 2)` minuty.
+1. Které číslo popisuje **velikost vztahu** mezi délkou erupce a čekáním?
+2. Které číslo popisuje **přesnost tohoto `r render_glossary_term("odhad", display = "odhadu")`**?
+:::
 
-Teprve vedle známého sloupce `Estimate` přidáme novou informaci. `Std. Error` = `r round(table_souhrn_modelu["delka_erupce_min", "Std. Error"], 2)` je `r render_glossary_term("standardni-chyba", display = "standardní chyba")` odhadu sklonu (anglicky *standard error of the slope estimate*, zkratka **SE**). Česky se používá také překlad **směrodatná chyba**; v této lekci budeme důsledně používat termín **standardní chyba**. Je ve stejných jednotkách jako sklon a popisuje typickou velikost změny odhadu mezi srovnatelnými soubory pozorování.
+::: {.box-result collapse="true" title="Odpověď: řádek delka_erupce_min, sloupce Estimate a Std. Error"}
 
-Sloupce `t value` a `Pr(>|t|)` zatím pouze přeskočíme. Souvisí s formálním hodnocením statistických tvrzení, kterému se budeme věnovat v následující lekci.
+V tabulce `Coefficients` najdeme řádek `delka_erupce_min`. Sloupec `Estimate` obsahuje odhad `r render_glossary_term("sklon", display = "sklonu")` `r format_cz(odhad_sklonu)` — velikost vztahu. Sloupec `Std. Error` obsahuje jeho `r render_glossary_term("standardni-chyba", display = "standardní chybu")` `r format_cz(standardni_chyba_sklonu)` — přesnost odhadu. Obě čísla mají jednotku minuty čekání na minutu erupce.
+:::
 
-Standardní chyba tedy není další efekt, který by „patřil“ ke sklonu bez vysvětlení. Je to **měřítko přesnosti odhadu**. Menší standardní chyba znamená, že by se sklony ze srovnatelných opakování shlukovaly těsněji. Větší standardní chyba znamená širší `r render_glossary_term("rozptyl", display = "rozptyl")` možných sklonů.
+Výstup můžeme číst shora:
 
-V reálném výzkumu obvykle nemáme sto nezávislých opakování. `lm()` proto standardní chybu odhaduje z jediného souboru pomocí počtu pozorování, rozmístění hodnot prediktoru a odchylek bodů od přímky. Tento výpočet spoléhá na předpoklady lineárního modelu.
+1. `Call` připomíná vzorec modelu `cekani_min ~ delka_erupce_min`: čekání odhadujeme z délky předchozí erupce.
+2. `Residuals` shrnují `r render_glossary_term("residuum", display = "residua")`, tedy svislé odchylky bodů od přímky z předchozí lekce.
+3. V tabulce `Coefficients` obsahuje sloupec `Estimate` stejné odhady, které vrací `coef(mod_gejzir)`. Sloupec `Std. Error` vedle nich ukazuje jejich standardní chyby.
+4. Řádek `Residual standard error` udává typickou velikost residuí; vrátíme se k němu při výpočtu standardní chyby.
 
-{{< pagebreak >}}
+Sloupce `t value` a `Pr(>|t|)` a poslední řádky výstupu zatím přeskočíme. Souvisí s posuzováním konkrétních tvrzení o `r render_glossary_term("parametry-modelu", display = "parametrech modelu")`, kterému se budeme věnovat v následující lekci.
+
+Standardní chyba ze všech erupcí, `r format_cz(standardni_chyba_sklonu)`, je menší než typická standardní chyba jednoho hlášení (`r format_cz(typicka_se_hlaseni)`). Model ze všech erupcí vychází z `r format_cz(nrow(data_gejzir))` `r render_glossary_term("pozorovani", display = "pozorování")`, hlášení jen ze `r format_cz(pocet_erupci_v_hlaseni)`: více pozorování nese více informace a odhad je přesnější. **Velikost vztahu a přesnost odhadu jsou dvě různé informace** — velký sklon může být odhadnutý nepřesně a malý sklon velmi přesně.
+
+::: {.box-result title="Vzor zápisu: odhad a standardní chyba"}
+
+„Dvě erupce, jejichž délky se lišily o jednu minutu, se podle `r render_glossary_term("linearni-model", display = "lineárního modelu")` v průměru lišily čekáním na další erupci o `r format_cz(odhad_sklonu)` minuty (odhad sklonu = `r format_cz(odhad_sklonu)`, SE = `r format_cz(standardni_chyba_sklonu)` minuty čekání na minutu erupce).“
+
+Věta nejprve interpretuje vztah v běžném jazyce a až za ní uvádí kompaktní statistický zápis. Samotná dvojice čísel bez proměnných a jednotek by nestačila.
+:::
 
 ::: {.box-data collapse="true" title="Doplňující: co standardní chyba nezahrnuje"}
 
-Standardní chyba popisuje výběrovou proměnlivost **za předpokladu, že použitý model a způsob zacházení s pozorováními jsou přiměřené**. Sama automaticky neopraví systematickou chybu měření, nereprezentativní výběr, opakovaná měření vydávaná za nezávislá ani zřetelné zakřivení či změnu rozptylu residuí.
+Standardní chyba popisuje `r render_glossary_term("vyberova-variabilita", display = "výběrovou variabilitu")` **za předpokladu, že použitý model a způsob zacházení s pozorováními jsou přiměřené**. Sama automaticky neopraví systematickou chybu měření, nereprezentativní `r render_glossary_term("vyber", display = "výběr")`, `r render_glossary_term("opakovana-mereni", display = "opakovaná měření")` vydávaná za nezávislá ani zřetelné zakřivení či změnu rozptýlení residuí.
 
-Malá SE tedy neznamená, že studie nemůže být systematicky zavádějící. Můžeme velmi přesně odhadnout vztah v nereprezentativním souboru nebo získat příliš optimistickou SE, pokud jsme přehlédli závislost pozorování. Proto se nejistota z tabulky modelu čte společně s diagnostikou z předchozí lekce a s popisem získání dat.
+Malá SE tedy neznamená, že studie nemůže být systematicky zavádějící. Můžeme velmi přesně odhadnout vztah v nereprezentativním souboru nebo získat příliš optimistickou SE, pokud jsme přehlédli závislost pozorování. Proto se `r render_glossary_term("nejistota", display = "nejistota")` z tabulky modelu čte společně s `r render_glossary_term("diagnostika-modelu", display = "diagnostikou")` z předchozí lekce a s popisem získání dat.
 :::
 
 ### Jak se standardní chyba sklonu počítá?
@@ -858,7 +1111,6 @@ data_maly_se <-
   data_gejzir |>
   dplyr::slice_head(n = 5) |>
   dplyr::select(
-    eruption_id,
     delka_erupce_min,
     cekani_min
   )
@@ -869,38 +1121,8 @@ mod_maly_se <-
     data = data_maly_se
   )
 
-data_maly_se <-
-  data_maly_se |>
-  dplyr::mutate(
-    odhadnute_cekani = fitted(mod_maly_se),
-    residuum = residuals(mod_maly_se)
-  )
-
-vec_residua_maly_se <-
-  data_maly_se$residuum
-
-vec_delky_maly_se <-
-  data_maly_se$delka_erupce_min
-
 pocet_maly_se <-
   nrow(data_maly_se)
-
-stupne_volnosti_maly_se <-
-  df.residual(mod_maly_se)
-
-prumer_delky_maly_se <-
-  mean(vec_delky_maly_se)
-
-soucet_ctvercu_residui_maly_se <-
-  sum(vec_residua_maly_se^2)
-
-rezidualni_smerodatna_odchylka_maly_se <-
-  summary(mod_maly_se)$sigma
-
-soucet_ctvercu_delky_maly_se <-
-  sum(
-    (vec_delky_maly_se - prumer_delky_maly_se)^2
-  )
 
 standardni_chyba_maly_se <-
   summary(mod_maly_se)$coefficients[
@@ -908,83 +1130,106 @@ standardni_chyba_maly_se <-
     "Std. Error"
   ]
 
-vec_text_residua_maly_se <-
+# The worked example uses the values displayed in the table (two decimals)
+#   at every step, so readers can repeat the arithmetic exactly. R's own
+#   unrounded result is reported separately below.
+prumer_delky_maly_se <-
+  round(mean(data_maly_se$delka_erupce_min), 2)
+
+data_maly_se <-
+  data_maly_se |>
+  dplyr::mutate(
+    erupce = dplyr::row_number(),
+    delka = round(delka_erupce_min, 2),
+    odhadnute_cekani = round(fitted(mod_maly_se), 2),
+    residuum = round(residuals(mod_maly_se), 2),
+    residuum_ctverec = round(residuum^2, 2),
+    odchylka_delky = delka - prumer_delky_maly_se,
+    odchylka_delky_ctverec = round(odchylka_delky^2, 2)
+  )
+
+soucet_ctvercu_residui_maly_se <-
+  sum(data_maly_se$residuum_ctverec)
+
+podil_rss_maly_se <-
+  round(soucet_ctvercu_residui_maly_se / (pocet_maly_se - 2), 2)
+
+rezidualni_smerodatna_odchylka_maly_se <-
+  round(sqrt(podil_rss_maly_se), 2)
+
+soucet_ctvercu_delky_maly_se <-
+  sum(data_maly_se$odchylka_delky_ctverec)
+
+odmocnina_sxx_maly_se <-
+  round(sqrt(soucet_ctvercu_delky_maly_se), 2)
+
+standardni_chyba_rucne_maly_se <-
+  round(
+    rezidualni_smerodatna_odchylka_maly_se / odmocnina_sxx_maly_se,
+    2
+  )
+
+# Hand rounding may differ from R only in the last displayed digit.
+stopifnot(
+  abs(standardni_chyba_rucne_maly_se - standardni_chyba_maly_se) < 0.05
+)
+
+text_residua_mocniny <-
   paste0(
     "(",
-    formatC(
-      x = vec_residua_maly_se,
-      digits = 3,
-      format = "f"
-    ),
+    format_cz_math(data_maly_se$residuum, nsmall = 2),
     ")^2"
   )
 
-vec_text_delky_maly_se <-
+text_residua_ctverce <-
+  format_cz_math(data_maly_se$residuum_ctverec, nsmall = 2)
+
+text_odchylky_mocniny <-
   paste0(
     "(",
-    formatC(
-      x = vec_delky_maly_se,
-      digits = 3,
-      format = "f"
-    ),
-    " - ",
-    formatC(
-      x = prumer_delky_maly_se,
-      digits = 3,
-      format = "f"
-    ),
+    format_cz_math(data_maly_se$odchylka_delky, nsmall = 2),
     ")^2"
   )
 
-text_residua_prvni_maly_se <-
-  paste(
-    vec_text_residua_maly_se[1:3],
-    collapse = " + "
-  )
+text_odchylky_ctverce <-
+  format_cz_math(data_maly_se$odchylka_delky_ctverec, nsmall = 2)
 
-text_residua_druhe_maly_se <-
-  paste(
-    vec_text_residua_maly_se[4:5],
-    collapse = " + "
-  )
-
-text_delky_prvni_maly_se <-
-  paste(
-    vec_text_delky_maly_se[1:3],
-    collapse = " + "
-  )
-
-text_delky_druhe_maly_se <-
-  paste(
-    vec_text_delky_maly_se[4:5],
-    collapse = " + "
-  )
 ```
 
-Nejprve výpočet zpomalíme na malém souboru konkrétních erupcí. Sloupec `residuum` ukazuje `r render_glossary_term("residuum", display = "residuum")` (anglicky *residual*) — svislou odchylku bodu od přímky, kterou známe z předchozí lekce. Česky se někdy používá také **reziduální odchylka**; samotné slovo „chyba“ by zde bylo méně přesné, protože skutečnou chybu měření neznáme.
+R standardní chybu nepočítá z mnoha hlášení, ale z jediného souboru dat. Zpomalíme proto výpočet na malém souboru prvních `r format_cz(pocet_maly_se)` erupcí. Všechny hodnoty v tabulkách níže jsou zaokrouhlené na dvě desetinná místa a v každém kroku počítáme s nimi. První tabulka ukazuje, jak daleko leží jednotlivé erupce od přímky odhadnuté z těchto pěti erupcí:
+
+```{=typst}
+#block(breakable: false)[
+```
 
 ```{r}
-#| label: tabulka-maleho-vypoctu-standardni-chyby
+#| label: tabulka-maleho-vypoctu-residua
 #| echo: false
 #| message: false
 #| warning: false
-#| tbl-cap: "Malý soubor erupcí použitý k rozebrání výpočtu standardní chyby sklonu."
+#| tbl-cap: "Pět erupcí: naměřené a odhadnuté čekání, residuum a jeho čtverec (čekání, odhady a residua v minutách)."
 data_maly_se |>
   dplyr::transmute(
-    eruption_id,
-    delka_erupce_min,
-    cekani_min,
-    odhadnute_cekani = round(odhadnute_cekani, digits = 2),
-    residuum = round(residuum, digits = 2)
+    `Erupce` = erupce,
+    `Čekání` = format_cz(cekani_min),
+    `Odhadnuté čekání` = format_cz(odhadnute_cekani),
+    `Residuum` = sub("^-", "−", format_cz(residuum)),
+    `Čtverec residua` = format_cz(residuum_ctverec)
   ) |>
-  knitr::kable()
+  knitr::kable(align = "rrrrr")
 ```
 
-Standardní chyba sklonu porovnává dvě informace. V čitateli je reziduální směrodatná odchylka; ve jmenovateli je součet čtverců odchylek délek erupcí od jejich `r render_glossary_term("prumer", display = "průměru")`.
+```{=typst}
+]
+```
 
-#### 1. Součet čtverců residuí {.unnumbered .unlisted}
+Sloupec `Residuum` ukazuje residuum (anglicky *residual*), tedy svislou odchylku bodu od přímky odhadnuté z těchto pěti erupcí. Slovo „chyba“ by zde bylo méně přesné, protože skutečnou chybu měření neznáme.
 
-Nejprve sečteme druhé mocniny všech residuí. Tento mezivýsledek se nazývá **součet čtverců residuí** (anglicky *residual sum of squares*, **RSS**; česky také **reziduální součet čtverců**).
+Standardní chyba sklonu porovnává dvě informace: jak daleko leží body od přímky a jak široce jsou rozprostřené délky erupcí kolem svého `r render_glossary_term("prumer", display = "průměru")`.
+
+#### 1. `r render_glossary_term("soucet-ctvercu-residui", display = "Součet čtverců residuí")` {.unnumbered .unlisted}
+
+Druhé mocniny všech residuí sečteme. Výsledek se nazývá součet čtverců residuí (anglicky *residual sum of squares*, **RSS**).
 
 $$
 \text{součet čtverců residuí}
@@ -993,14 +1238,15 @@ $$
 (\text{residuum poslední erupce})^2
 $$
 
-Dosadíme residua z tabulky:
+Dosadíme residua ze sloupce `Residuum`, umocníme je (sloupec `Čtverec residua`) a sečteme:
 
 $$
 \begin{aligned}
 \text{součet čtverců residuí}
-&= `r text_residua_prvni_maly_se` \\
-&\quad + `r text_residua_druhe_maly_se` \\
-&= `r round(soucet_ctvercu_residui_maly_se, 2)`.
+&= `r paste(text_residua_mocniny[1:3], collapse = " + ")` \\
+&\quad + `r paste(text_residua_mocniny[4:5], collapse = " + ")` \\
+&= `r paste(text_residua_ctverce, collapse = " + ")` \\
+&= `r format_cz_math(soucet_ctvercu_residui_maly_se, nsmall = 2)`.
 \end{aligned}
 $$
 
@@ -1012,9 +1258,9 @@ $$
 
 Zde $e_i$ označuje residuum $i$-té erupce, $i$ postupně prochází všechna pozorování a $n$ je jejich počet. Značka $\sum$ znamená „sečti následující hodnotu pro všechna pozorování“.
 
-#### 2. Reziduální směrodatná odchylka {.unnumbered .unlisted}
+#### 2. `r render_glossary_term("rezidualni-smerodatna-odchylka", display = "Reziduální směrodatná odchylka")` {.unnumbered .unlisted}
 
-Součet čtverců převedeme zpět na původní jednotky čekání. Výsledku budeme říkat **reziduální směrodatná odchylka** (anglicky *residual standard error*, **RSE**; česky se používá také **reziduální standardní chyba**).
+Součet čtverců převedeme zpět na původní jednotky čekání. Výsledku říkáme reziduální směrodatná odchylka (anglicky *residual standard error*, **RSE**). Ve výstupu `summary()` je to řádek `Residual standard error`. Přestože se v angličtině jmenuje *standard error*, není to standardní chyba odhadu sklonu, ale typická velikost residuí.
 
 $$
 \text{reziduální směrodatná odchylka}
@@ -1027,8 +1273,9 @@ $$
 $$
 \begin{aligned}
 \text{reziduální směrodatná odchylka}
-&= \sqrt{\frac{`r round(soucet_ctvercu_residui_maly_se, 2)`}{`r pocet_maly_se` - 2}} \\
-&= `r round(rezidualni_smerodatna_odchylka_maly_se, 2)`.
+&= \sqrt{\frac{`r format_cz_math(soucet_ctvercu_residui_maly_se, nsmall = 2)`}{`r pocet_maly_se` - 2}} \\
+&= \sqrt{`r format_cz_math(podil_rss_maly_se, nsmall = 2)`} \\
+&= `r format_cz_math(rezidualni_smerodatna_odchylka_maly_se, nsmall = 2)`.
 \end{aligned}
 $$
 
@@ -1038,26 +1285,55 @@ $$
 \hat{\sigma} = \sqrt{\frac{\operatorname{RSS}}{n - 2}}.
 $$
 
-Zde $\hat{\sigma}$ označuje reziduální směrodatnou odchylku, $\operatorname{RSS}$ právě vypočtený součet čtverců residuí a $n$ počet erupcí. Výraz $n-2$ je technická úprava označovaná jako **počet stupňů volnosti** (anglicky *degrees of freedom*). Proč se zde odečítá právě číslo 2, vysvětlíme v některé z dalších lekcí.
+Zde $\hat{\sigma}$ označuje reziduální směrodatnou odchylku, $\operatorname{RSS}$ právě vypočtený součet čtverců residuí a $n$ počet erupcí. Výraz $n-2$ se nazývá `r render_glossary_term("stupne-volnosti", display = "stupně volnosti")` (anglicky *degrees of freedom*). Proč se odečítá právě číslo 2, vysvětlíme v následující lekci.
 
 #### 3. Součet čtverců odchylek délek erupcí {.unnumbered .unlisted}
 
-Nyní změříme, jak daleko jsou délky erupcí od své průměrné hodnoty:
+Druhou informací je, jak daleko jsou délky erupcí od své průměrné hodnoty `r format_cz(prumer_delky_maly_se)` minuty. V tabulce jsou délky i jejich odchylky v minutách erupce, jejich čtverce v $\mathrm{min}^2$.
 
-$$
-\text{součet čtverců odchylek délek erupcí}
-=
-(\text{délka erupce 1} - \text{průměrná délka})^2
-+ \cdots +
-(\text{délka poslední erupce} - \text{průměrná délka})^2.
-$$
+```{=typst}
+#block(breakable: false)[
+```
+
+```{r}
+#| label: tabulka-maleho-vypoctu-odchylky-delky
+#| echo: false
+#| message: false
+#| warning: false
+#| tbl-cap: "Stejných pět erupcí: délka erupce, její odchylka od průměrné délky a čtverec této odchylky (délky a odchylky v minutách erupce, čtverce odchylek v min²)."
+data_maly_se |>
+  dplyr::transmute(
+    `Erupce` = erupce,
+    `Délka erupce` = format_cz(delka, digits = 2),
+    `Odchylka od průměru` = sub("^-", "−", format_cz(odchylka_delky)),
+    `Čtverec odchylky` = format_cz(odchylka_delky_ctverec)
+  ) |>
+  knitr::kable(align = "rrrr")
+```
+
+```{=typst}
+]
+```
+
 
 $$
 \begin{aligned}
 \text{součet čtverců odchylek délek erupcí}
-&= `r text_delky_prvni_maly_se` \\
-&\quad + `r text_delky_druhe_maly_se` \\
-&= `r round(soucet_ctvercu_delky_maly_se, 2)`.
+&= (\text{délka erupce 1} - \text{průměrná délka})^2 \\
+&\quad + \cdots +
+(\text{délka poslední erupce} - \text{průměrná délka})^2.
+\end{aligned}
+$$
+
+Dosadíme odchylky ze sloupce `Odchylka od průměru` a jejich čtverce ze sloupce `Čtverec odchylky`:
+
+$$
+\begin{aligned}
+\text{součet čtverců odchylek délek erupcí}
+&= `r paste(text_odchylky_mocniny[1:3], collapse = " + ")` \\
+&\quad + `r paste(text_odchylky_mocniny[4:5], collapse = " + ")` \\
+&= `r paste(text_odchylky_ctverce, collapse = " + ")` \\
+&= `r format_cz_math(soucet_ctvercu_delky_maly_se, nsmall = 2)`.
 \end{aligned}
 $$
 
@@ -1067,11 +1343,11 @@ $$
 S_{xx} = \sum_{i=1}^{n}(x_i - \bar{x})^2.
 $$
 
-Zde $x_i$ označuje délku $i$-té erupce, $\bar{x}$ průměrnou délku a $S_{xx}$ součet čtverců odchylek délek erupcí od průměru (anglicky *sum of squares of x*). Tato hodnota popisuje, jak jsou délky erupcí v datech rozprostřené: čím rozmanitější délky máme, tím větší je $S_{xx}$.
+Zde $x_i$ označuje délku $i$-té erupce, $\bar{x}$ průměrnou délku a $S_{xx}$ součet čtverců odchylek délek erupcí od průměru (anglicky *sum of squares of x*). Čím rozmanitější délky erupcí máme, tím větší je $S_{xx}$.
 
 #### 4. Standardní chyba sklonu {.unnumbered .unlisted}
 
-Nakonec vydělíme reziduální směrodatnou odchylku odmocninou ze součtu čtverců odchylek délek erupcí:
+Standardní chyba sklonu spojí obě informace: je to podíl reziduální směrodatné odchylky a odmocniny ze součtu čtverců odchylek délek erupcí.
 
 $$
 \text{standardní chyba sklonu}
@@ -1083,11 +1359,15 @@ $$
 $$
 \begin{aligned}
 \text{standardní chyba sklonu}
-&= \frac{`r round(rezidualni_smerodatna_odchylka_maly_se, 2)`}
-{\sqrt{`r round(soucet_ctvercu_delky_maly_se, 2)`}} \\
-&= `r round(standardni_chyba_maly_se, 2)`.
+&= \frac{`r format_cz_math(rezidualni_smerodatna_odchylka_maly_se, nsmall = 2)`}
+{\sqrt{`r format_cz_math(soucet_ctvercu_delky_maly_se, nsmall = 2)`}} \\
+&= \frac{`r format_cz_math(rezidualni_smerodatna_odchylka_maly_se, nsmall = 2)`}
+{`r format_cz_math(odmocnina_sxx_maly_se, nsmall = 2)`} \\
+&= `r format_cz_math(standardni_chyba_rucne_maly_se, nsmall = 2)`.
 \end{aligned}
 $$
+
+R počítá s nezaokrouhlenými hodnotami a pro těchto pět erupcí vypíše `r format_cz(standardni_chyba_maly_se)`; případný rozdíl v poslední číslici způsobuje jen zaokrouhlování.
 
 Obecně zapisujeme:
 
@@ -1099,186 +1379,68 @@ $$
 
 Zde $\hat{\beta}_1$ označuje odhad sklonu, $\operatorname{SE}(\hat{\beta}_1)$ jeho standardní chybu, $\hat{\sigma}$ reziduální směrodatnou odchylku a $S_{xx}$ součet čtverců odchylek délek erupcí od průměru.
 
-Když je reziduální směrodatná odchylka větší, čitatel a standardní chyba rostou. Když máme více dobře rozprostřených hodnot délky erupce, součet čtverců jejich odchylek roste a standardní chyba se zmenšuje. `summary()` použije stejný princip pro všech `r nrow(data_gejzir)` pozorování a vypíše výsledek `r round(standardni_chyba_sklonu, 2)`.
+Ze vzorce je vidět, proč model ze všech erupcí dává menší standardní chybu než jedno hlášení. Každá další erupce přidá do součtu $S_{xx}$ další kladný člen, takže jmenovatel roste; reziduální směrodatná odchylka v čitateli se přitom příliš nemění, protože popisuje typickou velikost residuí. Standardní chyba se proto s větším počtem dobře rozprostřených pozorování zmenšuje. Naopak když body leží daleko od přímky, čitatel roste a standardní chyba také. `summary()` použije stejný postup pro všech `r format_cz(nrow(data_gejzir))` erupcí a vypíše `r format_cz(standardni_chyba_sklonu)`.
 
-### Histogram sklonů a jedna standardní chyba
+### Co říká standardní chyba o našem sklonu?
 
 ```{r}
-#| label: spojit-histogram-a-standardni-chybu
-#| echo: false
-#| message: false
-#| warning: false
-#| fig-width: 8
-#| fig-height: 5.8
-#| fig-cap: >
-#|   Histogram ukazuje sklony ze 100 hlášení po 40 erupcích.
-#|   Nad sloupci je ve stejné ose odhad ze všech dat ± jedna standardní chyba.
-graf_histogram_se <-
-  ggplot2::ggplot(
-    data = data_odhady_hlaseni,
-    mapping = ggplot2::aes(x = odhad_sklonu)
-  ) +
-  ggplot2::geom_histogram(
-    bins = 18,
-    fill = biostat_cols[["amethyst"]],
-    color = "white"
-  )
+#| label: pripravit-navrat-k-modelu
+#| include: false
+table_koeficienty <-
+  summary(object = mod_gejzir)$coefficients
 
-max_cetnost_se <-
-  max(
-    ggplot2::ggplot_build(graf_histogram_se)$data[[1]]$count
-  )
+standardni_chyba_interceptu <-
+  table_koeficienty["(Intercept)", "Std. Error"]
 
-data_rozsah_se <-
-  tibble::tibble(
-    odhad = odhad_sklonu,
-    dolni = odhad_sklonu - standardni_chyba_sklonu,
-    horni = odhad_sklonu + standardni_chyba_sklonu,
-    y = max_cetnost_se + 1.5
-  )
-
-graf_histogram_se +
-  ggplot2::geom_vline(
-    xintercept = odhad_sklonu,
-    color = biostat_cols[["orange"]],
-    linetype = "dashed",
-    linewidth = 0.9
-  ) +
-  ggplot2::geom_errorbarh(
-    data = data_rozsah_se,
-    mapping = ggplot2::aes(
-      xmin = dolni,
-      xmax = horni,
-      y = y
-    ),
-    height = 0.7,
-    color = biostat_cols[["indigo_velvet"]],
-    linewidth = 1.5
-  ) +
-  ggplot2::geom_point(
-    data = data_rozsah_se,
-    mapping = ggplot2::aes(
-      x = odhad,
-      y = y
-    ),
-    color = biostat_cols[["orange"]],
-    size = 3.5
-  ) +
-  ggplot2::annotate(
-    geom = "text",
-    x = odhad_sklonu,
-    y = max_cetnost_se + 2.6,
-    label = "odhad ± 1 SE",
-    color = biostat_cols[["indigo_velvet"]],
-    size = 4
-  ) +
-  ggplot2::scale_y_continuous(
-    expand = ggplot2::expansion(mult = c(0, 0.18))
-  ) +
-  ggplot2::labs(
-    x = "Odhad sklonu (minuty čekání na minutu erupce)",
-    y = "Počet hlášení"
-  ) +
-  theme_biostat(base_size = 12)
+procento_se_ze_sklonu <-
+  100 * standardni_chyba_sklonu / odhad_sklonu
 ```
 
-Histogram ukazuje, že sklony ze sta čtyřicetiřádkových hlášení nejsou stejné. Jejich `r render_glossary_term("smerodatna-odchylka", display = "směrodatná odchylka")` je `r round(sd(data_odhady_hlaseni$odhad_sklonu), 2)` minuty čekání na minutu erupce. Model ze všech `r nrow(data_gejzir)` erupcí odhaduje svůj sklon s menší standardní chybou `r round(standardni_chyba_sklonu, 2)`, protože využívá více pozorování než jedno hlášení.
+Vraťme se od pěti erupcí k našemu modelu ze všech `r format_cz(nrow(data_gejzir))` erupcí. Pro otázku, o kolik déle čekáme po delší erupci, potřebujeme z tabulky `Coefficients` jen řádek `delka_erupce_min` a jeho první dva sloupce:
 
-Rozsah **odhad ± jedna standardní chyba** není interval spolehlivosti. Je to vizuální jednotka, která ukazuje měřítko přesnosti. V dalším kroku z této informace vytvoříme širší interval určený pro interpretaci nejistoty.
-
-::: {.box-result title="Vzor zápisu: odhad a standardní chyba"}
-
-„Lineární model odhadl, že erupce delší o jednu minutu souvisela s čekáním delším o `r round(odhad_sklonu, 2)` minuty (odhad sklonu = `r round(odhad_sklonu, 2)`, SE = `r round(standardni_chyba_sklonu, 2)` minuty čekání na minutu erupce).“
-
-Věta nejprve interpretuje vztah v běžném jazyce a teprve potom uvádí kompaktní statistický zápis. Samotná dvojice čísel bez proměnných a jednotek by nestačila.
-:::
-
-## Jak vyjádřit rozsah nejistoty?
-
-### Připomenutí kvantilů
-
-V jedné z předchozích lekcí jsme pomocí
-`r render_glossary_term("kvantil", display = "kvantilů")` (anglicky
-*quantiles*) rozdělovali seřazené hodnoty na části. Například 2,5% kvantil
-odděluje nejnižších 2,5 % hodnot a 97,5% kvantil odděluje nejvyšších 2,5 %.
-Mezi těmito dvěma hranicemi proto leží prostředních 95 %
-`r render_glossary_term("rozdeleni", display = "rozdělení")`.
+```{=typst}
+#block(breakable: false)[
+```
 
 ```{r}
-#| label: pripravit-kvantily-a-intervaly-sklonu
+#| label: odhad-a-standardni-chyba-sklonu
+#| echo: true
+# Odhad sklonu a jeho standardní chyba z tabulky Coefficients
+summary(object = mod_gejzir)$coefficients[
+  "delka_erupce_min",
+  c("Estimate", "Std. Error")
+]
+```
+
+```{=typst}
+]
+```
+
+Obě čísla čteme společně a obě mají jednotku minuty čekání na minutu erupce:
+
+- **`Estimate` = `r format_cz(odhad_sklonu)`** je velikost vztahu: dvě erupce, jejichž délky se liší o jednu minutu, se podle modelu v průměru liší čekáním na další erupci o `r format_cz(odhad_sklonu)` minuty.
+- **`Std. Error` = `r format_cz(standardni_chyba_sklonu)`** je přesnost tohoto odhadu. Kdyby někdo za stejných podmínek zaznamenal jiný soubor `r format_cz(nrow(data_gejzir))` erupcí a fitoval stejný model, dostal by jiný odhad sklonu. Takové odhady by typicky kolísaly zhruba o `r format_cz(standardni_chyba_sklonu)` minuty kolem skutečného sklonu — stejně jako kolísaly sklony hlášení GeyserWatch, jen méně, protože jedno hlášení mělo jen `r format_cz(pocet_erupci_v_hlaseni)` erupcí (typická standardní chyba `r format_cz(typicka_se_hlaseni)`).
+
+Ve srovnání s velikostí sklonu je standardní chyba malá: odpovídá asi `r format_cz(procento_se_ze_sklonu, digits = 0)` % odhadu. Náš sklon je tedy odhadnutý poměrně přesně, i když `r format_cz(odhad_sklonu)` není jediná hodnota, kterou data připouštějí. Vlastní standardní chybu má i `r render_glossary_term("intercept", display = "intercept")` (`r format_cz(standardni_chyba_interceptu)` minuty) a čte se stejně; pro naši otázku je ale podstatný sklon.
+
+*Jaký rozsah sklonů je tedy s našimi daty slučitelný?*
+
+## Jak vyjádřit rozsah `r render_glossary_term("nejistota", display = "nejistoty")`?
+
+### Připomenutí `r render_glossary_term("kvantil", display = "kvantilů")`
+
+```{r}
+#| label: pripravit-kvantily-sklonu
 #| include: false
 vec_kvantily_sklonu <-
   quantile(
     x = data_odhady_hlaseni$odhad_sklonu,
-    probs = c(0.025, 0.975)
+    probs = c(0.025, 0.975),
+    names = FALSE
   )
-
-vec_hladiny_intervalu <-
-  c(0.80, 0.90, 0.95, 0.99)
-
-data_intervaly <-
-  vec_hladiny_intervalu |>
-  purrr::map(
-    .f = ~ {
-      table_jeden_interval <-
-        confint(
-          object = mod_gejzir,
-          parm = "delka_erupce_min",
-          level = .x
-        )
-
-      tibble::tibble(
-        hladina = .x,
-        popisek = paste0(
-          formatC(
-            x = .x * 100,
-            digits = 0,
-            format = "f"
-          ),
-          "% interval"
-        ),
-        dolni = table_jeden_interval[1, 1],
-        horni = table_jeden_interval[1, 2]
-      )
-    }
-  ) |>
-  purrr::list_rbind() |>
-  dplyr::mutate(
-    odhad = odhad_sklonu,
-    popisek = factor(
-      x = popisek,
-      levels = paste0(
-        formatC(
-          x = vec_hladiny_intervalu * 100,
-          digits = 0,
-          format = "f"
-        ),
-        "% interval"
-      )
-    )
-  )
-
-dolni_interval <-
-  data_intervaly |>
-  dplyr::filter(hladina == 0.95) |>
-  dplyr::pull(dolni)
-
-horni_interval <-
-  data_intervaly |>
-  dplyr::filter(hladina == 0.95) |>
-  dplyr::pull(horni)
-
-kriticka_hodnota_95 <-
-  qt(
-    p = 1 - (1 - 0.95) / 2,
-    df = df.residual(mod_gejzir)
-  )
-
-polovina_intervalu_95 <-
-  kriticka_hodnota_95 * standardni_chyba_sklonu
 ```
 
-Na histogramu sta sklonů z GeyserWatch nyní vyznačíme právě tyto dva kvantily.
+V první lekci jsme pomocí kvantilů (anglicky *quantiles*) rozdělovali seřazené hodnoty na části. Například 2,5% kvantil odděluje nejnižších 2,5 % hodnot a 97,5% kvantil nejvyšších 2,5 %. Mezi těmito dvěma hranicemi proto leží prostředních 95 % `r render_glossary_term("rozdeleni", display = "rozdělení")`. Na `r render_glossary_term("histogram", display = "histogramu")` sta `r render_glossary_term("sklon", display = "sklonů")` z GeyserWatch vyznačíme právě tyto dva kvantily:
 
 ```{r}
 #| label: ukazat-kvantily-sklonu
@@ -1287,9 +1449,8 @@ Na histogramu sta sklonů z GeyserWatch nyní vyznačíme právě tyto dva kvant
 #| warning: false
 #| fig-width: 8
 #| fig-height: 5.2
-#| fig-cap: >
-#|   Kvantily rozdělují 100 sklonů z výukové demonstrace.
-#|   Mezi svislými čarami leží prostředních 95 % jejich rozdělení.
+#| fig-cap: "Mezi svislými čarami leží prostředních 95 % simulovaných sklonů."
+#| fig-alt: "Histogram sta sklonů s oranžově podbarvenou střední oblastí mezi 2,5% a 97,5% kvantilem."
 ggplot2::ggplot(
   data = data_odhady_hlaseni,
   mapping = ggplot2::aes(x = odhad_sklonu)
@@ -1301,13 +1462,12 @@ ggplot2::ggplot(
     ymin = -Inf,
     ymax = Inf,
     fill = biostat_cols[["orange"]],
-    alpha = 0.55
+    alpha = 0.35
   ) +
   ggplot2::geom_histogram(
     bins = 18,
     fill = biostat_cols[["amethyst"]],
-    color = "white",
-    alpha = 0.85
+    color = biostat_cols[["white"]]
   ) +
   ggplot2::geom_vline(
     xintercept = vec_kvantily_sklonu,
@@ -1316,21 +1476,62 @@ ggplot2::ggplot(
     linewidth = 1
   ) +
   ggplot2::labs(
-    x = "Odhad sklonu (minuty čekání na minutu erupce)",
+    x = "Odhad sklonu (min čekání / min erupce)",
     y = "Počet hlášení"
   ) +
   theme_biostat(base_size = 12)
 ```
 
-Kvantily vždy patří k určitému rozdělení hodnot. Zde popisují rozdělení sta uměle vytvořených sklonů. `r render_glossary_term("interval-spolehlivosti", display = "Interval spolehlivosti")` (anglicky *confidence interval*, **CI**; česky také **konfidenční interval**) naproti tomu používá odhad sklonu, jeho standardní chybu a předpoklady modelu, aby vyjádřil rozsah hodnot `r render_glossary_term("efekt", display = "efektu")` slučitelných s daty.
+Kvantily vždy patří k určitému rozdělení hodnot; zde popisují `r format_cz(pocet_hlaseni)` simulovaných sklonů. Skutečný výzkumník ale tolik hlášení nemá. `r render_glossary_term("interval-spolehlivosti", display = "Interval spolehlivosti")` (anglicky *confidence interval*, **CI**; česky také **konfidenční interval**) proto vychází z jediného souboru: použije `r render_glossary_term("odhad", display = "odhad")` sklonu, jeho `r render_glossary_term("standardni-chyba", display = "standardní chybu")` a předpoklady modelu, aby vyjádřil rozsah hodnot `r render_glossary_term("efekt", display = "efektu")` slučitelných s daty.
 
 ### Od odhadu a standardní chyby k intervalu
 
-Interval vytvoříme ze tří čísel: odhadu sklonu, jeho standardní chyby a **kritické hodnoty** (anglicky *critical value*). Kritická hodnota určuje, kolik standardních chyb přidáme na každou stranu od odhadu. Její přesný výpočet souvisí se zvolenou hladinou spolehlivosti a stupni volnosti; podrobně jej vysvětlíme v některé z dalších lekcí.
+```{r}
+#| label: pripravit-interval-95
+#| include: false
+hladina_hlavni <- 0.95
+
+kriticka_hodnota_95 <-
+  qt(
+    p = 1 - (1 - hladina_hlavni) / 2,
+    df = df.residual(mod_gejzir)
+  )
+
+polovina_intervalu_95 <-
+  kriticka_hodnota_95 * standardni_chyba_sklonu
+
+table_interval_95 <-
+  confint(
+    object = mod_gejzir,
+    parm = "delka_erupce_min",
+    level = hladina_hlavni
+  )
+
+dolni_interval <- table_interval_95[1, 1]
+horni_interval <- table_interval_95[1, 2]
+
+stopifnot(
+  isTRUE(all.equal(dolni_interval, odhad_sklonu - polovina_intervalu_95)),
+  isTRUE(all.equal(horni_interval, odhad_sklonu + polovina_intervalu_95))
+)
+
+# The worked steps show three decimals; the displayed arithmetic must
+#   reproduce the displayed results.
+stopifnot(
+  round(round(kriticka_hodnota_95, 3) * round(standardni_chyba_sklonu, 3), 3) ==
+    round(polovina_intervalu_95, 3),
+  round(round(odhad_sklonu, 3) - round(polovina_intervalu_95, 3), 3) ==
+    round(dolni_interval, 3),
+  round(round(odhad_sklonu, 3) + round(polovina_intervalu_95, 3), 3) ==
+    round(horni_interval, 3)
+)
+```
+
+Interval vytvoříme ze tří čísel: odhadu sklonu, jeho standardní chyby a `r render_glossary_term("kriticka-hodnota", display = "kritické hodnoty")` (anglicky *critical value*). Kritická hodnota určuje, kolik standardních chyb přidáme na každou stranu od odhadu. Závisí na zvolené `r render_glossary_term("hladina-spolehlivosti", display = "hladině spolehlivosti")` (anglicky *confidence level*), nejčastěji 95 %. Co toto číslo přesně znamená, ukážeme na simulaci v oddílu „Jak číst hladinu intervalu?“. Pro 95% interval je kritická hodnota blízko čísla 2; její přesná hodnota závisí také na počtu `r render_glossary_term("pozorovani", display = "pozorování")` a podrobně ji vysvětlíme v následující lekci.
 
 #### 1. Vzdálenost od odhadu k hranici intervalu {.unnumbered .unlisted}
 
-Nejprve vypočteme, jak daleko bude každá hranice intervalu od odhadu. Této vzdálenosti se říká **polovina šířky intervalu** (anglicky *margin of error*; česky také **mez chyby**). Samotným hranicím se v odborných textech říká také **meze intervalu**, anglicky *confidence limits*. V této lekci používáme srozumitelnější slovo **hranice**.
+Vzdálenost každé hranice intervalu od odhadu se nazývá **polovina šířky intervalu** nebo `r render_glossary_term("mez-chyby", display = "mez chyby")` (anglicky *margin of error*). Samotným hranicím se v odborných textech říká také **meze intervalu**, anglicky *confidence limits*. V této lekci používáme slovo **hranice**.
 
 $$
 \text{polovina šířky intervalu}
@@ -1338,14 +1539,14 @@ $$
 \text{kritická hodnota} \times \text{standardní chyba sklonu}.
 $$
 
-Pro 95% interval je kritická hodnota `r round(x = kriticka_hodnota_95, digits = 2)`, takže:
+Pro 95% interval je kritická hodnota `r format_cz(kriticka_hodnota_95, digits = 3)`. Mezivýsledky zde uvádíme na tři desetinná místa, aby výpočet přesně navazoval:
 
 $$
 \begin{aligned}
 \text{polovina šířky intervalu}
-&= `r round(x = kriticka_hodnota_95, digits = 2)`
-\times `r round(x = standardni_chyba_sklonu, digits = 2)` \\
-&= `r round(x = polovina_intervalu_95, digits = 2)`.
+&= `r format_cz_math(kriticka_hodnota_95, digits = 3, nsmall = 3)`
+\times `r format_cz_math(standardni_chyba_sklonu, digits = 3, nsmall = 3)` \\
+&= `r format_cz_math(polovina_intervalu_95, digits = 3, nsmall = 3)`.
 \end{aligned}
 $$
 
@@ -1355,7 +1556,7 @@ $$
 M = t_{1-\alpha/2,\,n-2}\operatorname{SE}(\hat{\beta}_1).
 $$
 
-Zde $M$ označuje polovinu šířky intervalu, $t_{1-\alpha/2,\,n-2}$ kritickou hodnotu pro zvolenou hladinu a daný model a $\operatorname{SE}(\hat{\beta}_1)$ standardní chybu odhadu sklonu. Zápis $n-2$ souvisí se stupni volnosti, jejichž význam podrobněji probereme později.
+Zde $M$ označuje polovinu šířky intervalu, $t_{1-\alpha/2,\,n-2}$ kritickou hodnotu a $\operatorname{SE}(\hat{\beta}_1)$ standardní chybu odhadu sklonu. Písmeno $\alpha$ je doplněk hladiny do jedné: $\alpha = 1 - \text{hladina}$, takže pro 95% interval je $\alpha = \text{0,05}$. Písmeno $t$ označuje rozdělení, ze kterého kritická hodnota pochází, a $n-2$ jsou opět `r render_glossary_term("stupne-volnosti", display = "stupně volnosti")`; obojí vysvětlíme v následující lekci.
 
 #### 2. Dolní hranice {.unnumbered .unlisted}
 
@@ -1368,9 +1569,9 @@ $$
 $$
 \begin{aligned}
 \text{dolní hranice}
-&= `r round(x = odhad_sklonu, digits = 2)`
-- `r round(x = polovina_intervalu_95, digits = 2)` \\
-&= `r round(x = dolni_interval, digits = 2)`.
+&= `r format_cz_math(odhad_sklonu, digits = 3, nsmall = 3)`
+- `r format_cz_math(polovina_intervalu_95, digits = 3, nsmall = 3)` \\
+&= `r format_cz_math(dolni_interval, digits = 3, nsmall = 3)`.
 \end{aligned}
 $$
 
@@ -1387,9 +1588,9 @@ $$
 $$
 \begin{aligned}
 \text{horní hranice}
-&= `r round(x = odhad_sklonu, digits = 2)`
-+ `r round(x = polovina_intervalu_95, digits = 2)` \\
-&= `r round(x = horni_interval, digits = 2)`.
+&= `r format_cz_math(odhad_sklonu, digits = 3, nsmall = 3)`
++ `r format_cz_math(polovina_intervalu_95, digits = 3, nsmall = 3)` \\
+&= `r format_cz_math(horni_interval, digits = 3, nsmall = 3)`.
 \end{aligned}
 $$
 
@@ -1398,18 +1599,18 @@ Obecně zapisujeme $U = \hat{\beta}_1 + M$. Zde $U$ označuje horní hranici.
 #### 4. Celý interval {.unnumbered .unlisted}
 
 $$
-\text{95% interval}
+\text{95\%}\ \text{interval}
 =
 \left[\text{dolní hranice};\,\text{horní hranice}\right].
 $$
 
-Teprve potom dosadíme obě vypočtené hranice:
+Po dosazení obou vypočtených hranic:
 
 $$
-\text{95% interval}
+\text{95\%}\ \text{interval}
 =
-\left[`r round(x = dolni_interval, digits = 2)`\,;
-`r round(x = horni_interval, digits = 2)`\right].
+\left[`r format_cz_math(dolni_interval)`\,;\,
+`r format_cz_math(horni_interval)`\right].
 $$
 
 Celý interval můžeme zapsat kratším vzorcem:
@@ -1425,33 +1626,98 @@ t_{1-\alpha/2,\,n-2}
 \operatorname{SE}(\hat{\beta}_1).
 $$
 
-Značka $I_{1-\alpha}$ označuje interval se zvolenou **hladinou spolehlivosti** (anglicky *confidence level*; česky také **konfidenční hladina**). Pro 95% interval platí $1-\alpha=0{,}95$.
+Značka $I_{1-\alpha}$ označuje interval se zvolenou hladinou spolehlivosti $1-\alpha$; pro 95% interval platí $1-\alpha=\text{0,95}$.
+
+#### Stejný interval v R {.unnumbered .unlisted}
+
+V praxi interval nepočítáme ručně. Funkce `confint()` vypíše intervaly pro všechny koeficienty modelu:
+
+```{=typst}
+#block(breakable: false)[
+```
+
+```{r}
+#| label: interval-confint
+#| echo: true
+# 95% intervaly spolehlivosti interceptu a sklonu
+confint(object = mod_gejzir)
+```
+
+```{=typst}
+]
+```
+
+V řádku `delka_erupce_min` najdeme stejné hranice, jaké jsme vypočítali ručně: `r format_cz(dolni_interval)` a `r format_cz(horni_interval)` minuty čekání na minutu erupce. Názvy sloupců `2.5 %` a `97.5 %` připomínají, že 95% interval nechává na každé straně 2,5 %.
 
 ### Jak se interval mění s požadovanou hladinou?
 
-Hodnota 95 % není jediná možnost. Stejným postupem můžeme vytvořit například 80%, 90%, 95% a 99% interval. Všechny mají stejný střed - odhad sklonu - ale liší se šířkou.
+```{r}
+#| label: pripravit-intervaly-ruznych-hladin
+#| include: false
+vec_hladiny_intervalu <-
+  c(0.80, 0.90, 0.95, 0.99)
+
+data_intervaly <-
+  vec_hladiny_intervalu |>
+  purrr::map(
+    .f = ~ {
+      table_jeden_interval <-
+        confint(
+          object = mod_gejzir,
+          parm = "delka_erupce_min",
+          level = .x
+        )
+
+      tibble::tibble(
+        hladina = .x,
+        kriticka_hodnota = qt(
+          p = 1 - (1 - .x) / 2,
+          df = df.residual(mod_gejzir)
+        ),
+        dolni = table_jeden_interval[1, 1],
+        horni = table_jeden_interval[1, 2]
+      )
+    }
+  ) |>
+  purrr::list_rbind() |>
+  dplyr::mutate(
+    popisek = factor(
+      x = paste0(format_cz(100 * hladina, digits = 0), "% interval"),
+      levels = paste0(format_cz(100 * vec_hladiny_intervalu, digits = 0), "% interval")
+    )
+  )
+```
+
+Hodnota 95 % není jediná možnost. Stejným postupem můžeme vytvořit například 80%, 90% nebo 99% interval; v `confint()` stačí nastavit argument `level`, například `level = 0.80`.
+
+::: {.box-question title="Co čekáte?"}
+
+Seřaďte 80%, 90%, 95% a 99% interval od nejužšího po nejširší. Musí interval s vyšší hladinou být širší, nebo užší?
+:::
+
+```{=typst}
+#block(breakable: false)[
+```
 
 ```{r}
 #| label: tabulka-ruznych-intervalu
 #| echo: false
 #| message: false
 #| warning: false
-#| tbl-cap: "Intervaly spolehlivosti sklonu pro čtyři zvolené hladiny."
+#| tbl-cap: "Intervaly spolehlivosti sklonu pro čtyři zvolené hladiny (min čekání / min erupce)."
 data_intervaly |>
   dplyr::transmute(
-    `Hladina` = paste0(
-      formatC(
-        x = hladina * 100,
-        digits = 0,
-        format = "f"
-      ),
-      " %"
-    ),
-    `Dolní hranice` = round(dolni, digits = 2),
-    `Odhad` = round(odhad_sklonu, digits = 2),
-    `Horní hranice` = round(horni, digits = 2)
+    `Hladina` = paste0(format_cz(100 * hladina, digits = 0), " %"),
+    `Kritická hodnota` = format_cz(kriticka_hodnota),
+    `Dolní hranice` = format_cz(dolni),
+    `Odhad` = format_cz(odhad_sklonu),
+    `Horní hranice` = format_cz(horni)
   ) |>
-  knitr::kable()
+  knitr::kable(align = "rrrrr")
+```
+
+```{=typst}
+]
 ```
 
 ```{r}
@@ -1461,92 +1727,53 @@ data_intervaly |>
 #| warning: false
 #| fig-width: 8
 #| fig-height: 4.8
-#| fig-cap: >
-#|   Vyšší požadovaná hladina vede k širšímu intervalu kolem stejného odhadu.
+#| fig-cap: "Vyšší požadovaná hladina vede k širšímu intervalu kolem stejného odhadu."
+#| fig-alt: "Čtyři vodorovné intervaly pod sebou se stejným středem. Osmdesátiprocentní je nejkratší, devadesátidevítiprocentní nejdelší."
 ggplot2::ggplot(
   data = data_intervaly,
   mapping = ggplot2::aes(
-    x = odhad,
+    x = odhad_sklonu,
     y = popisek
   )
 ) +
-  ggplot2::geom_vline(
-    xintercept = odhad_sklonu,
-    color = biostat_cols[["orange"]],
-    linetype = "dashed",
-    linewidth = 0.8
-  ) +
   ggplot2::geom_errorbarh(
     mapping = ggplot2::aes(
       xmin = dolni,
       xmax = horni
     ),
     height = 0.25,
-    color = biostat_cols[["indigo_velvet"]],
+    color = biostat_cols[["amethyst"]],
     linewidth = 1.4
   ) +
   ggplot2::geom_point(
-    color = biostat_cols[["orange"]],
+    color = biostat_cols[["indigo_velvet"]],
     size = 3.3
   ) +
   ggplot2::labs(
-    x = "Odhad sklonu (minuty čekání na minutu erupce)",
+    x = "Odhad sklonu (min čekání / min erupce)",
     y = NULL
   ) +
   theme_biostat(base_size = 12)
 ```
 
-Čím větší dlouhodobé pokrytí od intervalu požadujeme, tím dále musí jeho hranice sahat. Proto je 80% interval nejužší a 99% interval nejširší.
+Vyšší hladina používá větší kritickou hodnotu, a proto přidá na každou stranu od odhadu více standardních chyb. Proto je 80% interval nejužší a 99% interval nejširší. Co přesně vyšší hladina získá, ukáže následující oddíl.
 
 ### Jak číst hladinu intervalu?
 
-Vraťme se ke stu návštěvníkům GeyserWatch. Každý z nich by ze svého souboru pozorování získal **jeden sklon a jeden interval**. Kdyby tento postup opakovalo mnoho srovnatelných návštěvníků, přibližně 95 ze 100 jejich **95% intervalů** by pokrylo stejnou skutečnou hodnotu sklonu a přibližně 5 by ji minulo.
-
-Následující trojice panelů používá stejných 100 simulovaných pozorovatelů a mění pouze hladinu intervalu. Jako známou srovnávací hodnotu používáme odhad sklonu z našeho modelu. Je to **modelová referenční hodnota pro demonstraci**, nikoli známý skutečný populační sklon.
-
 ```{r}
-#| label: porovnat-pokryti-sta-intervalu
-#| echo: false
-#| message: false
-#| warning: false
-#| fig-width: 10
-#| fig-height: 5.8
-#| fig-cap: >
-#|   Stejných 100 simulovaných odhadů s 95%, 80% a 50% intervaly.
-#|   Fialové intervaly pokrývají oranžovou modelovou referenční hodnotu;
-#|   šedé ji míjejí. Nižší hladina vytváří užší intervaly a nižší pokrytí.
-set.seed(100)
-
-referencni_sklon_simulace <- odhad_sklonu
-referencni_se_simulace <- standardni_chyba_sklonu
-
-data_simulovane_odhady <-
-  data.frame(
-    pozorovatel = seq_len(100),
-    odhad_sklonu = rnorm(
-      n = 100,
-      mean = referencni_sklon_simulace,
-      sd = referencni_se_simulace
-    )
-  )
+#| label: pripravit-pokryti-intervalu
+#| include: false
+# The simulation was generated from the full-data line, so its slope is the
+#   known reference value of this demonstration.
+referencni_sklon <- odhad_sklonu
 
 data_pokryti_intervalu <-
-  tidyr::crossing(
-    data_simulovane_odhady,
-    hladina = c(0.95, 0.80, 0.50)
-  ) |>
-  # Z času dvou sousedních erupcí vypočítáme dobu čekání
+  data_odhady_hlaseni |>
+  dplyr::select(hlaseni, odhad_sklonu, intervaly) |>
+  tidyr::unnest(cols = intervaly) |>
   dplyr::mutate(
-    kriticka_hodnota = qnorm(1 - (1 - hladina) / 2),
-    dolni_mez =
-      odhad_sklonu -
-        kriticka_hodnota * referencni_se_simulace,
-    horni_mez =
-      odhad_sklonu +
-        kriticka_hodnota * referencni_se_simulace,
-    pokryva =
-      dolni_mez <= referencni_sklon_simulace &
-        horni_mez >= referencni_sklon_simulace
+    pokryva = dolni_mez <= referencni_sklon &
+      horni_mez >= referencni_sklon
   )
 
 data_popisky_pokryti <-
@@ -1558,50 +1785,71 @@ data_popisky_pokryti <-
   ) |>
   dplyr::mutate(
     panel = paste0(
-      formatC(hladina * 100, format = "f", digits = 0),
+      format_cz(100 * hladina, digits = 0),
       "% interval: ",
       pocet_pokrytych,
-      " ze 100"
+      " ze ",
+      pocet_hlaseni
     )
-  )
+  ) |>
+  dplyr::arrange(match(x = hladina, table = vec_hladiny_pokryti))
 
-data_pokryti_intervalu <-
+pocet_pokrytych_95 <-
+  data_popisky_pokryti$pocet_pokrytych[data_popisky_pokryti$hladina == 0.95]
+
+pocet_pokrytych_80 <-
+  data_popisky_pokryti$pocet_pokrytych[data_popisky_pokryti$hladina == 0.80]
+
+pocet_pokrytych_50 <-
+  data_popisky_pokryti$pocet_pokrytych[data_popisky_pokryti$hladina == 0.50]
+```
+
+Vraťme se ke všem `r format_cz(pocet_hlaseni)` hlášením GeyserWatch. Každý návštěvník by ze svého hlášení získal **jeden sklon, jednu standardní chybu a jeden interval** — přesně tak, jak to děláme s našimi daty. Protože hlášení jsou simulovaná, známe referenční sklon `r format_cz(odhad_sklonu)`, ze kterého vznikla. Můžeme proto u každého intervalu ověřit, zda referenční sklon zachytil.
+
+Následující trojice panelů používá **stejná hlášení** a mění pouze hladinu intervalu.
+
+```{r}
+#| label: porovnat-pokryti-sta-intervalu
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-width: 10
+#| fig-height: 6.5
+#| fig-cap: !expr paste0("Stejných ", pocet_hlaseni, " simulovaných hlášení s 95%, 80% a 50% intervaly. Plné fialové intervaly zachytily referenční sklon (tmavá čára), šedé přerušované jej minuly.")
+#| fig-alt: "Tři panely, v každém vodorovné intervaly všech hlášení pod sebou a svislá tmavá čára referenčního sklonu. S nižší hladinou jsou intervaly kratší a více z nich je šedých a přerušovaných, tedy čáru míjí."
+data_pokryti_graf <-
   data_pokryti_intervalu |>
   dplyr::left_join(
     data_popisky_pokryti,
-    by = "hladina"
+    by = dplyr::join_by(hladina)
   ) |>
   dplyr::mutate(
     panel = factor(
-      panel,
-      levels = data_popisky_pokryti$panel[
-        match(
-          c(0.95, 0.80, 0.50),
-          data_popisky_pokryti$hladina
-        )
-      ]
+      x = panel,
+      levels = data_popisky_pokryti$panel
     )
   )
 
 ggplot2::ggplot(
-  data = data_pokryti_intervalu,
+  data = data_pokryti_graf,
   mapping = ggplot2::aes(
     x = odhad_sklonu,
-    y = pozorovatel,
+    y = hlaseni,
     xmin = dolni_mez,
     xmax = horni_mez,
-    colour = pokryva
+    colour = pokryva,
+    linetype = pokryva
   )
 ) +
   ggplot2::geom_errorbarh(
     height = 0,
-    linewidth = 0.35,
-    alpha = 0.8
+    linewidth = 0.8,
+    alpha = 0.9
   ) +
   ggplot2::geom_point(size = 0.7) +
   ggplot2::geom_vline(
-    xintercept = referencni_sklon_simulace,
-    colour = biostat_cols[["orange"]],
+    xintercept = referencni_sklon,
+    colour = biostat_cols[["graphite"]],
     linewidth = 0.9
   ) +
   ggplot2::facet_wrap(
@@ -1615,80 +1863,108 @@ ggplot2::ggplot(
     ),
     guide = "none"
   ) +
-  ggplot2::labs(
-    x = "Odhad sklonu a interval",
-    y = "Pozorovatel"
+  ggplot2::scale_linetype_manual(
+    values = c(
+      "TRUE" = "solid",
+      "FALSE" = "22"
+    ),
+    guide = "none"
   ) +
-  theme_biostat(base_size = 10) +
+  ggplot2::labs(
+    x = "Odhad sklonu a interval (min čekání / min erupce)",
+    y = "Hlášení"
+  ) +
+  theme_biostat(base_size = 14) +
   ggplot2::theme(
     axis.text.y = ggplot2::element_blank(),
     axis.ticks.y = ggplot2::element_blank(),
     panel.grid = ggplot2::element_blank(),
-    strip.text = ggplot2::element_text(size = 9)
+    strip.text = ggplot2::element_text(size = 12)
   )
 ```
 
+Z `r format_cz(pocet_hlaseni)` intervalů zachytilo referenční sklon `r pocet_pokrytych_95` při hladině 95 %, `r pocet_pokrytych_80` při hladině 80 % a `r pocet_pokrytych_50` při hladině 50 %. Při dalším opakování simulace by počty vyšly trochu jinak, ale kolísaly by kolem hodnot odpovídajících hladině. Podíl intervalů, které hledanou hodnotu zachytí, se nazývá `r render_glossary_term("pokryti-intervalu", display = "pokrytí")` (anglicky *coverage*). **Hladina intervalu popisuje, jak často postup při mnoha opakováních zachytí skutečný sklon** — v simulaci referenční sklon, ve skutečném výzkumu neznámý sklon celého procesu. U 95% intervalů jej asi každý dvacátý mine, a výzkumník, který má jediný interval, nepozná, zda je jeho interval mezi nimi.
+
 Je důležité rozlišit dvě věty:
 
-- U kvantilů histogramu jsme vyznačili oblast, ve které leží prostředních 95 % vytvořených **odhadů sklonu**.
-- U 95% intervalu spolehlivosti číslo 95 % říká, jaký podíl opakovaně vytvořených **intervalů** dlouhodobě pokryje skutečný sklon.
+- U kvantilů histogramu jsme vyznačili oblast, ve které leží prostředních 95 % simulovaných **odhadů sklonu**.
+- U 95% intervalu spolehlivosti číslo 95 % říká, jaký podíl opakovaně vytvořených **intervalů** dlouhodobě zachytí skutečný sklon.
 
 Jeden vypočtený interval tedy neříká, že uvnitř musí ležet 95 ze 100 sklonů. Neříká ani, že skutečný sklon má po výpočtu 95% pravděpodobnost být uvnitř. Číslo 95 % popisuje úspěšnost postupu při mnoha opakováních.
 
-Nižší hladina, například 80 %, vytvoří z týchž dat užší interval. To ale neznamená, že jsme z dat získali přesnější informaci: pouze jsme přijali nižší pokrytí. Při mnoha opakováních by skutečný sklon pokrylo přibližně 80 ze 100 takových intervalů a přibližně 20 by jej minulo. **Užší interval znamená vyšší přesnost pouze tehdy, porovnáváme-li intervaly se stejnou hladinou**, například dva 95% intervaly získané z různě informativních dat.
+Nižší hladina, například 80 %, vytvoří z týchž dat užší interval. To ale neznamená, že jsme z dat získali přesnější informaci: pouze jsme přijali, že postup bude častěji minout. **Užší interval znamená vyšší přesnost pouze tehdy, porovnáváme-li intervaly se stejnou hladinou**, například dva 95% intervaly získané z různě informativních dat.
 
 ::: {.box-rule title="Proč právě 95 %?"}
 
-Hodnota 95 % není dána přírodním zákonem ani našimi daty. Je to historicky ustálená vědecká konvence, která představuje kompromis: vyšší hladina dává širší interval, nižší hladina užší interval. V následující lekci uvidíme, proč se 95 % často objevuje společně s formálním hodnocením statistických tvrzení. Pro tuto lekci je důležité vědět, že **95 % je standardní volba, nikoli jediná správná volba**.
+Hodnota 95 % není dána přírodním zákonem ani našimi daty. Je to ustálená vědecká konvence a kompromis: vyšší hladina dává širší interval, nižší hladina užší interval, který ale častěji mine. V následující lekci uvidíme, proč se 95 % často objevuje společně s posuzováním statistických tvrzení. Pro tuto lekci je důležité vědět, že **95 % je standardní volba, nikoli jediná správná volba**.
 :::
 
 ::: {.box-warning title="Co interval spolehlivosti neříká"}
 
 - **Neobsahuje prostředních 95 % erupcí ani čekacích dob.** Popisuje nejistotu odhadu sklonu, nikoli rozdělení jednotlivých pozorování.
 - **Nedokazuje, že některá hodnota je pravdivá nebo nepravdivá.** Ukazuje, které velikosti efektu jsou s daty a modelem slučitelné.
-- **Neříká, že skutečný parametr má po výpočtu tohoto intervalu 95% pravděpodobnost ležet uvnitř.** Číslo 95 % patří k dlouhodobému postupu vytváření intervalů.
+- **Neříká, že skutečný sklon má po výpočtu tohoto intervalu 95% pravděpodobnost ležet uvnitř.** Číslo 95 % patří k dlouhodobému postupu vytváření intervalů.
 :::
 
 ::: {.box-result title="Vzor zápisu: odhad, standardní chyba a interval"}
 
-„Erupce delší o jednu minutu souvisela s čekáním delším o `r round(odhad_sklonu, 2)` minuty (odhad sklonu = `r round(odhad_sklonu, 2)`, SE = `r round(standardni_chyba_sklonu, 2)`, 95% CI [`r round(dolni_interval, 2)`, `r round(horni_interval, 2)`] minuty čekání na minutu erupce).“
+„Dvě erupce, jejichž délky se lišily o jednu minutu, se podle `r render_glossary_term("linearni-model", display = "lineárního modelu")` v průměru lišily čekáním na další erupci o `r format_cz(odhad_sklonu)` minuty (odhad sklonu = `r format_cz(odhad_sklonu)`, SE = `r format_cz(standardni_chyba_sklonu)`, 95% CI [`r format_cz(dolni_interval)`; `r format_cz(horni_interval)`] minuty čekání na minutu erupce).“
 
 Tento zápis obsahuje velikost vztahu i jeho přesnost. Stále musí být doprovázen popisem dat, modelu a jednotek.
 :::
 
 ## Co můžeme říct o Old Faithful?
 
-V zaznamenaných datech od června do srpna 2024 jsme odhadli, že erupce delší o jednu minutu souvisí v průměru s čekáním delším o `r round(odhad_sklonu, 2)` minuty. 95% interval spolehlivosti sahá od `r round(dolni_interval, 2)` do `r round(horni_interval, 2)` minuty čekání na minutu erupce.
+Vraťme se k hlavní otázce: **o kolik déle čekáme po delší erupci — a jak jistě to víme?**
 
-Tento interval se vztahuje ke **sklonu**, tedy k odhadované průměrné změně čekání při změně délky erupce. Neříká, v jakém rozmezí bude čekání po jedné konkrétní budoucí erupci: jednotlivá čekání se navíc rozptylují kolem modelové přímky. Pro takovou předpověď bychom potřebovali jiný interval, který zde nepočítáme.
+V zaznamenaných datech od června do srpna 2024 se dvě erupce, jejichž délky se liší o jednu minutu, podle modelu v průměru liší čekáním na další erupci o `r format_cz(odhad_sklonu)` minuty. To je **velikost vztahu**. `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` sahá od `r format_cz(dolni_interval)` do `r format_cz(horni_interval)` minuty čekání na minutu erupce. To je **přesnost `r render_glossary_term("odhad", display = "odhadu")`**: data a model jsou slučitelné s tímto rozsahem kladných `r render_glossary_term("sklon", display = "sklonů")`, ne pouze s jediným číslem.
+
+Interval se vztahuje ke **sklonu**, tedy k průměrnému rozdílu čekání mezi erupcemi různé délky. Neříká, jak dlouho budeme čekat po jedné konkrétní budoucí erupci: jednotlivá čekání se navíc rozptylují kolem modelové přímky.
+
+```{=typst}
+#block(breakable: false)[
+```
 
 ::: {.box-data collapse="true" title="Doplňující: interval pro průměrný vztah není interval pro další erupci"}
 
 Interval spolehlivosti pro průměrný vztah se ptá, kde může ležet **průměrné čekání** odpovídající určité délce erupce nebo jaký může být sklon tohoto průměrného trendu. Jedna budoucí erupce se však může od trendu odchýlit, stejně jako se od přímky odchylují už pozorované body.
 
-Interval pro jednotlivé nové čekání proto musí zahrnout dvě nejistoty současně: nejistotu polohy průměrného trendu a přirozený rozptyl jednotlivých čekání kolem něj. Bývá tedy širší než interval pro průměr. Úplný výpočet predikčního intervalu zde nepotřebujeme; důležité je nejprve pojmenovat, zda chceme odhadnout průměrný vztah, nebo předpovědět jeden nový případ.
+Interval pro jednotlivé nové čekání proto musí zahrnout dvě `r render_glossary_term("nejistota", display = "nejistoty")` současně: nejistotu polohy průměrného trendu a přirozené rozptýlení jednotlivých čekání kolem něj. Bývá tedy širší než interval pro průměr. Úplný výpočet takového intervalu (anglicky *prediction interval*) zde nepotřebujeme; důležité je nejprve pojmenovat, zda chceme odhadnout průměrný vztah, nebo předpovědět jeden nový případ.
 :::
 
-Toto tvrzení sděluje dvě věci současně:
+```{=typst}
+]
+```
 
-1. **Velikost vztahu:** delší erupce jsou spojeny s delším čekáním.
-2. **Přesnost odhadu:** data jsou slučitelná s určitým rozsahem kladných velikostí vztahu, ne pouze s jediným číslem.
+Interpretace stále závisí na použitém modelu a na způsobu získání dat. Dobrovolnická `r render_glossary_term("pozorovani", display = "pozorování")` nejsou náhodný `r render_glossary_term("vyber", display = "výběr")` všech erupcí. Rozdělení podle měsíců ukázalo, že se odhad sklonu mezi obdobími liší; ze tří měsíců ale nepoznáme, zda jde jen o `r render_glossary_term("vyberova-variabilita", display = "výběrovou variabilitu")`, nebo i o změnu chování gejzíru. Výsledek proto čteme jako opatrný odhad vztahu v zachyceném období, nikoli jako neměnný přírodní zákon.
 
-Interpretace stále závisí na použitém modelu a na způsobu získání dat. Dobrovolnická pozorování nejsou dokonale náhodná a rozdělení podle měsíců ukázalo, že odhadovaný sklon se může měnit. Výsledek proto čteme jako opatrný odhad vztahu v zachyceném procesu, nikoli jako neměnný přírodní zákon.
+## Co bude následovat dál
+
+V této lekci jsme k `r render_glossary_term("odhad", display = "odhadu")` `r render_glossary_term("sklon", display = "sklonu")` přidali jeho `r render_glossary_term("nejistota", display = "nejistotu")`: `r render_glossary_term("standardni-chyba", display = "standardní chybu")` a `r render_glossary_term("interval-spolehlivosti", display = "interval spolehlivosti")`. V následující lekci se zeptáme, jak pomocí dat posoudit konkrétní tvrzení o `r render_glossary_term("parametry-modelu", display = "parametru modelu")` — například zda jsou data slučitelná s tím, že délka erupce s čekáním vůbec nesouvisí. Vrátíme se přitom ke sloupcům `t value` a `Pr(>|t|)`, které jsme zatím přeskočili.
 
 ## Shrnutí
 
-- Soubor pozorování určuje, které body vstoupí do modelu, a proto ovlivňuje odhadnutý sklon.
-- Pepa, Mařenka a Karel dostali ze tří měsíců různé sklony, přestože použili stejný postup fitování.
-- Výběrová variabilita označuje proměnlivost odhadu mezi možnými soubory pozorování.
-- Standardní chyba popisuje typickou velikost této proměnlivosti a je měřítkem přesnosti odhadu.
-- Interval spolehlivosti vyjadřuje rozsah efektů slučitelných s daty a modelem.
-- Vědecký zápis má spojit interpretaci, odhad, standardní chybu, interval a jednotky.
+- Jiný soubor `r render_glossary_term("pozorovani", display = "pozorování")` dává jiný `r render_glossary_term("odhad", display = "odhad")` `r render_glossary_term("sklon", display = "sklonu")`; tuto proměnlivost mezi `r render_glossary_term("vyber", display = "výběry")` nazýváme `r render_glossary_term("vyberova-variabilita", display = "výběrová variabilita")`.
+- Ve výstupu `summary()` popisuje `Estimate` velikost vztahu a `Std. Error` jeho přesnost. `r render_glossary_term("standardni-chyba", display = "Standardní chyba")` odhaduje z jediného výběru, jak moc by se odhady typicky lišily mezi výběry stejné velikosti; s více pozorováními se zmenšuje.
+- `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` z `confint()` ukazuje rozsah sklonů slučitelných s daty a modelem. Hladina 95 % popisuje úspěšnost postupu při opakování, nikoli podíl pozorování uvnitř intervalu ani důkaz hypotézy.
+- Vědecký zápis spojuje interpretaci v běžném jazyce s odhadem, standardní chybou, intervalem a jednotkami.
 
-::: {.box-question title="Most k následující lekci"}
+### Závěrečná otázka
 
-Nyní umíme popsat velikost odhadovaného efektu i jeho nejistotu. Další otázka zní: **Jak pomocí dat hodnotit konkrétní tvrzení o parametru modelu?** Formální postup a možné chyby rozhodnutí zavedeme až v následující lekci.
+Někdo vám ukáže jen titulek „Po minutě erupce navíc čekáme o `r format_cz(odhad_sklonu)` minuty déle“. Co potřebujete vidět, než titulku uvěříte?
+
+```{=typst}
+#block(breakable: false)[
+```
+
+::: {.box-result collapse="true" title="Možné otázky"}
+
+Jak vypadá `r render_glossary_term("bodovy-graf", display = "bodový graf")` a graf `r render_glossary_term("residuum", display = "residuí")` — sedí přímka k datům? Kolik erupcí autor měl, kdy a jak byly zaznamenány? Jak přesný je odhad — jaká je standardní chyba a 95% interval spolehlivosti? Mění se sklon mezi obdobími? A tvrdí titulek jen průměrný rozdíl mezi erupcemi různé délky, nebo i to, že delší erupce čekání způsobuje?
 :::
+
+```{=typst}
+]
+```
 
 ## Slovníček pojmů {.unnumbered}
 
@@ -1698,7 +1974,9 @@ Pojmy použité v těchto materiálech a jejich definice. Úplný průběžně a
 #| label: slovnicek
 #| echo: false
 #| results: asis
-if (knitr::is_html_output()) {
+if (
+  knitr::is_html_output()
+) {
   glossary::glossary_table()
 } else {
   cat(
