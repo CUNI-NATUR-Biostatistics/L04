@@ -37,7 +37,7 @@ review and revisions on that same branch/PR, and merge it before creating the
 next stage branch. Assistants must still obtain user authorization before
 creating or switching branches, pushing, or opening/merging pull requests.
 
-Stage 6 release validation happens after the presentation PR is merged. It checks the exact public allowlist, privacy and assessment boundaries, provenance and reuse terms, repository visibility, licensing status, stable lesson routes, and the expected HUB refresh. If it finds a source problem, fix that on a separate release-fix branch and PR.
+For release preparation, post-merge validation, and publication receipts, follow the [canonical publication workflow](../../_internal/.ai/core/publication.md#release-preparation-and-recordkeeping). Workflow record-copying and stage-log steps apply to authoring and pre-merge preparation. Post-merge release results go in the GitHub Release description and leave the lesson working tree unchanged; actual source fixes retain the normal branch and PR workflow.
 
 ## Recommended sequence
 
@@ -45,7 +45,7 @@ Stage 6 release validation happens after the presentation PR is merged. It check
 2. `stage-1-dataset.md`
 3. `stage-2-learning-materials.md`
 4. `stage-4-slides.md` (includes the Stage 5 presentation review)
-5. `stage-5-review-release.md` (post-merge Stage 6 release validation)
+5. `stage-5-review-release.md` (pre-merge preparation and external post-merge receipt)
 
 ## Why this exists
 
