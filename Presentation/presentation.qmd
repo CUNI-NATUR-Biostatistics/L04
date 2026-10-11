@@ -178,7 +178,7 @@ Po absolvování této přednášky budete schopni:
 ::: {.incremental}
 - vysvětlit, proč [jiný soubor pozorování]{.text-hgl-graphite} dává [jiný odhad sklonu]{.text-hgl-indigo_velvet}
 - najít ve výstupu `summary()` [odhad sklonu]{.text-hgl-indigo_velvet} a jeho [standardní chybu]{.text-hgl-orange} a rozlišit velikost vztahu od přesnosti odhadu
-- získat [95% interval spolehlivosti]{.text-hgl-amethyst} funkcí `confint()` a interpretovat ho bez tvrzení, že obsahuje 95 % pozorování nebo dokazuje hypotézu
+- získat [95% interval spolehlivosti]{.text-hgl-amethyst} sklonu funkcí `confint()` a [pás spolehlivosti]{.text-hgl-amethyst} kolem přímky funkcí `predict()` a interpretovat je bez tvrzení, že obsahují 95 % pozorování nebo dokazují hypotézu
 - zapsat výsledek jednou větou s [odhadem]{.text-hgl-indigo_velvet}, [SE]{.text-hgl-orange}, [intervalem]{.text-hgl-amethyst} a jednotkami
 :::
 
@@ -283,6 +283,7 @@ odhad_sklonu <-
 
 plot_model <-
   plot_data +
+  # No band: the confidence band is introduced later in this lesson.
   ggplot2::geom_abline(
     intercept = coef(object = mod_gejzir)[["(Intercept)"]],
     slope = odhad_sklonu,
@@ -392,6 +393,7 @@ plot_pepa <-
     alpha = 0.75,
     size = 3.4
   ) +
+  # No band: the confidence band is introduced later in this lesson.
   ggplot2::geom_abline(
     intercept = coef(object = mod_pepa)[["(Intercept)"]],
     slope = sklon_pepa,
@@ -547,6 +549,7 @@ plot_mesice <-
     alpha = 0.7,
     size = 2.6
   ) +
+  # No band: the confidence band is introduced later in this lesson.
   ggplot2::geom_smooth(
     method = "lm",
     formula = y ~ x,
@@ -750,6 +753,7 @@ vec_frame_paths <-
             y = cekani_min
           )
         ) +
+        # No band: simulated report lines in the animation.
         ggplot2::geom_abline(
           data = data_frame_predchozi_primky,
           mapping = ggplot2::aes(
@@ -1698,6 +1702,305 @@ Při mnoha srovnatelných opakováních zachytí skutečný sklon přibližně 9
 Kolík stojí pevně jako skutečný sklon, kroužek se při každém hodu posune jako interval. Většina hodů kolík obepne, některé ne, a z jednoho hodu nepoznáme, jestli patří k těm úspěšným. A popisuje rozdělení pozorování, ne nejistotu sklonu. B přisuzuje pravděpodobnost jednomu už vypočtenému intervalu; číslo 95 % patří k postupu. Interval také nic nedokazuje, jen ukazuje sklony slučitelné s daty a modelem.
 :::
 
+##
+
+::: {.slide-margin-top-15}
+::: {.card-question}
+::: {.card-title}
+Otázka
+:::
+
+Nakreslíme přímky všech `r pocet_hlaseni` hlášení GeyserWatch do jednoho grafu. Kde se od sebe budou lišit nejméně?
+:::
+
+<br>
+
+:::: {.columns}
+
+::: {.column width="33%"}
+::: {.card-question .card-compact}
+**A)** U krátkých erupcí.
+:::
+:::
+
+::: {.column width="33%"}
+::: {.card-question .card-compact}
+[**B)** U průměrně dlouhých.]{.rn-circle-orange}
+:::
+:::
+
+::: {.column width="33%"}
+::: {.card-question .card-compact}
+**C)** U dlouhých erupcí.
+:::
+:::
+
+::::
+
+<br>
+
+::: {.takeaway-strip}
+Zvolte A, B, nebo C a zdůvodněte svou volbu sousedovi.
+:::
+:::
+
+::: {.notes}
+Dosud jsme nejistotu vyjadřovali pro jediné číslo, sklon. Přímka ale dává pro každou délku erupce i odhadnuté průměrné čekání, a to je také odhad. To, jak se průměrné čekání mění s délkou erupce, nazýváme průměrný trend. Po diskuzi zakroužkuji B; následující slide ukáže proč.
+:::
+
+## Sto hlášení, sto přímek
+
+```{r}
+#| label: pripravit-vejir-sta-primek
+#| include: false
+# The fan and the band share one x range and the mean eruption length.
+vec_rozsah_delky <-
+  range(data_gejzir$delka_erupce_min)
+prumerna_delka <-
+  mean(data_gejzir$delka_erupce_min)
+intercept_vsech_erupci <-
+  coef(object = mod_gejzir)[["(Intercept)"]]
+
+data_vejir <-
+  data_odhady_hlaseni |>
+  dplyr::transmute(
+    hlaseni,
+    x = vec_rozsah_delky[1],
+    xend = vec_rozsah_delky[2],
+    y = intercept + odhad_sklonu * x,
+    yend = intercept + odhad_sklonu * xend
+  )
+
+plot_vejir <-
+  ggplot2::ggplot(data = data_vejir) +
+  ggplot2::geom_segment(
+    mapping = ggplot2::aes(
+      x = x,
+      xend = xend,
+      y = y,
+      yend = yend,
+      group = hlaseni
+    ),
+    color = biostat_cols[["indigo_velvet"]],
+    alpha = 0.25,
+    linewidth = 0.7
+  ) +
+  ggplot2::annotate(
+    geom = "segment",
+    x = vec_rozsah_delky[1],
+    xend = vec_rozsah_delky[2],
+    y = intercept_vsech_erupci + odhad_sklonu * vec_rozsah_delky[1],
+    yend = intercept_vsech_erupci + odhad_sklonu * vec_rozsah_delky[2],
+    color = biostat_cols[["graphite"]],
+    linewidth = 1.6
+  ) +
+  ggplot2::geom_vline(
+    xintercept = prumerna_delka,
+    linetype = "dashed",
+    color = biostat_cols[["graphite"]]
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (min)",
+    y = "Odhadnuté čekání (min)"
+  ) +
+  theme_biostat(base_size = 20)
+
+save_local_figure(
+  plot = plot_vejir,
+  filename = "vejir_sta_primek.png",
+  height = 700
+)
+```
+
+```{r}
+#| label: zobrazit-vejir-sta-primek
+#| echo: false
+#| fig-alt: "Sto tenkých fialových přímek nakreslených přes sebe s tmavou referenční přímkou. U svislé přerušované čáry průměrné délky erupce leží těsně u sebe; směrem ke krátkým i dlouhým erupcím se rozbíhají jako vějíř."
+include_local_figure("vejir_sta_primek.png")
+```
+
+::: {.takeaway-strip}
+Fialové jsou přímky hlášení, [tmavá je přímka ze všech erupcí]{.text-hgl-graphite}. Přímky se kříží u průměrné délky erupce (čárkovaně) a k okrajům se rozbíhají.
+:::
+
+::: {.notes}
+Přímka z lm() vždy prochází bodem (průměrná délka erupce; průměrné čekání) svých dat, a tyto průměry se mezi hlášeními liší málo. Proto se přímky s různým sklonem kříží blízko středu a nejistota sklonu se projeví tím víc, čím dál jsme od průměrné délky. Hlášení mají jen `r pocet_erupci_v_hlaseni` erupcí, takže vějíř je širší než nejistota ze všech `r format_cz(nrow(data_gejzir))` erupcí, stejně jako SE sklonu v jednom hlášení byla větší.
+:::
+
+## Pás pro průměrný trend
+
+```{r}
+#| label: pripravit-pas-spolehlivosti
+#| include: false
+# Band intervals annotated at a short and at the average eruption length
+delka_kratka <- 2
+
+mat_dve_delky <-
+  predict(
+    object = mod_gejzir,
+    newdata = data.frame(delka_erupce_min = c(delka_kratka, prumerna_delka)),
+    interval = "confidence"
+  )
+
+data_dve_delky <-
+  data.frame(
+    delka_erupce_min = c(delka_kratka, prumerna_delka),
+    lwr = mat_dve_delky[, "lwr"],
+    upr = mat_dve_delky[, "upr"]
+  )
+
+plot_pas <-
+  plot_data +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = TRUE,
+    color = biostat_cols[["indigo_velvet"]],
+    fill = biostat_cols[["amethyst"]],
+    alpha = 0.25,
+    linewidth = 1.6
+  ) +
+  ggplot2::geom_vline(
+    xintercept = prumerna_delka,
+    linetype = "dashed",
+    color = biostat_cols[["graphite"]]
+  )
+
+plot_pas_intervaly <-
+  plot_pas +
+  ggplot2::geom_errorbar(
+    data = data_dve_delky,
+    mapping = ggplot2::aes(
+      x = delka_erupce_min,
+      ymin = lwr,
+      ymax = upr
+    ),
+    inherit.aes = FALSE,
+    width = 0.12,
+    linewidth = 1.3,
+    color = biostat_cols[["indigo_velvet"]]
+  ) +
+  ggplot2::geom_label(
+    data = data_dve_delky,
+    mapping = ggplot2::aes(
+      x = delka_erupce_min + 0.1,
+      y = lwr - 3,
+      label = paste0(
+        "šířka ",
+        formatC(x = upr - lwr, format = "f", digits = 1, decimal.mark = ","),
+        " min"
+      )
+    ),
+    inherit.aes = FALSE,
+    hjust = 0,
+    size = 6,
+    color = biostat_cols[["indigo_velvet"]],
+    fill = scales::alpha(biostat_cols[["white"]], 0.75),
+    label.size = 0
+  )
+
+save_local_figure(
+  plot = plot_pas_intervaly,
+  filename = "pas_spolehlivosti_intervaly.png",
+  height = 700
+)
+```
+
+```{r}
+#| label: zobrazit-pas-spolehlivosti-intervaly
+#| echo: false
+#| out-width: "88%"
+#| fig-alt: "Bodový graf všech erupcí s fialovou přímkou a světle fialovým pásem kolem ní. Dvě svislé úsečky ukazují interval pro průměrné čekání: u dvouminutové erupce je širší, u průměrné délky erupce na přerušované čáře užší."
+include_local_figure("pas_spolehlivosti_intervaly.png")
+```
+
+::: {.takeaway-strip}
+[Pás spolehlivosti]{.text-hgl-amethyst}: pro každou délku erupce 95% interval pro **průměrné** čekání; hranice vrátí `predict(..., interval = "confidence")`. Nejužší je u průměrné délky erupce (čárkovaně), ne tam, kde je nejvíc bodů.
+:::
+
+::: {.notes}
+Skutečný výzkumník sto hlášení nemá, ale nejistotu přímky odhadne z jednoho souboru dat, podobně jako SE sklonu. Průměrná délka erupce leží v řidší oblasti mezi shluky krátkých a dlouhých erupcí, takže rozhoduje vzdálenost od průměru, ne počet bodů v okolí. Pás je užší než vějíř z minulého slidu, protože vychází ze všech erupcí, ne ze čtyřiceti. Číslo 95 % čteme stejně jako u sklonu: patří k postupu.
+:::
+
+## Kolik erupcí leží uvnitř pásu?
+
+```{r}
+#| label: pripravit-body-v-pasu
+#| include: false
+# Band limits at every observed eruption
+mat_pas_pozorovani <-
+  predict(
+    object = mod_gejzir,
+    interval = "confidence"
+  )
+
+data_gejzir_pas <-
+  data_gejzir |>
+  dplyr::mutate(
+    v_pasu = cekani_min >= mat_pas_pozorovani[, "lwr"] &
+      cekani_min <= mat_pas_pozorovani[, "upr"]
+  )
+
+pocet_v_pasu <-
+  sum(data_gejzir_pas$v_pasu)
+
+save_local_figure(
+  plot = plot_pas,
+  filename = "pas_spolehlivosti.png",
+  height = 700
+)
+
+plot_pas_uvnitr <-
+  plot_pas +
+  ggplot2::geom_point(
+    data = dplyr::filter(data_gejzir_pas, v_pasu),
+    mapping = ggplot2::aes(
+      x = delka_erupce_min,
+      y = cekani_min
+    ),
+    color = biostat_cols[["orange"]],
+    size = 3.4
+  )
+
+save_local_figure(
+  plot = plot_pas_uvnitr,
+  filename = "pas_spolehlivosti_uvnitr.png",
+  height = 700
+)
+```
+
+::: {.r-stack}
+```{r}
+#| label: zobrazit-pas-spolehlivosti
+#| echo: false
+#| out-width: "82%"
+#| fig-alt: "Bodový graf všech erupcí s fialovou přímkou a světle fialovým pásem spolehlivosti."
+include_local_figure("pas_spolehlivosti.png")
+```
+
+::: {.fragment}
+```{r}
+#| label: zobrazit-pas-spolehlivosti-uvnitr
+#| echo: false
+#| out-width: "82%"
+#| fig-alt: "Stejný graf; oranžově jsou zvýrazněné erupce uvnitř pásu. Je jich jen menšina, většina bodů leží mimo pás."
+include_local_figure("pas_spolehlivosti_uvnitr.png")
+```
+:::
+:::
+
+::::: {.fragment}
+::: {.panel-warning}
+[Pás ≠ kde leží 95 % erupcí]{.panel-title}
+
+Uvnitř leží jen [**`r pocet_v_pasu` ze `r format_cz(nrow(data_gejzir))`**]{.text-hgl-orange} erupcí. Pás ukazuje, kde může ležet průměrný trend. Rozsah pro jedno nové čekání musí být širší.
+:::
+:::::
+
+::: {.notes}
+Nejprve nechám studenty odhadnout počet. To, že většina bodů leží mimo pás, samo o sobě není známkou špatného modelu. Jedno nové čekání se od trendu odchýlí o své vlastní rozptýlení, takže rozsah pro něj musí zahrnout dvě nejistoty: polohu trendu a rozptýlení kolem něj. Anglicky se mu říká prediction interval; jeho výpočet zde nepotřebujeme.
+:::
+
 ## Statistická redakce: opravte titulek
 
 <br>
@@ -1720,6 +2023,23 @@ Možná oprava: „Při mnoha opakováních zachytí takto vytvořené intervaly
 
 ## Co už víme o čekání na další erupci?
 
+```{r}
+#| label: pripravit-ctyri-minuty
+#| include: false
+# Mean wait after a 4-minute eruption with its confidence interval
+vec_ctyri_minuty_text <-
+  formatC(
+    x = predict(
+      object = mod_gejzir,
+      newdata = data.frame(delka_erupce_min = 4),
+      interval = "confidence"
+    )[1, ],
+    format = "f",
+    digits = 2,
+    decimal.mark = ","
+  )
+```
+
 ::: {.box-question}
 **O kolik déle čekáme po delší erupci — a jak jistě to víme?**
 :::
@@ -1733,6 +2053,8 @@ Možná oprava: „Při mnoha opakováních zachytí takto vytvořené intervaly
 [Co už můžeme říct]{.panel-title}
 
 Dvě erupce, jejichž délky se liší o minutu, se v průměru liší čekáním o [`r format_cz(odhad_sklonu)` min]{.text-hgl-indigo_velvet}; s daty a modelem jsou slučitelné sklony od [`r format_cz(dolni_interval)` do `r format_cz(horni_interval)`]{.text-hgl-amethyst}.
+
+Po čtyřminutové erupci je odhadnuté průměrné čekání [`r vec_ctyri_minuty_text[["fit"]]` min (95% CI [`r vec_ctyri_minuty_text[["lwr"]]`; `r vec_ctyri_minuty_text[["upr"]]`])]{.text-hgl-amethyst}.
 :::
 :::
 
@@ -1836,6 +2158,7 @@ Některé erupce, třeba v noci, nikdo nezaznamená. Zaznamenané erupce proto n
 - [Jiný soubor pozorování]{.text-hgl-graphite} dává jiný odhad sklonu: to je výběrová variabilita.
 - Ve výstupu `summary()` popisuje [`Estimate`]{.text-hgl-indigo_velvet} velikost vztahu a [`Std. Error`]{.text-hgl-orange} jeho přesnost; SE se s více pozorováními zmenšuje.
 - [95% interval z `confint()`]{.text-hgl-amethyst} ukazuje sklony slučitelné s daty a modelem; 95 % popisuje úspěšnost postupu, ne podíl pozorování ani důkaz.
+- [Pás spolehlivosti]{.text-hgl-amethyst} ukazuje nejistotu průměrného trendu pro každou délku erupce; je nejužší u průměrné délky a neobsahuje 95 % erupcí.
 - Vědecká věta spojuje interpretaci s odhadem, SE, intervalem a jednotkami.
 :::
 :::
@@ -1866,5 +2189,5 @@ Jak posoudit konkrétní tvrzení o sklonu? Následující lekce přidá testov�
 :::
 
 ::: {.notes}
-Otevřená otázka bez jedné správné odpovědi. Očekávané otázky: Jak vypadá graf a residua? Kolik erupcí a jak byly zaznamenány? Jaká je SE a interval? Mění se sklon mezi obdobími? Tvrdí autor příčinu, nebo jen průměrný rozdíl?
+Otevřená otázka bez jedné správné odpovědi. Očekávané otázky: Jak vypadá graf s pásem spolehlivosti a residua? Kolik erupcí a jak byly zaznamenány? Jaká je SE a interval? Mění se sklon mezi obdobími? Tvrdí autor příčinu, nebo jen průměrný rozdíl?
 :::
