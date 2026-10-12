@@ -79,13 +79,13 @@ assert(new Set(correctPositions).size > 1, "Correct answers must not all occupy 
 assertObject(config, "config.json");
 rejectUnknownKeys(config, configKeys, "config.json");
 assert(config.schemaVersion === 1, "config.json schemaVersion must be 1.");
-assert(config.clientRepository === "CUNI-NATUR-Biostatistics/_internal", "config.json must use the canonical client repository.");
+assert(config.clientRepository === "CUNI-NATUR-Biostatistics/_pollslive", "config.json must use the canonical client repository.");
 assert(/^[a-f0-9]{40}$/.test(config.clientRevision ?? ""), "config.json must pin a complete client revision.");
 assert(config.definition === "pollslive/quiz.json", "config.json definition path is invalid.");
 assert(config.documentDirectory === "Presentation", "config.json documentDirectory is invalid.");
 assert(config.generatedDirectory === "pollslive/generated", "config.json generatedDirectory is invalid.");
-assert(JSON.stringify(config.assetPreparation?.command) === JSON.stringify(["Rscript", "R/render_pollslive_assets.R"]), "config.json asset preparation command is invalid.");
-assert(config.synchronization?.repository === "CUNI-NATUR-Biostatistics/_internal", "config.json synchronization repository is invalid.");
+assert(JSON.stringify(config.assetPreparation?.command) === JSON.stringify(["Rscript", "R/verify_pollslive_assets.R"]), "config.json asset preparation command is invalid.");
+assert(config.synchronization?.repository === "CUNI-NATUR-Biostatistics/_pollslive", "config.json synchronization repository is invalid.");
 assert(config.synchronization?.workflow === "pollslive-sync.yml", "config.json synchronization workflow is invalid.");
 assert(config.synchronization?.ref === "main", "config.json synchronization ref must be main.");
 

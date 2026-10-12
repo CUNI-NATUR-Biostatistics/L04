@@ -66,7 +66,7 @@ acquire_pollslive_client <- function(config, mode) {
   if (length(revision) != 1L || !grepl("^[a-f0-9]{40}$", revision)) {
     stop(
       "pollslive/config.json must pin clientRevision to a complete 40-character ",
-      "_internal commit SHA. For local infrastructure development only, set ",
+      "PollsLive client commit SHA. For local infrastructure development only, set ",
       "BIOSTAT_POLLSLIVE_CLIENT_SOURCE explicitly."
     )
   }
