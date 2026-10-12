@@ -164,7 +164,7 @@ Po prostudování této lekce budete schopni:
 
 - vysvětlit, proč jiný soubor `r render_glossary_term("pozorovani", display = "pozorování")` dává jiný `r render_glossary_term("odhad", display = "odhad")` `r render_glossary_term("sklon", display = "sklonu")`;
 - najít ve výstupu `summary()` odhad sklonu a jeho `r render_glossary_term("standardni-chyba", display = "standardní chybu")` a rozlišit velikost vztahu od přesnosti odhadu;
-- získat `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` funkcí `confint()` a interpretovat ho bez tvrzení, že obsahuje 95 % pozorování nebo dokazuje hypotézu;
+- získat `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` sklonu funkcí `confint()` a `r render_glossary_term("pas-spolehlivosti", display = "pás spolehlivosti")` kolem přímky funkcí `predict()` a interpretovat je bez tvrzení, že obsahují 95 % pozorování nebo dokazují hypotézu;
 - zapsat výsledek jednou větou s odhadem, standardní chybou, intervalem a jednotkami.
 
 ## Každý řádek je jedna erupce
@@ -511,6 +511,7 @@ ggplot2::ggplot(
     alpha = 0.65,
     size = 2.3
   ) +
+  # No band: the confidence band is introduced later in this lesson.
   ggplot2::geom_abline(
     intercept = coef(object = mod_gejzir)[["(Intercept)"]],
     slope = odhad_sklonu,
@@ -620,6 +621,7 @@ ggplot2::ggplot(
     alpha = 0.75,
     size = 2.5
   ) +
+  # No band: the confidence band is introduced later in this lesson.
   ggplot2::geom_abline(
     intercept = coef(object = mod_pepa)[["(Intercept)"]],
     slope = coef(object = mod_pepa)[["delka_erupce_min"]],
@@ -743,6 +745,7 @@ ggplot2::ggplot(
     alpha = 0.7,
     size = 1.9
   ) +
+  # No band: the confidence band is introduced later in this lesson.
   ggplot2::geom_smooth(
     method = "lm",
     formula = y ~ x,
@@ -863,6 +866,7 @@ ggplot2::ggplot(
     alpha = 0.55,
     size = 0.9
   ) +
+  # No band: simulated report lines; the band is introduced later in this lesson.
   ggplot2::geom_smooth(
     method = "lm",
     formula = y ~ x,
@@ -1913,40 +1917,404 @@ Hodnota 95 % není dána přírodním zákonem ani našimi daty. Je to ustálen�
 Tento zápis obsahuje velikost vztahu i jeho přesnost. Stále musí být doprovázen popisem dat, modelu a jednotek.
 :::
 
-## Co můžeme říct o Old Faithful?
+## Kde může ležet průměrný trend?
 
-Vraťme se k hlavní otázce: **o kolik déle čekáme po delší erupci — a jak jistě to víme?**
-
-V zaznamenaných datech od června do srpna 2024 se dvě erupce, jejichž délky se liší o jednu minutu, podle modelu v průměru liší čekáním na další erupci o `r format_cz(odhad_sklonu)` minuty. To je **velikost vztahu**. `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` sahá od `r format_cz(dolni_interval)` do `r format_cz(horni_interval)` minuty čekání na minutu erupce. To je **přesnost `r render_glossary_term("odhad", display = "odhadu")`**: data a model jsou slučitelné s tímto rozsahem kladných `r render_glossary_term("sklon", display = "sklonů")`, ne pouze s jediným číslem.
-
-Interval se vztahuje ke **sklonu**, tedy k průměrnému rozdílu čekání mezi erupcemi různé délky. Neříká, jak dlouho budeme čekat po jedné konkrétní budoucí erupci: jednotlivá čekání se navíc rozptylují kolem modelové přímky.
+Zatím jsme `r render_glossary_term("nejistota", display = "nejistotu")` vyjadřovali pro jediné číslo — `r render_glossary_term("sklon", display = "sklon")`. Přímka ale dává ještě něco dalšího: pro každou délku erupce `r render_glossary_term("odhadnuta-hodnota", display = "odhadnuté")` průměrné čekání. I výška přímky je tedy `r render_glossary_term("odhad", display = "odhad")`, a proto má vlastní nejistotu. To, jak se průměrné čekání mění s délkou erupce, budeme nazývat **průměrný trend**; přímka modelu je jeho odhadem.
 
 ```{=typst}
 #block(breakable: false)[
 ```
 
-::: {.box-data collapse="true" title="Doplňující: interval pro průměrný vztah není interval pro další erupci"}
+::: {.box-question title="Co čekáte?"}
 
-Interval spolehlivosti pro průměrný vztah se ptá, kde může ležet **průměrné čekání** odpovídající určité délce erupce nebo jaký může být sklon tohoto průměrného trendu. Jedna budoucí erupce se však může od trendu odchýlit, stejně jako se od přímky odchylují už pozorované body.
+Kdybychom do jednoho grafu nakreslili přímky všech `r format_cz(pocet_hlaseni)` hlášení GeyserWatch, kde by se od sebe lišily nejméně?
 
-Interval pro jednotlivé nové čekání proto musí zahrnout dvě `r render_glossary_term("nejistota", display = "nejistoty")` současně: nejistotu polohy průměrného trendu a přirozené rozptýlení jednotlivých čekání kolem něj. Bývá tedy širší než interval pro průměr. Úplný výpočet takového intervalu (anglicky *prediction interval*) zde nepotřebujeme; důležité je nejprve pojmenovat, zda chceme odhadnout průměrný vztah, nebo předpovědět jeden nový případ.
+- **A:** U krátkých erupcí.
+- **B:** U průměrně dlouhých erupcí.
+- **C:** U dlouhých erupcí.
 :::
 
 ```{=typst}
 ]
 ```
 
+::: {.box-result collapse="true" title="Odpověď: u průměrně dlouhých erupcí"}
+
+Správně je **možnost B**. Přímky se nejméně liší u průměrně dlouhých erupcí a směrem ke krátkým i dlouhým erupcím se rozcházejí. Proč, ukáže následující graf.
+:::
+
+### Sto hlášení, sto přímek
+
+```{r}
+#| label: pripravit-vejir-primek
+#| include: false
+# Every report line is drawn over the observed range of eruption lengths.
+vec_rozsah_delky <-
+  range(data_gejzir$delka_erupce_min)
+prumerna_delka <-
+  mean(data_gejzir$delka_erupce_min)
+intercept_vsech_erupci <-
+  coef(object = mod_gejzir)[["(Intercept)"]]
+
+data_vejir <-
+  data_odhady_hlaseni |>
+  dplyr::transmute(
+    hlaseni,
+    x = vec_rozsah_delky[1],
+    xend = vec_rozsah_delky[2],
+    y = intercept + odhad_sklonu * x,
+    yend = intercept + odhad_sklonu * xend
+  )
+
+# Heights of all report lines at a short and at the average eruption length
+delka_kratka <- 2
+
+vec_vyska_kratka <-
+  data_odhady_hlaseni$intercept +
+  data_odhady_hlaseni$odhad_sklonu * delka_kratka
+vec_vyska_prumerna <-
+  data_odhady_hlaseni$intercept +
+  data_odhady_hlaseni$odhad_sklonu * prumerna_delka
+```
+
+```{r}
+#| label: vejir-sta-primek
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-width: 8
+#| fig-height: 5
+#| fig-cap: !expr paste0("Přímky všech ", pocet_hlaseni, " simulovaných hlášení GeyserWatch (fialově), referenční přímka ze všech erupcí (tmavě) a průměrná délka erupce (přerušovaná čára).")
+#| fig-alt: "Sto tenkých fialových přímek nakreslených přes sebe. Uprostřed, u svislé přerušované čáry průměrné délky erupce, leží těsně u sebe; směrem ke krátkým i dlouhým erupcím se rozbíhají jako vějíř. Tmavá referenční přímka prochází středem vějíře."
+ggplot2::ggplot(data = data_vejir) +
+  ggplot2::geom_segment(
+    mapping = ggplot2::aes(
+      x = x,
+      xend = xend,
+      y = y,
+      yend = yend,
+      group = hlaseni
+    ),
+    color = biostat_cols[["indigo_velvet"]],
+    alpha = 0.25,
+    linewidth = 0.5
+  ) +
+  ggplot2::annotate(
+    geom = "segment",
+    x = vec_rozsah_delky[1],
+    xend = vec_rozsah_delky[2],
+    y = intercept_vsech_erupci + odhad_sklonu * vec_rozsah_delky[1],
+    yend = intercept_vsech_erupci + odhad_sklonu * vec_rozsah_delky[2],
+    color = biostat_cols[["graphite"]],
+    linewidth = 1.1
+  ) +
+  ggplot2::geom_vline(
+    xintercept = prumerna_delka,
+    linetype = "dashed",
+    color = biostat_cols[["graphite"]]
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (min)",
+    y = "Odhadnuté čekání (min)"
+  ) +
+  theme_biostat(base_size = 13)
+```
+
+Každá fialová přímka patří k jednomu hlášení. Přímky mají různé sklony, ale všechny procházejí blízko středu dat. Přímka odhadnutá funkcí `lm()` má totiž tu vlastnost, že vždy prochází bodem, jehož souřadnicemi jsou průměrná délka erupce a průměrné čekání v datech, ze kterých byla odhadnuta. Tyto průměry se mezi hlášeními liší jen málo. Přímky s různým sklonem se proto kříží blízko průměrné délky erupce (`r format_cz(prumerna_delka)` minuty) a směrem k okrajům se rozbíhají jako vějíř. Po erupcích dlouhých `r format_cz(delka_kratka)` minuty odhadují přímky hlášení průměrné čekání od `r formatC(min(vec_vyska_kratka), format = "f", digits = 1, decimal.mark = ",")` do `r formatC(max(vec_vyska_kratka), format = "f", digits = 1, decimal.mark = ",")` minuty, u průměrné délky erupce jen od `r formatC(min(vec_vyska_prumerna), format = "f", digits = 1, decimal.mark = ",")` do `r formatC(max(vec_vyska_prumerna), format = "f", digits = 1, decimal.mark = ",")` minuty. **Nejistota sklonu se projeví tím víc, čím dál jsme od průměrné délky erupce.**
+
+Každé hlášení obsahuje jen `r format_cz(pocet_erupci_v_hlaseni)` erupcí. Vějíř je proto širší než nejistota přímky odhadnuté ze všech `r format_cz(nrow(data_gejzir))` erupcí, stejně jako byla standardní chyba sklonu v jednom hlášení větší než ve výstupu pro všechny erupce.
+
+### `r render_glossary_term("pas-spolehlivosti", display = "Pás spolehlivosti")` kolem přímky
+
+Skutečný výzkumník sto hlášení nemá. Nejistotu přímky ale umí odhadnout ze svých dat, podobně jako odhadl `r render_glossary_term("standardni-chyba", display = "standardní chybu")` sklonu: kolem přímky nakreslí pás spolehlivosti. Kód, kterým pás nakreslíte sami, ukážeme o kousek níže.
+
+```{r}
+#| label: pas-spolehlivosti-vsech-erupci
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-width: 8
+#| fig-height: 5
+#| fig-cap: "Všechny erupce, přímka modelu a její 95% pás spolehlivosti. Přerušovaná čára označuje průměrnou délku erupce."
+#| fig-alt: "Bodový graf všech erupcí s fialovou rostoucí přímkou a světle fialovým pásem kolem ní. Pás je nejužší u svislé přerušované čáry průměrné délky erupce, která leží v řidší oblasti mezi shluky krátkých a dlouhých erupcí, a k oběma okrajům se rozšiřuje. Většina bodů leží mimo pás."
+graf_pas_vsech_erupci <-
+  ggplot2::ggplot(
+    data = data_gejzir,
+    mapping = ggplot2::aes(
+      x = delka_erupce_min,
+      y = cekani_min
+    )
+  ) +
+  ggplot2::geom_point(
+    color = biostat_cols[["grey_olive"]],
+    alpha = 0.65,
+    size = 2.3
+  ) +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = TRUE,
+    color = biostat_cols[["indigo_velvet"]],
+    fill = biostat_cols[["amethyst"]],
+    alpha = 0.2,
+    linewidth = 1.1
+  ) +
+  ggplot2::geom_vline(
+    xintercept = prumerna_delka,
+    linetype = "dashed",
+    color = biostat_cols[["graphite"]]
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (min)",
+    y = "Čekání na další erupci (min)"
+  ) +
+  theme_biostat(base_size = 13)
+
+graf_pas_vsech_erupci
+```
+
+`r render_glossary_term("pas-spolehlivosti", display = "Pás spolehlivosti")` (anglicky *confidence band*) ukazuje pro každou délku erupce 95% `r render_glossary_term("interval-spolehlivosti", display = "interval spolehlivosti")` pro **průměrné čekání** po erupcích této délky. Skládá se tedy z mnoha intervalů, jednoho pro každou délku erupce. Má podobný tvar jako vějíř přímek: je nejužší u průměrné délky erupce a k okrajům se rozšiřuje. Je ale užší než vějíř, protože vychází ze všech `r format_cz(nrow(data_gejzir))` erupcí.
+
+Nejužší místo pásu neleží tam, kde je nejvíc erupcí. Průměrná délka erupce (`r format_cz(prumerna_delka)` minuty) leží v řidší oblasti mezi shluky krátkých a dlouhých erupcí, a pás je přesto právě tam nejužší. Rozhoduje vzdálenost od průměrné délky erupce, ne počet bodů v okolí.
+
+Jeden soubor dat dává jeden pás, stejně jako jeden interval z `confint()`. Číslo 95 % čteme stejně jako u sklonu: popisuje úspěšnost postupu při mnoha opakováních, ne jistotu jednoho nakresleného pásu.
+
+### Pás v číslech: `predict()`
+
+Interval pro jednu zvolenou délku erupce spočítáme funkcí `predict()` s argumentem `interval = "confidence"`. Zvolíme krátkou erupci, průměrnou délku a dlouhou erupci:
+
+```{=typst}
+#block(breakable: false)[
+```
+
+```{r}
+#| label: predict-tri-delky
+#| echo: true
+# Tři délky erupce: krátká, průměrná a dlouhá
+data_tri_delky <-
+  data.frame(
+    delka_erupce_min = c(2, mean(data_gejzir$delka_erupce_min), 4.5)
+  )
+
+# Odhad průměrného čekání a jeho 95% interval spolehlivosti
+predict(
+  object = mod_gejzir,
+  newdata = data_tri_delky,
+  interval = "confidence"
+)
+```
+
+```{=typst}
+]
+```
+
+```{r}
+#| label: pripravit-sirky-pasu
+#| include: false
+mat_tri_delky <-
+  predict(
+    object = mod_gejzir,
+    newdata = data_tri_delky,
+    interval = "confidence"
+  )
+
+vec_sirky_pasu <- mat_tri_delky[, "upr"] - mat_tri_delky[, "lwr"]
+```
+
+Sloupec `fit` je odhadnuté průměrné čekání — stejné číslo, jaké leží na přímce. Sloupce `lwr` a `upr` (z anglického *lower* a *upper*) jsou dolní a horní hranice intervalu. Po dvouminutové erupci je interval široký `r format_cz(vec_sirky_pasu[[1]], digits = 1)` minuty, u průměrné délky erupce jen `r format_cz(vec_sirky_pasu[[2]], digits = 1)` minuty a po erupci dlouhé 4,5 minuty `r format_cz(vec_sirky_pasu[[3]], digits = 1)` minuty. Prostřední řádek tedy odpovídá nejužšímu místu pásu.
+
+Když stejný výpočet zopakujeme pro mnoho délek erupce v celém pozorovaném rozsahu a hranice spojíme čarami, dostaneme celý pás. Délky erupce a hranice pásu spočítáme takto:
+
+```{=typst}
+#block(breakable: false)[
+```
+
+```{r}
+#| label: pas-zakladni-r-vypocet
+#| echo: true
+# Padesát délek erupce od nejkratší po nejdelší pozorovanou
+data_mrizka <-
+  data.frame(
+    delka_erupce_min = seq(
+      from = min(data_gejzir$delka_erupce_min),
+      to = max(data_gejzir$delka_erupce_min),
+      length.out = 50
+    )
+  )
+
+# Pro každou délku odhad (fit) a hranice 95% intervalu (lwr, upr)
+mat_pas <-
+  predict(
+    object = mod_gejzir,
+    newdata = data_mrizka,
+    interval = "confidence"
+  )
+```
+
+```{=typst}
+]
+```
+
+Body, přímku a obě hranice pásu nakreslíme takto:
+
+```{=typst}
+#block(breakable: false)[
+```
+
+```{r}
+#| label: pas-zakladni-r-graf
+#| echo: true
+#| fig-width: 8
+#| fig-height: 4.6
+#| fig-alt: "Bodový graf všech erupcí s plnou fialovou přímkou modelu a dvěma přerušovanými fialovými čarami nad a pod ní; čáry jsou si nejblíž u průměrné délky erupce a k okrajům se vzdalují."
+# Body erupcí
+plot(
+  x = data_gejzir$delka_erupce_min,
+  y = data_gejzir$cekani_min,
+  xlab = "Délka erupce (min)",
+  ylab = "Čekání na další erupci (min)",
+  pch = 16,
+  col = "#8A8A8A",
+  cex = 1.3,
+  cex.axis = 1.2,
+  cex.lab = 1.3
+)
+
+# Přímka modelu plnou čarou, hranice pásu přerušovaně
+lines(
+  x = data_mrizka$delka_erupce_min, y = mat_pas[, "fit"],
+  col = "#5D2890", lwd = 2
+)
+lines(
+  x = data_mrizka$delka_erupce_min, y = mat_pas[, "lwr"],
+  col = "#5D2890", lty = 2, lwd = 2
+)
+lines(
+  x = data_mrizka$delka_erupce_min, y = mat_pas[, "upr"],
+  col = "#5D2890", lty = 2, lwd = 2
+)
+```
+
+```{=typst}
+]
+```
+
+Funkce `lines()` přidá do již nakresleného grafu čáru spojující zadané body. Pás nekreslíme mimo pozorovaný rozsah délek erupce: tam model nemá data, o která by se opřel.
+
+::: {.box-data collapse="true" title="Doplňující: kratší alternativa pomocí geom_smooth()"}
+
+V balíčku `{ggplot2}` nakreslí přímku i pás jediná vrstva `geom_smooth(method = "lm")`. Argument `se = TRUE` přidá pás spolehlivosti, `se = FALSE` nakreslí jen přímku. Zkratka se hodí pro rychlý graf, ale hranice pásu jako čísla nevrátí; ty získáme z `predict()`.
+
+```{r}
+#| label: pas-ggplot2
+#| echo: true
+#| fig-width: 8
+#| fig-height: 4
+#| fig-alt: "Stejný graf vytvořený balíčkem ggplot2: šedé body, fialová přímka a světle fialový pás spolehlivosti."
+# Body erupcí, přímka modelu a 95% pás spolehlivosti
+ggplot2::ggplot(
+  data = data_gejzir,
+  mapping = ggplot2::aes(
+    x = delka_erupce_min,
+    y = cekani_min
+  )
+) +
+  ggplot2::geom_point(colour = "#8A8A8A") +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    se = TRUE,
+    colour = "#5D2890",
+    fill = "#86579E"
+  ) +
+  ggplot2::labs(
+    x = "Délka erupce (min)",
+    y = "Čekání na další erupci (min)"
+  ) +
+  ggplot2::theme_bw(base_size = 14)
+```
+:::
+
+### Co pás neříká
+
+```{r}
+#| label: pripravit-body-mimo-pas
+#| include: false
+# Band limits at every observed eruption length
+mat_pas_pozorovani <-
+  predict(
+    object = mod_gejzir,
+    interval = "confidence"
+  )
+
+vec_mimo_pas <-
+  data_gejzir$cekani_min < mat_pas_pozorovani[, "lwr"] |
+  data_gejzir$cekani_min > mat_pas_pozorovani[, "upr"]
+
+pocet_mimo_pas <-
+  sum(vec_mimo_pas)
+
+# Mean wait after a 4-minute eruption, used in the answer to the main question
+delka_ctyri_minuty <- 4
+
+mat_ctyri_minuty <-
+  predict(
+    object = mod_gejzir,
+    newdata = data.frame(delka_erupce_min = delka_ctyri_minuty),
+    interval = "confidence"
+  )
+
+vec_ctyri_minuty_text <-
+  formatC(
+    x = mat_ctyri_minuty[1, ],
+    format = "f",
+    digits = 2,
+    decimal.mark = ","
+  )
+```
+
+```{=typst}
+#block(breakable: false)[
+```
+
+::: {.box-warning title="Na co si dát pozor"}
+
+- **Pás neobsahuje 95 % erupcí.** Mimo pás leží `r format_cz(100 * pocet_mimo_pas / nrow(data_gejzir), digits = 0)` % erupcí (`r pocet_mimo_pas` ze `r format_cz(nrow(data_gejzir))`). Pás popisuje, kde může ležet průměrný trend, nikoli kde leží jednotlivá čekání. To, že většina bodů leží mimo pás, proto samo o sobě není známkou špatného modelu.
+- **Pás neříká, jak dlouho budeme čekat po jedné konkrétní příští erupci.** Jedna erupce se od průměrného trendu odchýlí, stejně jako se od přímky odchylují už pozorované body. Rozsah pro jedno nové čekání musí zahrnout dvě nejistoty současně: nejistotu polohy trendu a rozptýlení jednotlivých čekání kolem něj. Takový rozsah se anglicky nazývá *prediction interval* a je širší než pás; jeho výpočet zde nepotřebujeme.
+- **Pás neověřuje, že přímka je vhodný model.** Platí jen tehdy, když přímka data přiměřeně popisuje (proto kontrolujeme `r render_glossary_term("residuum", display = "residua")`), a jen v rozsahu pozorovaných délek erupce.
+:::
+
+```{=typst}
+]
+```
+
+::: {.box-result title="Vzor zápisu: průměrné čekání a pás spolehlivosti"}
+
+„Po erupcích dlouhých `r format_cz(delka_ctyri_minuty)` minuty model odhaduje průměrné čekání na další erupci `r vec_ctyri_minuty_text[["fit"]]` minuty (95% CI [`r vec_ctyri_minuty_text[["lwr"]]`; `r vec_ctyri_minuty_text[["upr"]]`] minuty).“
+
+K obrázku: „Plná čára ukazuje přímku lineárního modelu, světlý pás je 95% pás spolehlivosti pro průměrné čekání po erupcích dané délky.“
+:::
+
+## Co můžeme říct o Old Faithful?
+
+Vraťme se k hlavní otázce: **o kolik déle čekáme po delší erupci — a jak jistě to víme?**
+
+V zaznamenaných datech od června do srpna 2024 se dvě erupce, jejichž délky se liší o jednu minutu, podle modelu v průměru liší čekáním na další erupci o `r format_cz(odhad_sklonu)` minuty. To je **velikost vztahu**. `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` sahá od `r format_cz(dolni_interval)` do `r format_cz(horni_interval)` minuty čekání na minutu erupce. To je **přesnost `r render_glossary_term("odhad", display = "odhadu")`**: data a model jsou slučitelné s tímto rozsahem kladných `r render_glossary_term("sklon", display = "sklonů")`, ne pouze s jediným číslem.
+
+Interval se vztahuje ke **sklonu**, tedy k průměrnému rozdílu čekání mezi erupcemi různé délky. Pro zvolenou délku erupce můžeme odhadnout i samotné průměrné čekání: po erupcích dlouhých `r format_cz(delka_ctyri_minuty)` minuty je to podle modelu `r vec_ctyri_minuty_text[["fit"]]` minuty (95% CI [`r vec_ctyri_minuty_text[["lwr"]]`; `r vec_ctyri_minuty_text[["upr"]]`] minuty). Ani tento interval ale neříká, jak dlouho budeme čekat po jedné konkrétní budoucí erupci: ta se od průměrného trendu odchýlí o své vlastní rozptýlení, jak ukázal `r render_glossary_term("pas-spolehlivosti", display = "pás spolehlivosti")` a body mimo něj.
+
 Interpretace stále závisí na použitém modelu a na způsobu získání dat. Dobrovolnická `r render_glossary_term("pozorovani", display = "pozorování")` nejsou náhodný `r render_glossary_term("vyber", display = "výběr")` všech erupcí. Rozdělení podle měsíců ukázalo, že se odhad sklonu mezi obdobími liší; ze tří měsíců ale nepoznáme, zda jde jen o `r render_glossary_term("vyberova-variabilita", display = "výběrovou variabilitu")`, nebo i o změnu chování gejzíru. Výsledek proto čteme jako opatrný odhad vztahu v zachyceném období, nikoli jako neměnný přírodní zákon.
 
 ## Co bude následovat dál
 
-V této lekci jsme k `r render_glossary_term("odhad", display = "odhadu")` `r render_glossary_term("sklon", display = "sklonu")` přidali jeho `r render_glossary_term("nejistota", display = "nejistotu")`: `r render_glossary_term("standardni-chyba", display = "standardní chybu")` a `r render_glossary_term("interval-spolehlivosti", display = "interval spolehlivosti")`. V následující lekci se zeptáme, jak pomocí dat posoudit konkrétní tvrzení o `r render_glossary_term("parametry-modelu", display = "parametru modelu")` — například zda jsou data slučitelná s tím, že délka erupce s čekáním vůbec nesouvisí. Vrátíme se přitom ke sloupcům `t value` a `Pr(>|t|)`, které jsme zatím přeskočili.
+V této lekci jsme k `r render_glossary_term("odhad", display = "odhadu")` `r render_glossary_term("sklon", display = "sklonu")` přidali jeho `r render_glossary_term("nejistota", display = "nejistotu")`: `r render_glossary_term("standardni-chyba", display = "standardní chybu")`, `r render_glossary_term("interval-spolehlivosti", display = "interval spolehlivosti")` a `r render_glossary_term("pas-spolehlivosti", display = "pás spolehlivosti")` kolem přímky. V následující lekci se zeptáme, jak pomocí dat posoudit konkrétní tvrzení o `r render_glossary_term("parametry-modelu", display = "parametru modelu")` — například zda jsou data slučitelná s tím, že délka erupce s čekáním vůbec nesouvisí. Vrátíme se přitom ke sloupcům `t value` a `Pr(>|t|)`, které jsme zatím přeskočili.
 
 ## Shrnutí
 
 - Jiný soubor `r render_glossary_term("pozorovani", display = "pozorování")` dává jiný `r render_glossary_term("odhad", display = "odhad")` `r render_glossary_term("sklon", display = "sklonu")`; tuto proměnlivost mezi `r render_glossary_term("vyber", display = "výběry")` nazýváme `r render_glossary_term("vyberova-variabilita", display = "výběrová variabilita")`.
 - Ve výstupu `summary()` popisuje `Estimate` velikost vztahu a `Std. Error` jeho přesnost. `r render_glossary_term("standardni-chyba", display = "Standardní chyba")` odhaduje z jediného výběru, jak moc by se odhady typicky lišily mezi výběry stejné velikosti; s více pozorováními se zmenšuje.
 - `r render_glossary_term("interval-spolehlivosti", display = "95% interval spolehlivosti")` z `confint()` ukazuje rozsah sklonů slučitelných s daty a modelem. Hladina 95 % popisuje úspěšnost postupu při opakování, nikoli podíl pozorování uvnitř intervalu ani důkaz hypotézy.
+- `r render_glossary_term("pas-spolehlivosti", display = "Pás spolehlivosti")` kolem přímky ukazuje nejistotu průměrného trendu pro každou délku erupce; hranice získáme z `predict()` s `interval = "confidence"`. Je nejužší u průměrné délky erupce a neobsahuje 95 % erupcí.
 - Vědecký zápis spojuje interpretaci v běžném jazyce s odhadem, standardní chybou, intervalem a jednotkami.
 
 ### Závěrečná otázka
@@ -1959,7 +2327,7 @@ Někdo vám ukáže jen titulek „Po minutě erupce navíc čekáme o `r format
 
 ::: {.box-result collapse="true" title="Možné otázky"}
 
-Jak vypadá `r render_glossary_term("bodovy-graf", display = "bodový graf")` a graf `r render_glossary_term("residuum", display = "residuí")` — sedí přímka k datům? Kolik erupcí autor měl, kdy a jak byly zaznamenány? Jak přesný je odhad — jaká je standardní chyba a 95% interval spolehlivosti? Mění se sklon mezi obdobími? A tvrdí titulek jen průměrný rozdíl mezi erupcemi různé délky, nebo i to, že delší erupce čekání způsobuje?
+Jak vypadá `r render_glossary_term("bodovy-graf", display = "bodový graf")` a graf `r render_glossary_term("residuum", display = "residuí")` — sedí přímka k datům? Je v grafu kolem přímky pás spolehlivosti, aby bylo vidět, jak přesně známe průměrný trend? Kolik erupcí autor měl, kdy a jak byly zaznamenány? Jak přesný je odhad — jaká je standardní chyba a 95% interval spolehlivosti? Mění se sklon mezi obdobími? A tvrdí titulek jen průměrný rozdíl mezi erupcemi různé délky, nebo i to, že delší erupce čekání způsobuje?
 :::
 
 ```{=typst}

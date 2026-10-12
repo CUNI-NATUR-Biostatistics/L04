@@ -51,7 +51,7 @@
 # Hlavní úlohy U01–U08 řešte v uvedeném pořadí, protože na sebe navazují.
 # Pozdější úlohy používají tabulku data_gejzir z vaší úlohy U01 a model
 # mod_gejzir z vaší úlohy U02.
-# Úlohy navíc N01–N15 jsou dobrovolné. Slouží k dalšímu procvičování,
+# Úlohy navíc N01–N16 jsou dobrovolné. Slouží k dalšímu procvičování,
 # klidně i po praktiku, a nemusíte je stihnout.
 #
 # Spouštění kódu:
@@ -84,8 +84,9 @@
 # - vysvětlit, proč jiný soubor pozorování dává jiný odhad sklonu,
 # - najít ve výstupu summary() odhad sklonu a jeho standardní chybu
 #   a rozlišit velikost vztahu od přesnosti odhadu,
-# - získat 95% interval spolehlivosti funkcí confint() a interpretovat ho
-#   bez tvrzení, že obsahuje 95 % pozorování nebo dokazuje hypotézu,
+# - získat 95% interval spolehlivosti sklonu funkcí confint() a pás
+#   spolehlivosti kolem přímky funkcí predict() a interpretovat je bez
+#   tvrzení, že obsahují 95 % pozorování nebo dokazují hypotézu,
 # - zapsat výsledek jednou větou s odhadem, standardní chybou, intervalem
 #   a jednotkami.
 #
@@ -438,13 +439,48 @@ if (
 # číslo 95 %?
 
 #--------------------------------------------------#
-## Jaké čekání odhaduje model po čtyřminutové erupci? -----
+## Jaké průměrné čekání odhaduje model a jak přesně? -----
 #--------------------------------------------------#
 # predict() použije hotový model pro novou hodnotu prediktoru. Argument
 # newdata je tabulka se sloupcem pojmenovaným stejně jako prediktor
 # v modelu. Tabulku s jedním řádkem vytvoříte funkcí data.frame(), například
 #   data.frame(delka_erupce_min = 2)
 # Čtyři minuty leží v rozsahu pozorovaných délek erupcí.
+#
+# S argumentem interval = "confidence" vrátí predict() tři sloupce:
+# fit je odhadnuté průměrné čekání, lwr a upr dolní a horní mez jeho 95%
+# intervalu spolehlivosti. Když tento výpočet zopakujeme pro mnoho délek
+# erupce a meze spojíme čarami, dostaneme pás spolehlivosti kolem přímky.
+# Funkce lines() přidá do posledního grafu čáru spojující zadané body.
+# Výsledek predict() s intervalem je matice: mat_pas[, "lwr"] vybere
+# sloupec lwr (prázdné místo před čárkou znamená všechny řádky).
+# Argument length.out = 50 určuje počet délek erupce, lwd tloušťku čáry
+# a lty = 2 přerušovanou čáru.
+#
+# Ukázka: pás spolehlivosti pro model mod_gejzir. Ukázka je zakomentovaná,
+# protože potřebuje data_gejzir a mod_gejzir z U01 a U02.
+# # Padesát délek erupce od nejkratší po nejdelší pozorovanou
+# data_mrizka <-
+#   data.frame(
+#     delka_erupce_min = seq(
+#       from = min(data_gejzir$delka_erupce_min),
+#       to = max(data_gejzir$delka_erupce_min),
+#       length.out = 50
+#     )
+#   )
+#
+# # Pro každou délku odhad (fit) a meze 95% intervalu (lwr, upr)
+# mat_pas <-
+#   predict(
+#     object = mod_gejzir,
+#     newdata = data_mrizka,
+#     interval = "confidence"
+#   )
+#
+# # Přímka plnou čarou, meze pásu přerušovaně (do grafu z U02)
+# lines(x = data_mrizka$delka_erupce_min, y = mat_pas[, "fit"], lwd = 2)
+# lines(x = data_mrizka$delka_erupce_min, y = mat_pas[, "lwr"], lty = 2)
+# lines(x = data_mrizka$delka_erupce_min, y = mat_pas[, "upr"], lty = 2)
 
 #----------------------------------------#
 ### Úloha | L04-U07 -----
@@ -455,25 +491,35 @@ if (
 #    delka_erupce_min a hodnotou 4.
 # 2. Pomocí predict() a mod_gejzir získejte odhad čekání po čtyřminutové
 #    erupci a uveďte jej v minutách.
-# 3. Do komentáře porovnejte tento odhad s intervalem z U06: popisují
-#    stejnou věc?
+# 3. Zopakujte výpočet s argumentem interval = "confidence" a zapište
+#    meze 95% intervalu pro průměrné čekání po čtyřminutových erupcích.
+# 4. Znovu nakreslete bodový graf z U02 (bez abline()), zkopírujte ukázku,
+#    odstraňte # a přidejte do grafu přímku a pás spolehlivosti.
+# 5. Do komentáře porovnejte interval z kroku 3 s intervalem z U06: popisují
+#    stejnou věc? Kde je pás nejužší a leží většina bodů uvnitř pásu?
 
 # Vaše řešení:
 
 
 # Očekávaný výsledek:
-# Model odhaduje po čtyřminutové erupci čekání asi 99,25 minuty. Je to
-# bodový odhad průměrného čekání po takových erupcích. Interval z U06 se
-# týká sklonu, ne čekání po jedné budoucí erupci; jednotlivá čekání se
-# kolem přímky rozptylují o několik minut (viz residua z U03).
+# Model odhaduje po čtyřminutové erupci průměrné čekání asi 99,25 minuty;
+# 95% interval spolehlivosti pro toto průměrné čekání je asi 97,91 až
+# 100,60 minuty. Interval z U06 se týká sklonu (minuty čekání na minutu
+# erupce), interval z kroku 3 průměrného čekání po čtyřminutových
+# erupcích (minuty). Pás je nejužší u průměrné délky erupce (asi 3,6
+# minuty) a k okrajům se rozšiřuje. Uvnitř pásu leží jen asi pětina bodů;
+# většina leží mimo pás, protože pás ukazuje nejistotu průměrného trendu,
+# ne rozptýlení jednotlivých čekání (viz residua z U03).
 #
 # Nápověda 1:
 # Do nové tabulky patří známá délka erupce, nikoli čekání, které teprve
-# odhadujete.
+# odhadujete. Pás kreslete až po plot(); lines() kreslí do posledního
+# grafu.
 #
 # Nápověda 2:
 # V data.frame() pojmenujte sloupec delka_erupce_min; do predict() dejte
-# object = mod_gejzir a newdata = data_nova_erupce.
+# object = mod_gejzir, newdata = data_nova_erupce a interval =
+# "confidence". Meze najdete ve sloupcích lwr a upr.
 #
 # Interpretace:
 # Zaručuje odhad 99,25 minuty, kdy přesně začne další erupce? Proč ne?
@@ -700,7 +746,8 @@ if (
 # a pch tvar bodu.
 
 # Zadání:
-# 1. Znovu nakreslete bodový graf a přímku mod_gejzir jako v U02.
+# 1. Znovu nakreslete bodový graf s přímkou a pásem spolehlivosti
+#    mod_gejzir jako v U07.
 # 2. Do stejného grafu přidejte odlišně zbarvený bod pro délku erupce
 #    4 minuty a odhad čekání z U07.
 
@@ -708,13 +755,13 @@ if (
 
 
 # Očekávaný výsledek:
-# Zvýrazněný bod leží na přímce přibližně v místě (4; 99,25).
+# Zvýrazněný bod leží na přímce uvnitř pásu přibližně v místě (4; 99,25).
 #
 # Nápověda 1:
 # Přidaný bod má známou souřadnici x a souřadnici y odhadnutou modelem.
 #
 # Nápověda 2:
-# Po plot() a abline() použijte points() s x = 4, y z predict()
+# Po plot() a třech lines() z U07 použijte points() s x = 4, y z predict()
 # a argumenty col a pch.
 #
 # Interpretace:
@@ -728,6 +775,8 @@ if (
 # 1. Vytvořte tabulku se sloupcem delka_erupce_min a hodnotami 2, 3 a 4.
 # 2. Jedním voláním predict() získejte odhad čekání pro všechny tři délky.
 # 3. Porovnejte rozdíly mezi sousedními odhady.
+# 4. Zopakujte výpočet s interval = "confidence" a pro každou délku
+#    spočítejte šířku intervalu (upr minus lwr).
 
 # Vaše řešení:
 
@@ -735,16 +784,19 @@ if (
 # Očekávaný výsledek:
 # Odhady jsou asi 72,58; 85,92 a 99,25 minuty. Erupce, jejichž délky se
 # liší o minutu, se v odhadu liší vždy o sklon, asi 13,34 minuty.
+# Šířky intervalů jsou asi 4,92; 2,99 a 2,69 minuty: nejširší je interval
+# u dvouminutové erupce, nejdál od průměrné délky erupce (asi 3,6 minuty).
 #
 # Nápověda 1:
 # Sloupec tabulky může obsahovat více hodnot; každý řádek dá jeden odhad.
 #
 # Nápověda 2:
 # Do data.frame() vložte delka_erupce_min = c(2, 3, 4) a tabulku předejte
-# funkci predict() jako newdata.
+# funkci predict() jako newdata. Šířku spočítáte odečtením sloupců
+# výsledku, například mat[, "upr"] - mat[, "lwr"] (viz úvod k U07).
 #
 # Interpretace:
-# Proč jsou oba rozdíly stejné?
+# Proč jsou oba rozdíly stejné, ale šířky intervalů ne?
 
 #--------------------------------------------------#
 ## Residua podrobněji -----
@@ -916,14 +968,15 @@ data_faithful <-
 # 1. V data_faithful ověřte počet řádků a rozsahy obou proměnných.
 # 2. Nakreslete bodový graf délky erupce a čekání.
 # 3. Fitujte model čekání podle délky erupce, uložte jej jako mod_faithful
-#    a přidejte jeho přímku do grafu.
+#    a přidejte do grafu jeho přímku a pás spolehlivosti podle vzoru z U07.
 
 # Vaše řešení:
 
 
 # Očekávaný výsledek:
 # 272 erupcí; délka 1,6 až 5,1 minuty a čekání 43 až 96 minut. Sklon
-# mod_faithful je asi 10,73 minuty čekání na minutu erupce.
+# mod_faithful je asi 10,73 minuty čekání na minutu erupce. Pás je úzký,
+# protože model vychází z 272 erupcí.
 #
 # Nápověda 1:
 # Postup z U01 a U02 použijte na jinou tabulku se stejně pojmenovanými
@@ -931,7 +984,8 @@ data_faithful <-
 #
 # Nápověda 2:
 # Použijte nrow(), range(), plot(), lm() se vzorcem
-# cekani_min ~ delka_erupce_min a abline(reg = mod_faithful).
+# cekani_min ~ delka_erupce_min. Ve vzoru z U07 nahraďte data_gejzir
+# tabulkou data_faithful a mod_gejzir modelem mod_faithful.
 #
 # Interpretace:
 # Je sklon stejný jako u mod_gejzir? Proč nemusí být?
@@ -990,6 +1044,48 @@ data_faithful <-
 # Interpretace:
 # Proč má mod_faithful menší standardní chybu než mod_gejzir?
 
+#--------------------------------------------------#
+## Pás spolehlivosti podrobněji -----
+#--------------------------------------------------#
+
+#----------------------------------------#
+### Úloha navíc | L04-N16 -----
+#----------------------------------------#
+
+# predict() bez argumentu newdata vrátí odhad a meze pro každou erupci,
+# ze které byl model fitován, ve stejném pořadí jako řádky data_gejzir.
+# Operátor | znamená „nebo“: vrátí TRUE, pokud platí aspoň jedna
+# z podmínek. Sloupec matice vyberete jako v U07, například
+# mat_pas_erupce[, "lwr"].
+
+# Zadání:
+# 1. Pomocí predict() s interval = "confidence" a bez newdata uložte meze
+#    pásu pro všechny erupce jako mat_pas_erupce.
+# 2. Spočítejte, kolik erupcí má čekání pod dolní mezí nebo nad horní
+#    mezí pásu.
+# 3. Do komentáře napište, jaký rozsah by musel zahrnout většinu
+#    jednotlivých čekání a proč by byl širší než pás.
+
+# Vaše řešení:
+
+
+# Očekávaný výsledek:
+# Mimo pás leží 95 ze 117 erupcí. Pás popisuje, kde může ležet průměrné
+# čekání; rozsah pro jednotlivá čekání by musel zahrnout i jejich
+# rozptýlení kolem přímky, proto by byl širší.
+#
+# Nápověda 1:
+# Podmínka „pod dolní mezí nebo nad horní mezí“ vrací pro každou erupci
+# TRUE nebo FALSE; sum() spočítá hodnoty TRUE.
+#
+# Nápověda 2:
+# Porovnejte cekani_min zvlášť se sloupcem lwr (menší než) a se sloupcem
+# upr (větší než); obě podmínky spojte operátorem | a výsledek vložte
+# do sum().
+#
+# Interpretace:
+# Znamená velký počet bodů mimo pás, že model je špatný?
+
 #----------------------------------------------------------#
 # Ohlédnutí a vlastní kontrola -----
 #----------------------------------------------------------#
@@ -999,7 +1095,8 @@ data_faithful <-
 # 2. Co znamená sklon 13,34 a co jeho standardní chyba 0,66? Proč je
 #    standardní chyba pro jeden měsíc větší?
 # 3. Co popisuje 95% interval spolehlivosti sklonu a co nepopisuje?
-# 4. Jak se liší odhad z predict() od intervalu spolehlivosti sklonu?
+# 4. Jak se liší odhad z predict() od intervalu spolehlivosti sklonu? Co
+#    ukazuje pás spolehlivosti a proč většina bodů leží mimo něj?
 # 5. Která omezení dat brání tvrzení, že délka erupce čekání způsobuje?
 # Pokud si nejste jistí, vraťte se k úlohám U04, U05, U06, U07 a U08.
 #
