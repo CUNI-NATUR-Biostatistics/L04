@@ -5,12 +5,14 @@ on:
     paths:
       - "pollslive/**"
       - "R/render_pollslive_assets.R"
+      - "R/verify_pollslive_assets.R"
       - "Presentation/presentation.qmd"
       - ".github/workflows/pollslive.yml"
   push:
     paths:
       - "pollslive/**"
       - "R/render_pollslive_assets.R"
+      - "R/verify_pollslive_assets.R"
       - "Presentation/presentation.qmd"
       - ".github/workflows/pollslive.yml"
 
