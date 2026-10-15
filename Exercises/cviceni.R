@@ -180,11 +180,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Tabulka obsahuje 117 erupcí, v červnu, červenci i srpnu po 39. Žádná
-# hodnota nechybí. Erupce trvaly 1,65 až 4,83 minuty a čekání 62 až 116
-# minut. Prediktorem je délka erupce, odezvou čekání na další erupci.
-#
 # Nápověda 1:
 # Kontrolovat můžete až tabulku, která už existuje v Environmentu. Jeden
 # řádek je jedna erupce, takže počet erupcí je počet řádků. Odezva je
@@ -194,6 +189,11 @@ if (
 # Funkci read.csv() zadejte argument file = soubor_gejzir. Oba řádky
 # s as.Date() a dělením 60 zkopírujte z textu nad úlohou. summary() stačí
 # zavolat na data_gejzir; měsíce spočítáte vnořením format() do table().
+#
+# Očekávaný výsledek:
+# Tabulka obsahuje 117 erupcí, v červnu, červenci i srpnu po 39. Žádná
+# hodnota nechybí. Erupce trvaly 1,65 až 4,83 minuty a čekání 62 až 116
+# minut. Prediktorem je délka erupce, odezvou čekání na další erupci.
 #
 # Interpretace:
 # Co představuje jeden řádek? Proč je užitečné vědět, kolik erupcí pochází
@@ -234,12 +234,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Rostoucí přímka prochází oblakem 117 bodů, které na ní neleží přesně;
-# body tvoří dvě skupiny, krátké a dlouhé erupce. Sklon je asi 13,34 minuty
-# čekání na minutu erupce: dvě erupce, jejichž délky se liší o minutu, se
-# podle modelu v průměru liší čekáním asi o 13,34 minuty.
-#
 # Nápověda 1:
 # Ve vzorci modelu patří odezva vlevo od ~ a prediktor vpravo. Body
 # ukazují jednotlivé erupce, přímka shrnuje jejich průměrný vztah.
@@ -248,6 +242,12 @@ if (
 # Funkci lm() zadejte argumenty formula a data; odezva cekani_min patří
 # vlevo od ~. Přímku přidáte až po vykreslení grafu. Sklon je druhá
 # hodnota výstupu coef().
+#
+# Očekávaný výsledek:
+# Rostoucí přímka prochází oblakem 117 bodů, které na ní neleží přesně;
+# body tvoří dvě skupiny, krátké a dlouhé erupce. Sklon je asi 13,34 minuty
+# čekání na minutu erupce: dvě erupce, jejichž délky se liší o minutu, se
+# podle modelu v průměru liší čekáním asi o 13,34 minuty.
 #
 # Interpretace:
 # Dokazuje tento vztah, že delší erupce delší čekání způsobuje? Proč ne?
@@ -276,12 +276,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Residua leží po obou stranách nuly ve dvou skupinách odhadnutého čekání,
-# bez zřetelného oblouku nebo trychtýře. Několik erupcí střední délky leží
-# výrazně nad nulou. Histogram ukazuje, že většina residuí je blízko nuly
-# a jen několik je vzdálenějších.
-#
 # Nápověda 1:
 # Graf proti odhadnutým hodnotám ukazuje, zda se odchylky od přímky
 # systematicky mění podél přímky. Histogram ukazuje, jak často se residua
@@ -291,6 +285,12 @@ if (
 # Na vodorovnou osu patří fitted(object = mod_gejzir), na svislou
 # resid(object = mod_gejzir). V obou grafech nastavte popisky os
 # argumenty xlab a ylab, aby obsahovaly jednotku minuty.
+#
+# Očekávaný výsledek:
+# Residua leží po obou stranách nuly ve dvou skupinách odhadnutého čekání,
+# bez zřetelného oblouku nebo trychtýře. Několik erupcí střední délky leží
+# výrazně nad nulou. Histogram ukazuje, že většina residuí je blízko nuly
+# a jen několik je vzdálenějších.
 #
 # Interpretace:
 # Vystihuje jedna přímka vztah dobře, ale ne dokonale? Co z těchto grafů
@@ -328,11 +328,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Každý měsíc má 39 erupcí. Sklony jsou asi 12,92 (červen), 13,99
-# (červenec) a 12,88 (srpen) minuty čekání na minutu erupce; model ze
-# všech erupcí má sklon asi 13,34. Sklony jsou si podobné, ale ne stejné.
-#
 # Nápověda 1:
 # Odezva, prediktor i vzorec modelu zůstávají stejné. Mění se jen řádky,
 # ze kterých model odhadujete.
@@ -341,6 +336,11 @@ if (
 # V ukázce změňte "06" na "07" a "08" a jméno nového objektu. Na každou
 # tabulku použijte nrow(), lm() se vzorcem cekani_min ~ delka_erupce_min
 # a coef().
+#
+# Očekávaný výsledek:
+# Každý měsíc má 39 erupcí. Sklony jsou asi 12,92 (červen), 13,99
+# (červenec) a 12,88 (srpen) minuty čekání na minutu erupce; model ze
+# všech erupcí má sklon asi 13,34. Sklony jsou si podobné, ale ne stejné.
 #
 # Interpretace:
 # Pepa, Mařenka i Karel použili stejný postup. Proč se jejich sklony liší?
@@ -373,12 +373,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Model ze všech erupcí: odhad sklonu asi 13,34 a standardní chyba asi
-# 0,66 minuty čekání na minutu erupce. Samotný červen (39 erupcí):
-# standardní chyba asi 1,12. Model ze 117 erupcí má menší standardní
-# chybu, protože více pozorování nese více informace a odhad je přesnější.
-#
 # Nápověda 1:
 # Odhad a jeho standardní chyba stojí ve stejném řádku tabulky
 # Coefficients, ale v různých sloupcích. Porovnáváte dva modely se stejným
@@ -387,6 +381,12 @@ if (
 # Nápověda 2:
 # Ve výstupu summary() hledejte průsečík řádku delka_erupce_min se sloupci
 # Estimate a Std. Error. Počet erupcí obou modelů znáte z U01 a U04.
+#
+# Očekávaný výsledek:
+# Model ze všech erupcí: odhad sklonu asi 13,34 a standardní chyba asi
+# 0,66 minuty čekání na minutu erupce. Samotný červen (39 erupcí):
+# standardní chyba asi 1,12. Model ze 117 erupcí má menší standardní
+# chybu, protože více pozorování nese více informace a odhad je přesnější.
 #
 # Interpretace:
 # Co by standardní chyba 0,66 znamenala pro někoho, kdo by zaznamenal jiný
@@ -421,11 +421,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# 95% interval spolehlivosti sklonu je asi 12,03 až 14,64 minuty čekání
-# na minutu erupce. Data a model jsou slučitelné s tímto rozsahem kladných
-# sklonů, ne pouze s jediným číslem 13,34.
-#
 # Nápověda 1:
 # Interval popisuje, jak velký může být průměrný rozdíl čekání mezi
 # erupcemi lišícími se o minutu, ne jak dlouho čeká jednotlivý návštěvník.
@@ -433,6 +428,11 @@ if (
 # Nápověda 2:
 # Výklad můžete začít větou: „Data a model jsou slučitelné se sklony
 # od … do … minuty čekání na minutu erupce.“
+#
+# Očekávaný výsledek:
+# 95% interval spolehlivosti sklonu je asi 12,03 až 14,64 minuty čekání
+# na minutu erupce. Data a model jsou slučitelné s tímto rozsahem kladných
+# sklonů, ne pouze s jediným číslem 13,34.
 #
 # Interpretace:
 # Proč tento interval neobsahuje „95 % čekacích dob“? Co přesně popisuje
@@ -501,16 +501,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Model odhaduje po čtyřminutové erupci průměrné čekání asi 99,25 minuty;
-# 95% interval spolehlivosti pro toto průměrné čekání je asi 97,91 až
-# 100,60 minuty. Interval z U06 se týká sklonu (minuty čekání na minutu
-# erupce), interval z kroku 3 průměrného čekání po čtyřminutových
-# erupcích (minuty). Pás je nejužší u průměrné délky erupce (asi 3,6
-# minuty) a k okrajům se rozšiřuje. Uvnitř pásu leží jen asi pětina bodů;
-# většina leží mimo pás, protože pás ukazuje nejistotu průměrného trendu,
-# ne rozptýlení jednotlivých čekání (viz residua z U03).
-#
 # Nápověda 1:
 # Do nové tabulky patří známá délka erupce, nikoli čekání, které teprve
 # odhadujete. Pás kreslete až po plot(); lines() kreslí do posledního
@@ -520,6 +510,16 @@ if (
 # V data.frame() pojmenujte sloupec delka_erupce_min; do predict() dejte
 # object = mod_gejzir, newdata = data_nova_erupce a interval =
 # "confidence". Meze najdete ve sloupcích lwr a upr.
+#
+# Očekávaný výsledek:
+# Model odhaduje po čtyřminutové erupci průměrné čekání asi 99,25 minuty;
+# 95% interval spolehlivosti pro toto průměrné čekání je asi 97,91 až
+# 100,60 minuty. Interval z U06 se týká sklonu (minuty čekání na minutu
+# erupce), interval z kroku 3 průměrného čekání po čtyřminutových
+# erupcích (minuty). Pás je nejužší u průměrné délky erupce (asi 3,6
+# minuty) a k okrajům se rozšiřuje. Uvnitř pásu leží jen asi pětina bodů;
+# většina leží mimo pás, protože pás ukazuje nejistotu průměrného trendu,
+# ne rozptýlení jednotlivých čekání (viz residua z U03).
 #
 # Interpretace:
 # Zaručuje odhad 99,25 minuty, kdy přesně začne další erupce? Proč ne?
@@ -549,6 +549,14 @@ if (
 # Vaše řešení:
 
 
+# Nápověda 1:
+# Velikost vztahu a jeho nejistotu uveďte před omezeními. Oddělte
+# průměrný vztah od čekání po jedné konkrétní erupci.
+#
+# Nápověda 2:
+# Čísla vezměte z U02 a U05 (sklon a SE), U06 (interval) a U04 (měsíce).
+# Omezení najdete v textu nad touto úlohou.
+#
 # Očekávaný výsledek:
 # Například: „Dvě erupce, jejichž délky se lišily o jednu minutu, se podle
 # lineárního modelu v průměru lišily čekáním na další erupci o 13,34 ± 0,66
@@ -557,14 +565,6 @@ if (
 # trychtýř, i když několik erupcí střední délky leží výrazně nad přímkou,
 # že sklony měsíců se liší asi o jednu minutu a že dobrovolnická
 # pozorování nejsou náhodným výběrem všech erupcí.
-#
-# Nápověda 1:
-# Velikost vztahu a jeho nejistotu uveďte před omezeními. Oddělte
-# průměrný vztah od čekání po jedné konkrétní erupci.
-#
-# Nápověda 2:
-# Čísla vezměte z U02 a U05 (sklon a SE), U06 (interval) a U04 (měsíce).
-# Omezení najdete v textu nad touto úlohou.
 #
 # Interpretace:
 # Která věta vašeho závěru by se nezměnila, kdyby standardní chyba byla
@@ -599,11 +599,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Dva měsíce obsahují 78 erupcí. Standardní chyba sklonu je asi 1,12
-# (červen), 0,77 (dva měsíce) a 0,66 (všechny erupce). S více erupcemi se
-# standardní chyba zmenšuje.
-#
 # Nápověda 1:
 # Do výběru patří řádky, jejichž měsíc je jeden ze dvou měsíců. Model,
 # vzorec i sloupce zůstávají stejné jako v U02.
@@ -612,6 +607,11 @@ if (
 # Podmínku pro řádky sestavte z format() jako v U04 a operátoru %in%
 # s vektorem dvou měsíců. Standardní chybu čtěte ve sloupci Std. Error
 # výstupu summary().
+#
+# Očekávaný výsledek:
+# Dva měsíce obsahují 78 erupcí. Standardní chyba sklonu je asi 1,12
+# (červen), 0,77 (dva měsíce) a 0,66 (všechny erupce). S více erupcemi se
+# standardní chyba zmenšuje.
 #
 # Interpretace:
 # Proč se standardní chyba zmenšuje, i když jde stále o stejný gejzír?
@@ -627,16 +627,16 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# 80% interval sklonu je asi 12,49 až 14,18; 95% interval 12,03 až 14,64.
-# Širší je 95% interval. Data i odhad sklonu zůstaly stejné.
-#
 # Nápověda 1:
 # Měníte požadovanou hladinu intervalu, nikoli model nebo jeho data.
 #
 # Nápověda 2:
 # Ve funkci confint() nastavte argument level = 0.80; výchozí hladina
 # je 0.95.
+#
+# Očekávaný výsledek:
+# 80% interval sklonu je asi 12,49 až 14,18; 95% interval 12,03 až 14,64.
+# Širší je 95% interval. Data i odhad sklonu zůstaly stejné.
 #
 # Interpretace:
 # Znamená užší 80% interval, že jsme z dat získali přesnější informaci?
@@ -659,17 +659,17 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Jeden řádek tabulky uvádí pro sklon odhad asi 13,34, standardní chybu
-# asi 0,66 a 95% interval asi 12,03 až 14,64, stejně jako summary()
-# a confint().
-#
 # Nápověda 1:
 # broom::tidy() mění uspořádání výstupu, ne data ani fitovaný model.
 #
 # Nápověda 2:
 # Zadejte broom::tidy(x = mod_gejzir, conf.int = TRUE) a čtěte sloupce
 # estimate, std.error, conf.low a conf.high.
+#
+# Očekávaný výsledek:
+# Jeden řádek tabulky uvádí pro sklon odhad asi 13,34, standardní chybu
+# asi 0,66 a 95% interval asi 12,03 až 14,64, stejně jako summary()
+# a confint().
 #
 # Interpretace:
 # Jde o tři různé modely, nebo o tři pohledy na jeden model?
@@ -691,10 +691,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Histogram má dvě skupiny: krátké erupce kolem 2 minut a dlouhé kolem
-# 4 minut. Méně než 3 minuty trvalo 28 erupcí, 3 minuty a déle 89 erupcí.
-#
 # Nápověda 1:
 # Podmínka „kratší než 3 minuty“ vrací pro každou erupci TRUE nebo FALSE.
 # TRUE se při sčítání počítá jako 1.
@@ -702,6 +698,10 @@ if (
 # Nápověda 2:
 # Použijte hist(x = data_gejzir$delka_erupce_min, xlab = ...) a
 # sum(data_gejzir$delka_erupce_min < 3).
+#
+# Očekávaný výsledek:
+# Histogram má dvě skupiny: krátké erupce kolem 2 minut a dlouhé kolem
+# 4 minut. Méně než 3 minuty trvalo 28 erupcí, 3 minuty a déle 89 erupcí.
 #
 # Interpretace:
 # Jak tyto dvě skupiny souvisejí se dvěma oblaky bodů v grafu z U02?
@@ -719,17 +719,17 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Sklon je asi 0,2223 minuty čekání na sekundu erupce; po vynásobení 60
-# vychází asi 13,34 minuty na minutu erupce. Jde o stejná pozorování
-# v jiných jednotkách.
-#
 # Nápověda 1:
 # Změní se jen jednotka prediktoru, ne měření jednotlivých erupcí.
 #
 # Nápověda 2:
 # Ve vzorci lm() ponechte cekani_min vlevo a duration dejte vpravo; sklon
 # najděte v coef().
+#
+# Očekávaný výsledek:
+# Sklon je asi 0,2223 minuty čekání na sekundu erupce; po vynásobení 60
+# vychází asi 13,34 minuty na minutu erupce. Jde o stejná pozorování
+# v jiných jednotkách.
 #
 # Interpretace:
 # Proč změna jednotky prediktoru změní číslo sklonu, ale ne vztah?
@@ -754,15 +754,15 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Zvýrazněný bod leží na přímce uvnitř pásu přibližně v místě (4; 99,25).
-#
 # Nápověda 1:
 # Přidaný bod má známou souřadnici x a souřadnici y odhadnutou modelem.
 #
 # Nápověda 2:
 # Po plot() a třech lines() z U07 použijte points() s x = 4, y z predict()
 # a argumenty col a pch.
+#
+# Očekávaný výsledek:
+# Zvýrazněný bod leží na přímce uvnitř pásu přibližně v místě (4; 99,25).
 #
 # Interpretace:
 # Je tento bod další naměřenou erupcí?
@@ -781,12 +781,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Odhady jsou asi 72,58; 85,92 a 99,25 minuty. Erupce, jejichž délky se
-# liší o minutu, se v odhadu liší vždy o sklon, asi 13,34 minuty.
-# Šířky intervalů jsou asi 4,92; 2,99 a 2,69 minuty: nejširší je interval
-# u dvouminutové erupce, nejdál od průměrné délky erupce (asi 3,6 minuty).
-#
 # Nápověda 1:
 # Sloupec tabulky může obsahovat více hodnot; každý řádek dá jeden odhad.
 #
@@ -794,6 +788,12 @@ if (
 # Do data.frame() vložte delka_erupce_min = c(2, 3, 4) a tabulku předejte
 # funkci predict() jako newdata. Šířku spočítáte odečtením sloupců
 # výsledku, například mat[, "upr"] - mat[, "lwr"] (viz úvod k U07).
+#
+# Očekávaný výsledek:
+# Odhady jsou asi 72,58; 85,92 a 99,25 minuty. Erupce, jejichž délky se
+# liší o minutu, se v odhadu liší vždy o sklon, asi 13,34 minuty.
+# Šířky intervalů jsou asi 4,92; 2,99 a 2,69 minuty: nejširší je interval
+# u dvouminutové erupce, nejdál od průměrné délky erupce (asi 3,6 minuty).
 #
 # Interpretace:
 # Proč jsou oba rozdíly stejné, ale šířky intervalů ne?
@@ -814,15 +814,15 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Naměřené čekání je 68 minut, odhad asi 72,36 minuty a residuum asi
-# −4,36 minuty.
-#
 # Nápověda 1:
 # Residuum je naměřená hodnota minus odhad pro tentýž řádek.
 #
 # Nápověda 2:
 # Z každého vektoru vyberte první hodnotu zápisem [1].
+#
+# Očekávaný výsledek:
+# Naměřené čekání je 68 minut, odhad asi 72,36 minuty a residuum asi
+# −4,36 minuty.
 #
 # Interpretace:
 # Leží první erupce nad přímkou, nebo pod ní?
@@ -844,16 +844,16 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Je to řádek 97 z 15. 8. 2024: erupce trvala 3 minuty, čekání 107 minut,
-# odhad asi 85,92 minuty a residuum asi +21,08 minuty.
-#
 # Nápověda 1:
 # Hledejte velikost odchylky bez ohledu na její znaménko.
 #
 # Nápověda 2:
 # Funkci which.max() použijte na absolutní hodnoty residuí. Stejné číslo
 # řádku pak vyberte v data_gejzir, ve fitted() i v resid().
+#
+# Očekávaný výsledek:
+# Je to řádek 97 z 15. 8. 2024: erupce trvala 3 minuty, čekání 107 minut,
+# odhad asi 85,92 minuty a residuum asi +21,08 minuty.
 #
 # Interpretace:
 # Znamená jedno nápadné čekání, že model nesmíme použít?
@@ -870,11 +870,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Osa x je nyní délka erupce v minutách, v U03 odhadnuté čekání v minutách.
-# S jedním prediktorem jde o stejná residua seřazená podle dvou propojených
-# os; závěr se nemění.
-#
 # Nápověda 1:
 # Mění se vodorovná veličina, nikoli model ani residua.
 #
@@ -882,6 +877,11 @@ if (
 # V plot() použijte x = data_gejzir$delka_erupce_min a
 # y = resid(object = mod_gejzir); nulu označte pomocí
 # abline(h = 0, lty = 2).
+#
+# Očekávaný výsledek:
+# Osa x je nyní délka erupce v minutách, v U03 odhadnuté čekání v minutách.
+# S jedním prediktorem jde o stejná residua seřazená podle dvou propojených
+# os; závěr se nemění.
 #
 # Interpretace:
 # Proč vypadají oba grafy tak podobně?
@@ -902,9 +902,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Odhad asi 13,34 a standardní chyba asi 0,66, stejné jako v U05.
-#
 # Nápověda 1:
 # Tabulka má pojmenované řádky i sloupce; potřebujete jeden řádek a dva
 # sloupce.
@@ -912,6 +909,9 @@ if (
 # Nápověda 2:
 # Vybírejte hranatými závorkami [řádek, sloupec] pomocí jmen
 # "delka_erupce_min", "Estimate" a "Std. Error".
+#
+# Očekávaný výsledek:
+# Odhad asi 13,34 a standardní chyba asi 0,66, stejné jako v U05.
 #
 # Interpretace:
 # Proč se při tomto výběru nefitoval nový model?
@@ -930,11 +930,6 @@ if (
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# A zaměňuje interval sklonu za rozdělení jednotlivých čekání. B zaměňuje
-# bodový odhad za jistou předpověď. C vyvozuje příčinu ze vztahu
-# v pozorovacích datech.
-#
 # Nápověda 1:
 # Rozlište nejistotu sklonu, rozptýlení jednotlivých čekání kolem přímky
 # a důkaz o příčině.
@@ -942,6 +937,11 @@ if (
 # Nápověda 2:
 # K větě A použijte confint() z U06, k větě B predict() z U07 a residua
 # z U03, k větě C způsob získání dat.
+#
+# Očekávaný výsledek:
+# A zaměňuje interval sklonu za rozdělení jednotlivých čekání. B zaměňuje
+# bodový odhad za jistou předpověď. C vyvozuje příčinu ze vztahu
+# v pozorovacích datech.
 #
 # Interpretace:
 # Která z vět je podle vás v médiích nejčastější?
@@ -973,11 +973,6 @@ data_faithful <-
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# 272 erupcí; délka 1,6 až 5,1 minuty a čekání 43 až 96 minut. Sklon
-# mod_faithful je asi 10,73 minuty čekání na minutu erupce. Pás je úzký,
-# protože model vychází z 272 erupcí.
-#
 # Nápověda 1:
 # Postup z U01 a U02 použijte na jinou tabulku se stejně pojmenovanými
 # sloupci.
@@ -986,6 +981,11 @@ data_faithful <-
 # Použijte nrow(), range(), plot(), lm() se vzorcem
 # cekani_min ~ delka_erupce_min. Ve vzoru z U07 nahraďte data_gejzir
 # tabulkou data_faithful a mod_gejzir modelem mod_faithful.
+#
+# Očekávaný výsledek:
+# 272 erupcí; délka 1,6 až 5,1 minuty a čekání 43 až 96 minut. Sklon
+# mod_faithful je asi 10,73 minuty čekání na minutu erupce. Pás je úzký,
+# protože model vychází z 272 erupcí.
 #
 # Interpretace:
 # Je sklon stejný jako u mod_gejzir? Proč nemusí být?
@@ -1003,10 +1003,6 @@ data_faithful <-
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Odhad z faithful je asi 76,39 minuty, tedy jiný než asi 99,25 minuty
-# ze souboru 2024.
-#
 # Nápověda 1:
 # Kontrola residuí i předpověď musí používat nový model mod_faithful.
 #
@@ -1014,6 +1010,10 @@ data_faithful <-
 # V plot() použijte fitted(object = mod_faithful) a
 # resid(object = mod_faithful); do predict() dejte newdata
 # s delka_erupce_min = 4.
+#
+# Očekávaný výsledek:
+# Odhad z faithful je asi 76,39 minuty, tedy jiný než asi 99,25 minuty
+# ze souboru 2024.
 #
 # Interpretace:
 # Proč dva soubory erupcí téhož gejzíru dávají jiný odhad?
@@ -1030,16 +1030,16 @@ data_faithful <-
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Sklon asi 10,73 ± 0,31 minuty čekání na minutu erupce (odhad sklonu ± SE;
-# 95% CI [10,11; 11,35]).
-#
 # Nápověda 1:
 # Postup z U05 a U06 odpovídá na stejnou otázku v jiných datech.
 #
 # Nápověda 2:
 # V summary() sledujte řádek delka_erupce_min ve sloupcích Estimate
 # a Std. Error; v confint() tentýž řádek.
+#
+# Očekávaný výsledek:
+# Sklon asi 10,73 ± 0,31 minuty čekání na minutu erupce (odhad sklonu ± SE;
+# 95% CI [10,11; 11,35]).
 #
 # Interpretace:
 # Proč má mod_faithful menší standardní chybu než mod_gejzir?
@@ -1069,11 +1069,6 @@ data_faithful <-
 # Vaše řešení:
 
 
-# Očekávaný výsledek:
-# Mimo pás leží 95 ze 117 erupcí. Pás popisuje, kde může ležet průměrné
-# čekání; rozsah pro jednotlivá čekání by musel zahrnout i jejich
-# rozptýlení kolem přímky, proto by byl širší.
-#
 # Nápověda 1:
 # Podmínka „pod dolní mezí nebo nad horní mezí“ vrací pro každou erupci
 # TRUE nebo FALSE; sum() spočítá hodnoty TRUE.
@@ -1082,6 +1077,11 @@ data_faithful <-
 # Porovnejte cekani_min zvlášť se sloupcem lwr (menší než) a se sloupcem
 # upr (větší než); obě podmínky spojte operátorem | a výsledek vložte
 # do sum().
+#
+# Očekávaný výsledek:
+# Mimo pás leží 95 ze 117 erupcí. Pás popisuje, kde může ležet průměrné
+# čekání; rozsah pro jednotlivá čekání by musel zahrnout i jejich
+# rozptýlení kolem přímky, proto by byl širší.
 #
 # Interpretace:
 # Znamená velký počet bodů mimo pás, že model je špatný?
