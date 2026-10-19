@@ -12,12 +12,13 @@ here::i_am("R/verify_pollslive_assets.R")
 # local PollsLive preparation verifies the approved bytes instead.
 approved_assets <-
   c(
-    "l03-formula-roles.png" =
-      "2e4e9ca4c29724c4188677170002f1404121e7a05ce2ff8824c3539380caed71",
-    "l03-slope-estimate.png" =
-      "c19c44167e995fd79016a0338ef7c631eefc7553474ea400ba3b130bf7a2eddc",
-    "l03-residual-example.png" =
-      "776c7693fb13dc0120217c118c8c0b18b88c58e9443534d14b4bac6dba73fbac"
+    "l03-coef-listky.png" =
+      "ab706c47351121c6287f619bf530fece376b448d84ccf5e10292d1bc6a17d1bb",
+    # Byte-identical copy of L03 Presentation/Materials/rezidua_podle_druhu.png
+    "l03-rezidua-podle-druhu.png" =
+      "e7b17466d25cd40e6daeeee6a49d96a5300e6622a0b0b7f847c4aef8c2818474",
+    "l03-dve-primky-residua.png" =
+      "8d89bb98674a75ea16294df284377bc7e5b0e357b0be4fc611cd45404c853559"
   )
 
 asset_paths <-
