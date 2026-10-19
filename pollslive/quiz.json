@@ -8,90 +8,90 @@
   "title": "L04 – Opakování předchozí lekce – 2026/27",
   "questions": [
     {
-      "id": "odezva-ve-vzorci",
-      "text": "Ve vzorci delka_listku ~ sirka_listku je která proměnná odezvou?",
+      "id": "rozdil-pri-pul-centimetru",
+      "text": "Dva kosatce se liší šířkou korunního lístku o 0,5 cm. O kolik se podle modelu v průměru liší jejich odhadnutá délka lístku?",
       "options": [
         {
-          "id": "sirka-listku",
-          "label": "sirka_listku"
+          "id": "asi-2-2",
+          "label": "Asi o 2,2 cm"
         },
         {
-          "id": "obe-prediktory",
-          "label": "Obě jsou prediktory"
+          "id": "asi-4-5",
+          "label": "Asi o 4,5 cm"
         },
         {
-          "id": "role-neurceny",
-          "label": "Vzorec role proměnných neurčuje"
+          "id": "asi-1-1",
+          "label": "Asi o 1,1 cm"
         },
         {
-          "id": "delka-listku",
-          "label": "delka_listku"
+          "id": "nelze-bez-sirek",
+          "label": "Nelze určit bez šířek obou květů"
         }
       ],
-      "correctOptionId": "delka-listku",
-      "explanation": "Proměnná vlevo od ~ je odezva; proměnná vpravo je prediktor.",
+      "correctOptionId": "asi-1-1",
+      "explanation": "Sklon 2,23 cm/cm vynásobíme rozdílem šířek: 2,23 · 0,5 ≈ 1,1 cm. Intercept se při porovnání dvou květů odečte, takže jejich konkrétní šířky nepotřebujeme.",
       "media": {
-        "path": "assets/l03-formula-roles.png",
-        "alt": "Karta zobrazuje vzorec delka_listku vlnovka sirka_listku bez označení rolí proměnných.",
-        "provenance": "Deterministically rendered by R/render_pollslive_assets.R from the approved L03 formula and variable roles."
+        "path": "assets/l03-coef-listky.png",
+        "alt": "Výstup R příkazu coef(mod_listky): intercept 1.08 a sklon sirka_listku 2.23.",
+        "provenance": "Rendered by R/render_pollslive_assets.R from lm(delka_listku ~ sirka_listku) fitted to the iris petal measurements used in approved L03 (data/kosatce.csv); coefficients rounded to two decimals; checksum pinned in R/verify_pollslive_assets.R."
       }
     },
     {
-      "id": "interpretace-sklonu",
-      "text": "Sklon modelu je přibližně 2,23 cm/cm. Která interpretace je správná?",
+      "id": "residua-podle-druhu",
+      "text": "Residua kosatců druhu versicolor leží převážně nad nulou. Co z toho plyne?",
       "options": [
         {
-          "id": "presna-zmena",
-          "label": "Každý lístek, který je o 1 cm širší, je přesně o 2,23 cm delší."
+          "id": "podhodnocuje-chybi-druh",
+          "label": "Model jejich délku převážně podhodnocuje; v modelu chybí informace o druhu."
         },
         {
-          "id": "intercept",
-          "label": "Intercept modelu je 2,23 cm."
+          "id": "nadhodnocuje-chybi-druh",
+          "label": "Model jejich délku převážně nadhodnocuje; v modelu chybí informace o druhu."
         },
         {
-          "id": "prumerna-zmena",
-          "label": "Dva květy, jejichž šířky se liší o 1 cm, se podle modelu liší v délce v průměru asi o 2,23 cm."
+          "id": "prumer-nula",
+          "label": "Nic; residua všech květů mají dohromady průměr nula, model je v pořádku."
         },
         {
-          "id": "bez-jednotek",
-          "label": "Sklon nemá jednotky."
+          "id": "nejdelsi-listky",
+          "label": "Versicolor má ze všech druhů nejdelší lístky, proto má kladná residua."
         }
       ],
-      "correctOptionId": "prumerna-zmena",
-      "explanation": "Sklon udává, o kolik se v průměru liší odhadnutá délka dvou květů, jejichž šířky se liší o 1 cm (cm délky na cm šířky).",
+      "correctOptionId": "podhodnocuje-chybi-druh",
+      "explanation": "Kladné residuum: naměřená délka je větší než odhad, model ji podhodnocuje. Průměr nula platí pro všechna residua dohromady, ne pro každý druh; posun skupiny ukazuje chybějící prediktor.",
       "media": {
-        "path": "assets/l03-slope-estimate.png",
-        "alt": "Karta zobrazuje odhad sklonu 2,23 centimetru na centimetr bez připojené interpretace.",
-        "provenance": "Deterministically rendered by R/render_pollslive_assets.R from lm(delka_listku ~ sirka_listku) fitted to the iris data used in approved L03."
+        "path": "assets/l03-rezidua-podle-druhu.png",
+        "alt": "Graf residuí proti odhadnuté délce lístku, body barevně podle druhu: setosa leží převážně pod nulou, versicolor převážně nad nulou a virginica na obou stranách.",
+        "provenance": "Byte-identical copy of approved L03 figure Presentation/Materials/rezidua_podle_druhu.png; checksum pinned in R/verify_pollslive_assets.R."
       }
     },
     {
-      "id": "vypocet-residua",
-      "text": "Jaké je residuum tohoto květu, když residuum počítáme jako naměřená minus odhadnutá délka?",
+      "id": "soucet-nebo-ctverce",
+      "text": "Dvě přímky mají pro stejné čtyři květy tato residua. Která přímka popisuje květy lépe?",
       "options": [
         {
-          "id": "plus-0-6",
-          "label": "+0,6 cm"
+          "id": "prvni-soucet-nula",
+          "label": "První přímka, protože součet jejích residuí je nula."
         },
         {
-          "id": "minus-0-6",
-          "label": "−0,6 cm"
+          "id": "obe-stejne",
+          "label": "Obě stejně, protože obě mají kladná i záporná residua."
         },
         {
-          "id": "6-6",
-          "label": "6,6 cm"
+          "id": "nelze-bez-koeficientu",
+          "label": "Nelze rozhodnout, dokud neznáme intercept a sklon obou přímek."
         },
         {
-          "id": "12-6",
-          "label": "12,6 cm"
+          "id": "druha-mensi-ctverce",
+          "label": "Druhá přímka, protože součet čtverců jejích residuí je menší."
         }
       ],
-      "correctOptionId": "minus-0-6",
-      "explanation": "6,0 − 6,6 = −0,6 cm. Záporné residuum znamená, že měření leží pod modelovým odhadem.",
+      "correctOptionId": "druha-mensi-ctverce",
+      "explanation": "Kladná a záporná residua se v součtu ruší, proto je umocňujeme: první přímka má součet čtverců 1,00 cm², druhá jen 0,10 cm².",
       "media": {
-        "path": "assets/l03-residual-example.png",
-        "alt": "Graf jednoho květu: naměřená délka je 6,0 cm, modelový odhad 6,6 cm a svislá vzdálenost mezi nimi představuje residuum.",
-        "provenance": "Byte-identical copy of approved L03 figure Presentation/Materials/reziduum_s_popisky.png; checksum pinned by R/render_pollslive_assets.R."
+        "path": "assets/l03-dve-primky-residua.png",
+        "alt": "Tabulka residuí čtyř květů v centimetrech: první přímka +0,5, −0,5, +0,5, −0,5; druhá přímka +0,2, −0,1, +0,2, −0,1.",
+        "provenance": "Rendered by R/render_pollslive_assets.R; teaching residuals in the setting of the approved L03 slides on comparing candidate lines by the sum of squared residuals (four flowers, two lines); checksum pinned in R/verify_pollslive_assets.R."
       }
     }
   ]
