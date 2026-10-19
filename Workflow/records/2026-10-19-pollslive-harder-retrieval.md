@@ -80,7 +80,11 @@ Across these 24 four-option questions A, B, C and D are each correct six times. 
 
 ## Review
 
-Independent read-only review: pending.
+Independent read-only review: completed on 2026-10-19 by a separate reviewer subagent (canonical prompt `.ai/agents/vision-corrector.md`, scoped to the retrieval block of L04, L05, L06, L07, L08 and L10; a capable general-purpose model, chosen because the task is a focused content review of 18 short items). No blockers: every keyed answer was confirmed correct, every distractor wrong, and the course-wide key balance verified.
+
+No should-fix items for L04. Minor: the Q3 card prints ASCII hyphens for negative residuals (cosmetic, left as is).
+
+Focused re-check of these corrections by the same reviewer: pending.
 
 ## Operational boundary
 
