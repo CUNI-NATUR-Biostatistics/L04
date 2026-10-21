@@ -5,15 +5,19 @@
 #   eruptions plus normal departures with the model's residual standard
 #   deviation. The fitted slope is therefore the known reference value of the
 #   demonstration, not the unknown population slope. Set the seed before use.
-simulate_reports <- function(data_source, mod_reference, n_reports, n_eruptions) {
+#   `sd_departures` defaults to the model's residual standard deviation; the
+#   SE section changes it to show how scatter around the line affects slopes.
+simulate_reports <- function(
+    data_source,
+    mod_reference,
+    n_reports,
+    n_eruptions,
+    sd_departures = stats::sigma(mod_reference)) {
   intercept_reference <-
     stats::coef(mod_reference)[["(Intercept)"]]
 
   slope_reference <-
     stats::coef(mod_reference)[["delka_erupce_min"]]
-
-  sd_departures <-
-    stats::sigma(mod_reference)
 
   res_reports <-
     seq_len(n_reports) |>
