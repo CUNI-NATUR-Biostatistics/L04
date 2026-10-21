@@ -24,7 +24,7 @@ Výukové materiály převádějí `duration` na minuty jako `delka_erupce_min`.
 
 ### Příprava
 
-Postup je zapsán v kódu výukových materiálů (`Learning_materials/skripta.qmd`, rozbalovací blok „Doplňující: jak vznikl soubor old_faithful_2024.csv“): pouze přesně zaznamenané hlavní erupce, čekání jako rozdíl časů dvou po sobě jdoucích erupcí, ponechány intervaly 50–127 minut, odstraněna tři předem prověřená odlehlá pozorování (`1461337`, `1468130`, `1471579`) a kontrola počtu 117 řádků.
+Postup je zapsán v kódu výukových materiálů (`Learning_materials/skripta.qmd`, rozbalovací blok „Doplňující: jak vznikl soubor old_faithful_2024.csv“): pouze přesně zaznamenané hlavní erupce, čekání jako rozdíl časů dvou po sobě jdoucích erupcí, ponechány intervaly 50–127 minut, odstraněna tři odlehlá pozorování (`1461337`, `1468130`, `1471579`) a kontrola počtu 117 řádků. Erupce `1471579` trvala jen 41 sekund, tedy méně než rozsah 1,5–5 minut uváděný National Park Service. Zbylé dvě byly odstraněny jen kvůli přehlednějšímu výukovému příkladu; výukové materiály v kapitole „Může jedna erupce změnit sklon?“ ukazují, že sklon téměř nemění. Hodnoty všech tří erupcí (datum, délka v sekundách, čekání v minutách): `1461337` 2024-06-04, 121 s, 94 min; `1468130` 2024-07-08, 256 s, 121 min; `1471579` 2024-08-01, 41 s, 106 min.
 
 ### Podmínky opětovného použití
 
