@@ -2824,7 +2824,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Upraveno</div>
     <div class="quarto-title-meta-contents">
-      <p class="date-modified">21. října 2026</p>
+      <p class="date-modified">28. října 2026</p>
     </div>
   </div>
     
@@ -3708,13 +3708,13 @@ border-color: #FFFFFF transparent transparent transparent;
 <h3 data-number="10.4" class="anchored" data-anchor-id="obvyklý-zápis-vzorce"><span class="header-section-number">10.4</span> Obvyklý zápis vzorce</h3>
 <p>V učebnicích se tentýž vzorec obvykle zapisuje takto:</p>
 <p><span class="math display">\[
-\operatorname{SE}(\hat{\beta}_1)
+\operatorname{SE}(b)
 =
 \frac{\hat{\sigma}}{\sqrt{S_{xx}}},
 \qquad
 S_{xx} = \sum_{i=1}^{n}(x_i - \bar{x})^2 = (n - 1)\, s_x^2.
 \]</span></p>
-<p>Zde <span class="math inline">\(\hat{\beta}_1\)</span> označuje odhad sklonu, <span class="math inline">\(\operatorname{SE}(\hat{\beta}_1)\)</span> jeho standardní chybu, <span class="math inline">\(\hat{\sigma}\)</span> residuální směrodatnou odchylku, <span class="math inline">\(n\)</span> počet erupcí, <span class="math inline">\(x_i\)</span> délku <span class="math inline">\(i\)</span>-té erupce, <span class="math inline">\(\bar{x}\)</span> průměrnou délku a <span class="math inline">\(s_x\)</span> směrodatnou odchylku délek. <span class="math inline">\(S_{xx}\)</span> je součet čtverců odchylek délek erupcí od jejich průměru. Protože se směrodatná odchylka počítá z tohoto součtu vyděleného <span class="math inline">\(n-1\)</span>, platí <span class="math inline">\(S_{xx} = (n-1)\,s_x^2\)</span> a oba zápisy dávají stejné číslo.</p>
+<p>Zde <span class="math inline">\(b\)</span> označuje stejně jako v lekci o lineárním modelu odhad sklonu, <span class="math inline">\(\operatorname{SE}(b)\)</span> jeho standardní chybu, <span class="math inline">\(\hat{\sigma}\)</span> residuální směrodatnou odchylku, <span class="math inline">\(n\)</span> počet erupcí, <span class="math inline">\(x_i\)</span> délku <span class="math inline">\(i\)</span>-té erupce, <span class="math inline">\(\bar{x}\)</span> průměrnou délku a <span class="math inline">\(s_x\)</span> směrodatnou odchylku délek. <span class="math inline">\(S_{xx}\)</span> je součet čtverců odchylek délek erupcí od jejich průměru. Protože se směrodatná odchylka počítá z tohoto součtu vyděleného <span class="math inline">\(n-1\)</span>, platí <span class="math inline">\(S_{xx} = (n-1)\,s_x^2\)</span> a oba zápisy dávají stejné číslo.</p>
 </section>
 </section>
 <section id="kde-ve-výstupu-najdeme-velikost-a-přesnost" class="level2" data-number="11">
@@ -4051,7 +4051,7 @@ S_{xx} = \sum_{i=1}^{n}(x_i - \bar{x})^2.
 \end{aligned}
 \]</span></p>
 <p>R počítá s nezaokrouhlenými hodnotami a pro těchto pět erupcí vypíše 1,22; případný rozdíl v poslední číslici způsobuje jen zaokrouhlování.</p>
-<p>Je to tentýž vzorec <span class="math inline">\(\operatorname{SE}(\hat{\beta}_1) = \hat{\sigma} / \sqrt{S_{xx}}\)</span> jako v kapitole o standardní chybě z jediného výběru, jen dosazený pro pět erupcí. Pět erupcí dává mnohem větší standardní chybu než všech 117 erupcí (0,66): <span class="math inline">\(S_{xx}\)</span> má jen pět členů.</p>
+<p>Je to tentýž vzorec <span class="math inline">\(\operatorname{SE}(b) = \hat{\sigma} / \sqrt{S_{xx}}\)</span> jako v kapitole o standardní chybě z jediného výběru, jen dosazený pro pět erupcí. Pět erupcí dává mnohem větší standardní chybu než všech 117 erupcí (0,66): <span class="math inline">\(S_{xx}\)</span> má jen pět členů.</p>
 </div>
 </div>
 </div>
@@ -4163,9 +4163,9 @@ S_{xx} = \sum_{i=1}^{n}(x_i - \bar{x})^2.
 \]</span></p>
 <p>Obecně zapisujeme:</p>
 <p><span class="math display">\[
-M = t_{1-\alpha/2,\,n-2}\operatorname{SE}(\hat{\beta}_1).
+M = t_{1-\alpha/2,\,n-2}\operatorname{SE}(b).
 \]</span></p>
-<p>Zde <span class="math inline">\(M\)</span> označuje polovinu šířky intervalu, <span class="math inline">\(t_{1-\alpha/2,\,n-2}\)</span> kritickou hodnotu a <span class="math inline">\(\operatorname{SE}(\hat{\beta}_1)\)</span> standardní chybu odhadu sklonu. Písmeno <span class="math inline">\(\alpha\)</span> je doplněk hladiny do jedné: <span class="math inline">\(\alpha = 1 - \text{hladina}\)</span>, takže pro 95% interval je <span class="math inline">\(\alpha = \text{0,05}\)</span>. Písmeno <span class="math inline">\(t\)</span> označuje rozdělení, ze kterého kritická hodnota pochází, a <span class="math inline">\(n-2\)</span> jsou opět <a class="glossary" title="Počet nezávislých informací dostupných pro odhad parametru; počet pozorování minus počet odhadovaných parametrů." href>stupně volnosti</a>; obojí vysvětlíme v následující lekci.</p>
+<p>Zde <span class="math inline">\(M\)</span> označuje polovinu šířky intervalu, <span class="math inline">\(t_{1-\alpha/2,\,n-2}\)</span> kritickou hodnotu a <span class="math inline">\(\operatorname{SE}(b)\)</span> standardní chybu odhadu sklonu. Písmeno <span class="math inline">\(\alpha\)</span> je doplněk hladiny do jedné: <span class="math inline">\(\alpha = 1 - \text{hladina}\)</span>, takže pro 95% interval je <span class="math inline">\(\alpha = \text{0,05}\)</span>. Písmeno <span class="math inline">\(t\)</span> označuje rozdělení, ze kterého kritická hodnota pochází, a <span class="math inline">\(n-2\)</span> jsou opět <a class="glossary" title="Počet nezávislých informací dostupných pro odhad parametru; počet pozorování minus počet odhadovaných parametrů." href>stupně volnosti</a>; obojí vysvětlíme v následující lekci.</p>
 </section>
 <section id="dolní-hranice" class="level4 unnumbered unlisted">
 <h4 class="unnumbered unlisted anchored" data-anchor-id="dolní-hranice">2. Dolní hranice</h4>
@@ -4182,7 +4182,7 @@ M = t_{1-\alpha/2,\,n-2}\operatorname{SE}(\hat{\beta}_1).
 &amp;= \text{12,033}.
 \end{aligned}
 \]</span></p>
-<p>Obecně zapisujeme <span class="math inline">\(L = \hat{\beta}_1 - M\)</span>. Zde <span class="math inline">\(L\)</span> označuje dolní hranici, <span class="math inline">\(\hat{\beta}_1\)</span> odhad sklonu a <span class="math inline">\(M\)</span> právě vypočtenou polovinu šířky.</p>
+<p>Obecně zapisujeme <span class="math inline">\(L = b - M\)</span>. Zde <span class="math inline">\(L\)</span> označuje dolní hranici, <span class="math inline">\(b\)</span> odhad sklonu a <span class="math inline">\(M\)</span> právě vypočtenou polovinu šířky.</p>
 </section>
 <section id="horní-hranice" class="level4 unnumbered unlisted">
 <h4 class="unnumbered unlisted anchored" data-anchor-id="horní-hranice">3. Horní hranice</h4>
@@ -4199,7 +4199,7 @@ M = t_{1-\alpha/2,\,n-2}\operatorname{SE}(\hat{\beta}_1).
 &amp;= \text{14,637}.
 \end{aligned}
 \]</span></p>
-<p>Obecně zapisujeme <span class="math inline">\(U = \hat{\beta}_1 + M\)</span>. Zde <span class="math inline">\(U\)</span> označuje horní hranici.</p>
+<p>Obecně zapisujeme <span class="math inline">\(U = b + M\)</span>. Zde <span class="math inline">\(U\)</span> označuje horní hranici.</p>
 </section>
 <section id="celý-interval" class="level4 unnumbered unlisted">
 <h4 class="unnumbered unlisted anchored" data-anchor-id="celý-interval">4. Celý interval</h4>
@@ -4221,10 +4221,10 @@ I_{1-\alpha}
 =
 \left[L;U\right]
 =
-\hat{\beta}_1
+b
 \pm
 t_{1-\alpha/2,\,n-2}
-\operatorname{SE}(\hat{\beta}_1).
+\operatorname{SE}(b).
 \]</span></p>
 <p>Značka <span class="math inline">\(I_{1-\alpha}\)</span> označuje interval se zvolenou hladinou spolehlivosti <span class="math inline">\(1-\alpha\)</span>; pro 95% interval platí <span class="math inline">\(1-\alpha=\text{0,95}\)</span>.</p>
 </section>
