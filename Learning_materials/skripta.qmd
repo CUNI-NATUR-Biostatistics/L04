@@ -1398,7 +1398,7 @@ Ve třetím srovnání vyšel rozdíl o něco větší: směrodatná odchylka sk
 V učebnicích se tentýž vzorec obvykle zapisuje takto:
 
 $$
-\operatorname{SE}(\hat{\beta}_1)
+\operatorname{SE}(b)
 =
 \frac{\hat{\sigma}}{\sqrt{S_{xx}}},
 \qquad
@@ -1409,7 +1409,7 @@ $$
 ]
 ```
 
-Zde $\hat{\beta}_1$ označuje odhad sklonu, $\operatorname{SE}(\hat{\beta}_1)$ jeho standardní chybu, $\hat{\sigma}$ residuální směrodatnou odchylku, $n$ počet erupcí, $x_i$ délku $i$-té erupce, $\bar{x}$ průměrnou délku a $s_x$ směrodatnou odchylku délek. $S_{xx}$ je součet čtverců odchylek délek erupcí od jejich průměru. Protože se směrodatná odchylka počítá z tohoto součtu vyděleného $n-1$, platí $S_{xx} = (n-1)\,s_x^2$ a oba zápisy dávají stejné číslo.
+Zde $b$ označuje stejně jako v lekci o lineárním modelu odhad sklonu, $\operatorname{SE}(b)$ jeho standardní chybu, $\hat{\sigma}$ residuální směrodatnou odchylku, $n$ počet erupcí, $x_i$ délku $i$-té erupce, $\bar{x}$ průměrnou délku a $s_x$ směrodatnou odchylku délek. $S_{xx}$ je součet čtverců odchylek délek erupcí od jejich průměru. Protože se směrodatná odchylka počítá z tohoto součtu vyděleného $n-1$, platí $S_{xx} = (n-1)\,s_x^2$ a oba zápisy dávají stejné číslo.
 
 ## Kde ve výstupu najdeme velikost a přesnost?
 
@@ -1772,7 +1772,7 @@ $$
 
 R počítá s nezaokrouhlenými hodnotami a pro těchto pět erupcí vypíše `r format_cz(standardni_chyba_maly_se)`; případný rozdíl v poslední číslici způsobuje jen zaokrouhlování.
 
-Je to tentýž vzorec $\operatorname{SE}(\hat{\beta}_1) = \hat{\sigma} / \sqrt{S_{xx}}$ jako v kapitole o standardní chybě z jediného výběru, jen dosazený pro pět erupcí. Pět erupcí dává mnohem větší standardní chybu než všech `r format_cz(nrow(data_gejzir))` erupcí (`r format_cz(standardni_chyba_sklonu)`): $S_{xx}$ má jen pět členů.
+Je to tentýž vzorec $\operatorname{SE}(b) = \hat{\sigma} / \sqrt{S_{xx}}$ jako v kapitole o standardní chybě z jediného výběru, jen dosazený pro pět erupcí. Pět erupcí dává mnohem větší standardní chybu než všech `r format_cz(nrow(data_gejzir))` erupcí (`r format_cz(standardni_chyba_sklonu)`): $S_{xx}$ má jen pět členů.
 :::
 
 ### Co říká standardní chyba o našem sklonu?
@@ -1972,10 +1972,10 @@ $$
 Obecně zapisujeme:
 
 $$
-M = t_{1-\alpha/2,\,n-2}\operatorname{SE}(\hat{\beta}_1).
+M = t_{1-\alpha/2,\,n-2}\operatorname{SE}(b).
 $$
 
-Zde $M$ označuje polovinu šířky intervalu, $t_{1-\alpha/2,\,n-2}$ kritickou hodnotu a $\operatorname{SE}(\hat{\beta}_1)$ standardní chybu odhadu sklonu. Písmeno $\alpha$ je doplněk hladiny do jedné: $\alpha = 1 - \text{hladina}$, takže pro 95% interval je $\alpha = `r format_cz_math(1 - hladina_hlavni, nsmall = 2)`$. Písmeno $t$ označuje rozdělení, ze kterého kritická hodnota pochází, a $n-2$ jsou opět `r render_glossary_term("stupne-volnosti", display = "stupně volnosti")`; obojí vysvětlíme v následující lekci.
+Zde $M$ označuje polovinu šířky intervalu, $t_{1-\alpha/2,\,n-2}$ kritickou hodnotu a $\operatorname{SE}(b)$ standardní chybu odhadu sklonu. Písmeno $\alpha$ je doplněk hladiny do jedné: $\alpha = 1 - \text{hladina}$, takže pro 95% interval je $\alpha = `r format_cz_math(1 - hladina_hlavni, nsmall = 2)`$. Písmeno $t$ označuje rozdělení, ze kterého kritická hodnota pochází, a $n-2$ jsou opět `r render_glossary_term("stupne-volnosti", display = "stupně volnosti")`; obojí vysvětlíme v následující lekci.
 
 #### 2. Dolní hranice {.unnumbered .unlisted}
 
@@ -1994,7 +1994,7 @@ $$
 \end{aligned}
 $$
 
-Obecně zapisujeme $L = \hat{\beta}_1 - M$. Zde $L$ označuje dolní hranici, $\hat{\beta}_1$ odhad sklonu a $M$ právě vypočtenou polovinu šířky.
+Obecně zapisujeme $L = b - M$. Zde $L$ označuje dolní hranici, $b$ odhad sklonu a $M$ právě vypočtenou polovinu šířky.
 
 #### 3. Horní hranice {.unnumbered .unlisted}
 
@@ -2013,7 +2013,7 @@ $$
 \end{aligned}
 $$
 
-Obecně zapisujeme $U = \hat{\beta}_1 + M$. Zde $U$ označuje horní hranici.
+Obecně zapisujeme $U = b + M$. Zde $U$ označuje horní hranici.
 
 #### 4. Celý interval {.unnumbered .unlisted}
 
@@ -2039,10 +2039,10 @@ I_{1-\alpha}
 =
 \left[L;U\right]
 =
-\hat{\beta}_1
+b
 \pm
 t_{1-\alpha/2,\,n-2}
-\operatorname{SE}(\hat{\beta}_1).
+\operatorname{SE}(b).
 $$
 
 Značka $I_{1-\alpha}$ označuje interval se zvolenou hladinou spolehlivosti $1-\alpha$; pro 95% interval platí $1-\alpha=`r format_cz_math(hladina_hlavni, nsmall = 2)`$.
